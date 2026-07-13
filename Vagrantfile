@@ -25,8 +25,11 @@ Vagrant.configure("2") do |config|
     vb.customize ["modifyvm", :id, "--vram", "128"]
     vb.customize ["modifyvm", :id, "--accelerate-3d", "on"]
 
-    # Enable Audio
-    vb.customize ["modifyvm", :id, "--audio", "pulse", "--audiout", "on", "--audioin", "on"]
+    # Enable Audio (VirtualBox 7.x Syntax)
+    vb.customize ["modifyvm", :id, "--audio-driver", "default"]
+    vb.customize ["modifyvm", :id, "--audio-enabled", "on"]
+    vb.customize ["modifyvm", :id, "--audio-out", "on"]
+    vb.customize ["modifyvm", :id, "--audio-in", "on"]
 
     # Enable USB Controller for Bluetooth Passthrough
     vb.customize ["modifyvm", :id, "--usb", "on"]
