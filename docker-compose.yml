@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  muse-workshop:
+    build: .
+    network_mode: host
+    environment:
+      # Pass through X11 display for GUIs
+      - DISPLAY=$DISPLAY
+      # If using wayland, may need additional configuration
+      # Prevent issues with Qt attempting to use Wayland
+      - QT_QPA_PLATFORM=xcb
+    volumes:
+      # Mount the X11 unix socket to display windows on the host
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # Mount local directory to avoid rebuilding on code change
+      - .:/app
+    # Necessary for some hardware devices / audio to work properly in docker
+    privileged: true
+    devices:
+      - /dev/snd:/dev/snd
+    command: bash -c "uv sync && uv run main.py"

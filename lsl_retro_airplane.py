@@ -77,7 +77,10 @@ def synthesize_explosion_sound():
 class RetroPlaneGame:
     def __init__(self):
         pygame.init()
-        pygame.mixer.init()
+        try:
+            pygame.mixer.init()
+        except pygame.error as e:
+            print(f"Warning: Audio device not found ({e}). Running without audio.")
         
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | RESIZABLE)
         pygame.display.set_caption("🎮 OpenGL BCI Retro Fighter Jet")

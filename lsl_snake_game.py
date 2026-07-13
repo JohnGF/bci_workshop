@@ -78,7 +78,10 @@ def synthesize_crash_sound():
 class SnakeGame:
     def __init__(self):
         pygame.init()
-        pygame.mixer.init()
+        try:
+            pygame.mixer.init()
+        except pygame.error as e:
+            print(f"Warning: Audio device not found ({e}). Running without audio.")
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption("LSL Physiological BCI Snake Game")
         self.clock = pygame.time.Clock()
