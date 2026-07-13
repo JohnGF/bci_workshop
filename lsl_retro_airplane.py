@@ -77,8 +77,10 @@ def synthesize_explosion_sound():
 class RetroPlaneGame:
     def __init__(self):
         pygame.init()
+        self.audio_enabled = False
         try:
             pygame.mixer.init()
+            self.audio_enabled = True
         except pygame.error as e:
             print(f"Warning: Audio device not found ({e}). Running without audio.")
         
@@ -103,13 +105,16 @@ class RetroPlaneGame:
         self.input_mgr = GameInputManager()
         
         # Synthesize audio on launch
-        try:
-            self.snd_laser = synthesize_laser_sound()
-            self.snd_explosion = synthesize_explosion_sound()
-        except Exception as e:
-            print(f"Audio Synthesis Warning: {e}. Running mute.")
-            self.snd_laser = None
-            self.snd_explosion = None
+        self.snd_laser = None
+        self.snd_explosion = None
+        if self.audio_enabled:
+            try:
+                self.snd_laser = synthesize_laser_sound()
+                self.snd_explosion = synthesize_explosion_sound()
+            except Exception as e:
+                print(f"Audio Synthesis Warning: {e}. Running mute.")
+                self.snd_laser = None
+                self.snd_explosion = None
 
         # Game state variables
         self.player_x = WINDOW_WIDTH // 2

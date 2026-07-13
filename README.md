@@ -15,6 +15,20 @@ We recommend using **[uv](https://github.com/astral-sh/uv)**, a fast Python pack
 curl -LsSf https://astral-sh/uv/install.sh | sh
 ```
 
+### 🌍 Cross-Environment Setup (Virtual Machines)
+
+Because this project relies heavily on real-time hardware (Bluetooth for the Muse headband, direct local network for phone sensors, and OpenGL for games), **if your host is macOS or Windows, using a Linux Virtual Machine (VM) is the most reliable way to run this.**
+
+While a Dockerfile is provided for native Linux hosts, Docker on Mac/Windows struggles to pass through USB Bluetooth adapters and hardware graphics acceleration.
+
+**Setting up an Ubuntu VM (VirtualBox / VMware):**
+1.  **Enable 3D Acceleration** in your VM's Display settings.
+2.  **Pass through your Host's Bluetooth adapter** to the VM via USB settings (required for Muse headset connection).
+3.  Run the included setup script inside the VM to install all GUI, OpenGL, Audio, and Bluetooth dependencies:
+    ```bash
+    ./setup_vm.sh
+    ```
+
 ---
 
 ## 🕹️ 1. Master Control Dashboard (`main.py`)

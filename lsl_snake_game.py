@@ -78,8 +78,10 @@ def synthesize_crash_sound():
 class SnakeGame:
     def __init__(self):
         pygame.init()
+        self.audio_enabled = False
         try:
             pygame.mixer.init()
+            self.audio_enabled = True
         except pygame.error as e:
             print(f"Warning: Audio device not found ({e}). Running without audio.")
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
@@ -89,15 +91,19 @@ class SnakeGame:
         self.font_ui = pygame.font.SysFont("Arial", 12, bold=False)
         self.font_ui_bold = pygame.font.SysFont("Arial", 12, bold=True)
         
-        try:
-            self.snd_food = synthesize_food_sound()
-            self.snd_shake = synthesize_shake_sound()
-            self.snd_crash = synthesize_crash_sound()
-        except Exception as e:
-            print(f"Audio Synthesis Warning: {e}. Running mute.")
-            self.snd_food = None
-            self.snd_shake = None
-            self.snd_crash = None
+        self.snd_food = None
+        self.snd_shake = None
+        self.snd_crash = None
+        if self.audio_enabled:
+            try:
+                self.snd_food = synthesize_food_sound()
+                self.snd_shake = synthesize_shake_sound()
+                self.snd_crash = synthesize_crash_sound()
+            except Exception as e:
+                print(f"Audio Synthesis Warning: {e}. Running mute.")
+                self.snd_food = None
+                self.snd_shake = None
+                self.snd_crash = None
             
         self.bci = GameInputManager()
         self.reset_game()

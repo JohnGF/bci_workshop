@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     git \
     build-essential \
-    libgl1-mesa-glx \
+    libgl1 \
     libgl1-mesa-dri \
     libglib2.0-0 \
     x11-apps \
@@ -19,7 +19,6 @@ RUN apt-get update && apt-get install -y \
     libxcb-cursor0 \
     alsa-utils \
     libasound2-dev \
-    # PySide / PyQt6 deps
     libxkbcommon-x11-0 \
     libxcb-icccm4 \
     libxcb-image0 \
@@ -29,7 +28,7 @@ RUN apt-get update && apt-get install -y \
     libxcb-shape0 \
     libxcb-xfixes0 \
     libxcb-xinerama0 \
-    # Cleanup
+    fonts-noto-color-emoji \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
