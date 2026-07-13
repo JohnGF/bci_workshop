@@ -34,6 +34,10 @@ Vagrant.configure("2") do |config|
     # Enable USB Controller for Bluetooth Passthrough
     vb.customize ["modifyvm", :id, "--usb", "on"]
     vb.customize ["modifyvm", :id, "--usbehci", "on"]
+
+    # Prevent common Ubuntu watchdog CPU lockups in VM
+    vb.customize ["modifyvm", :id, "--ioapic", "on"]
+    vb.customize ["modifyvm", :id, "--hwvirtex", "on"]
   end
 
   # Sync the current directory to /app in the VM
