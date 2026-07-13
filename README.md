@@ -151,6 +151,10 @@ uv run athena_streamer.py
 ## 🔧 Troubleshooting
 
 *   **VirtualBox 7.x 3D Acceleration:** Modern VirtualBox versions require the Graphics Controller to be set to `VMSVGA` in order to use 3D hardware acceleration. Our Vagrantfile automatically configures this, but keep it in mind if setting up manually.
+*   **Software OpenGL Fallback (LLVMpipe):** If you are on an older laptop or a restricted corporate machine and the VirtualBox GPU passthrough causes a crash/lockup, you can force the application to run via CPU software rasterization by prepending the `LIBGL_ALWAYS_SOFTWARE` flag:
+    ```bash
+    LIBGL_ALWAYS_SOFTWARE=1 uv run main.py
+    ```
 *   **Ubuntu VM Freezing on Boot:** If your VM freezes with a `watchdog: BUG: soft lockup - CPU#0 stuck` error, ensure you have IOAPIC and Hardware Virtualization extensions enabled in your VM CPU settings.
 *   **No Audio Device Found:** If you run the games inside a Docker container or a VM without sound configured, you will see a warning in the console: `Warning: Audio device not found`. The games have a graceful fallback mechanism and will simply run muted rather than crashing.
 *   **X11 Forwarding on Windows (VcXsrv/Xming):** If you attempt to use Docker's X11 forwarding on a Windows host using VcXsrv, you **must** check the "Disable access control" box when launching XLaunch. Otherwise, the container will be denied permission to draw windows on your screen.
