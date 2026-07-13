@@ -60,7 +60,9 @@ uv run main.py
 
 ---
 
-## 📱 2. Phone IMU Bridge (`phone_imu_bridge.py`)
+# This can be triggered in main or manually if main is not working properly.
+
+## 📱 2. Phone IMU Bridge (`phone_imu_bridge.py`) 
 
 Turn any smartphone into an LSL motion controller without installing an app.
 
