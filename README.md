@@ -8,35 +8,52 @@ All scripts use the modern Python script metadata format and can be run instantl
 
 ## 🚀 Getting Started
 
-We recommend using **[uv](https://github.com/astral-sh/uv)**, a fast Python package installer and runner.
+Because this project relies heavily on real-time hardware (Bluetooth for the Muse headband, direct local network broadcasts for phone sensors, and OpenGL for 3D games), your installation path depends on your operating system.
 
-```bash
-# Install uv (macOS/Linux)
-curl -LsSf https://astral-sh/uv/install.sh | sh
-```
+### Option A: Native Setup (Best for Native Linux)
+If you are on a native Linux machine, you can run the project directly on your hardware for the best performance.
 
-### 🌍 Cross-Environment Setup (Virtual Machines)
+1. Install **[uv](https://github.com/astral-sh/uv)**, a fast Python package installer:
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+2. Sync dependencies and run:
+   ```bash
+   uv sync
+   uv run main.py
+   ```
+*(Note: You can run this on macOS/Windows, but you may encounter issues with OpenGL acceleration or Bluetooth adapter access depending on your drivers).*
 
-Because this project relies heavily on real-time hardware (Bluetooth for the Muse headband, direct local network for phone sensors, and OpenGL for games), **if your host is macOS or Windows, using a Linux Virtual Machine (VM) is the most reliable way to run this.**
+### Option B: Virtual Machine Setup (Best for Windows/macOS)
+**If your host is macOS or Windows, using a Linux Virtual Machine (VM) is the most reliable way to run this.** This allows you to securely pass through your USB Bluetooth adapter and 3D graphics hardware to a Linux environment.
 
-While a Dockerfile is provided for native Linux hosts, Docker on Mac/Windows struggles to pass through USB Bluetooth adapters and hardware graphics acceleration.
-
-**One-Click VM Setup (Vagrant):**
-If you have [Vagrant](https://developer.hashicorp.com/vagrant) and VirtualBox installed, you can automatically spin up a fully configured VM with 3D acceleration, audio, and all dependencies pre-installed:
-
+**1. One-Click VM Setup (Vagrant)**
+If you have [Vagrant](https://developer.hashicorp.com/vagrant) and VirtualBox installed, you can automatically spin up a fully configured Ubuntu desktop VM:
 ```bash
 vagrant up
 vagrant reload
 ```
-Once the VirtualBox window appears, login (username: `vagrant`, password: `vagrant`), run `startx` to launch the desktop, open a terminal, and navigate to `/app` to run the project. You will still need to manually pass through your Bluetooth adapter via the VirtualBox USB menu.
+*   When the VirtualBox window appears, login with username: `vagrant` and password: `vagrant`.
+*   Run `startx` to launch the desktop environment.
+*   *Important:* Use the VirtualBox top menu (`Devices > USB`) to attach your host's Bluetooth adapter to the VM.
+*   Open a terminal, run `cd /app`, and launch the dashboard with `uv run main.py`.
 
-**Manual VM Setup (VirtualBox / VMware):**
+**2. Manual VM Setup**
+If you are provisioning your own VM (e.g., VMware, or manual VirtualBox):
 1.  **Enable 3D Acceleration** in your VM's Display settings.
-2.  **Pass through your Host's Bluetooth adapter** to the VM via USB settings (required for Muse headset connection).
-3.  Run the included setup script inside the VM to install all GUI, OpenGL, Audio, and Bluetooth dependencies:
+2.  **Pass through your Host's Bluetooth adapter** via USB settings.
+3.  Run the included setup script inside the VM to install all necessary system packages:
     ```bash
     ./setup_vm.sh
+    uv run main.py
     ```
+
+### Option C: Docker (Best for Headless Linux / CI)
+A `Dockerfile` and `docker-compose.yml` are provided. This setup uses host networking and X11 socket forwarding.
+```bash
+docker-compose up --build
+```
+*(Note: Docker on Mac/Windows runs inside a hidden VM, making X11 forwarding and Bluetooth passthrough extremely difficult. Option C is only recommended for Linux hosts).*
 
 ---
 
@@ -128,3 +145,12 @@ uv run athena_streamer.py
 *   `lsl_snake_game.py`: BCI Snake game with rolling signal visualizers.
 *   `athena_streamer.py`: Bluetooth driver for the Muse S headband.
 *   `ppg_viewer.py` & `lsl_viewer.py`: PPG heart rate visualizer and generic multi-channel time-series plotter.
+
+---
+
+## 🔧 Troubleshooting
+
+*   **VirtualBox 7.x 3D Acceleration:** Modern VirtualBox versions require the Graphics Controller to be set to `VMSVGA` in order to use 3D hardware acceleration. Our Vagrantfile automatically configures this, but keep it in mind if setting up manually.
+*   **Ubuntu VM Freezing on Boot:** If your VM freezes with a `watchdog: BUG: soft lockup - CPU#0 stuck` error, ensure you have IOAPIC and Hardware Virtualization extensions enabled in your VM CPU settings.
+*   **No Audio Device Found:** If you run the games inside a Docker container or a VM without sound configured, you will see a warning in the console: `Warning: Audio device not found`. The games have a graceful fallback mechanism and will simply run muted rather than crashing.
+*   **X11 Forwarding on Windows (VcXsrv/Xming):** If you attempt to use Docker's X11 forwarding on a Windows host using VcXsrv, you **must** check the "Disable access control" box when launching XLaunch. Otherwise, the container will be denied permission to draw windows on your screen.
