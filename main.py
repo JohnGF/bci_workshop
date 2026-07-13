@@ -1796,7 +1796,7 @@ class BCIControllerMappingWidget(QWidget):
             ind = self.indicators[source_input]
             
             # Animate LED color and label glow
-            ind["led"].setStyleSheet("background-color: #10b981; border-radius: 7px; border: none; box-shadow: 0 0 10px #10b981;")
+            ind["led"].setStyleSheet("background-color: #10b981; border-radius: 7px; border: none;")
             ind["frame"].setStyleSheet("""
                 QFrame#IndCard {
                     background-color: #064e3b;
@@ -2438,7 +2438,7 @@ class MasterControlDashboard(QMainWindow):
             s["status"] = "Running"
             w["status_lbl"].setText("Running")
             w["status_lbl"].setStyleSheet("color: #10b981;") # Emerald Green
-            w["light"].setStyleSheet("background-color: #10b981; border-radius: 6px; box-shadow: 0 0 8px #10b981;")
+            w["light"].setStyleSheet("background-color: #10b981; border-radius: 6px;")
             w["start_btn"].setEnabled(False)
             w["stop_btn"].setEnabled(True)
             if key == "athena":

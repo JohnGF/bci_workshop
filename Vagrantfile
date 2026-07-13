@@ -20,9 +20,10 @@ Vagrant.configure("2") do |config|
     vb.memory = "4096"
     vb.cpus = 2
 
-    # Enable 3D Acceleration
+    # Enable 3D Acceleration (Requires VMSVGA in VirtualBox 7.x+)
+    vb.customize ["modifyvm", :id, "--graphicscontroller", "vmsvga"]
     vb.customize ["modifyvm", :id, "--vram", "128"]
-    vb.customize ["modifyvm", :id, "--accelerate3d", "on"]
+    vb.customize ["modifyvm", :id, "--accelerate-3d", "on"]
 
     # Enable Audio
     vb.customize ["modifyvm", :id, "--audio", "pulse", "--audiout", "on", "--audioin", "on"]
