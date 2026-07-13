@@ -21,7 +21,16 @@ Because this project relies heavily on real-time hardware (Bluetooth for the Mus
 
 While a Dockerfile is provided for native Linux hosts, Docker on Mac/Windows struggles to pass through USB Bluetooth adapters and hardware graphics acceleration.
 
-**Setting up an Ubuntu VM (VirtualBox / VMware):**
+**One-Click VM Setup (Vagrant):**
+If you have [Vagrant](https://developer.hashicorp.com/vagrant) and VirtualBox installed, you can automatically spin up a fully configured VM with 3D acceleration, audio, and all dependencies pre-installed:
+
+```bash
+vagrant up
+vagrant reload
+```
+Once the VirtualBox window appears, login (username: `vagrant`, password: `vagrant`), run `startx` to launch the desktop, open a terminal, and navigate to `/app` to run the project. You will still need to manually pass through your Bluetooth adapter via the VirtualBox USB menu.
+
+**Manual VM Setup (VirtualBox / VMware):**
 1.  **Enable 3D Acceleration** in your VM's Display settings.
 2.  **Pass through your Host's Bluetooth adapter** to the VM via USB settings (required for Muse headset connection).
 3.  Run the included setup script inside the VM to install all GUI, OpenGL, Audio, and Bluetooth dependencies:
