@@ -1,155 +1,107 @@
-# 🫀 Brain & Pulse: Muse & Smartwatch LSL Workshop
+# 🧠 BCI & Kinematic Workshop: Muse EEG & Phone IMU
 
-This repository contains real-time signal processing and visualization tools for Brain-Computer Interfaces (BCI) and Physiological Computing, designed for interactive academic workshops.
+This repository contains real-time signal processing, visual telemetry, and BCI-controlled games designed for interactive workshops. It bridges physiological signals (Muse S EEG) and kinematic motions (Phone/Watch IMUs) onto a unified dashboard to drive gameplay.
 
 All scripts use the modern Python script metadata format and can be run instantly with `uv` (which automatically manages dependency environments).
 
 ---
 
-## 🚀 Setup & Prerequisites
+## 🚀 Getting Started
 
 We recommend using **[uv](https://github.com/astral-sh/uv)**, a fast Python package installer and runner.
 
-If you don't have `uv` installed, run:
 ```bash
-# macOS/Linux
+# Install uv (macOS/Linux)
 curl -LsSf https://astral-sh/uv/install.sh | sh
 ```
 
-Make sure your Bluetooth is enabled if streaming from actual Muse hardware.
+---
+
+## 🕹️ 1. Master Control Dashboard (`main.py`)
+
+The central nervous system of the project. This PyQt6 dashboard manages incoming LSL streams, computes real-time DSP metrics, and pipes control tokens to games.
+
+To launch the dashboard:
+```bash
+uv run main.py
+```
+
+### Key Features:
+*   **🔌 Auto-Connect**: Automatically binds to active LSL streams on the network.
+*   **📊 Live EEG Spectrum**: Visualizes raw EEG waveforms, performs real-time bandpower FFT (Alpha/Beta/Gamma), and extracts focus/calm scores.
+*   **📐 3D Kinematics**: Displays 3D rotation trajectories and computes real-time zero-baseline sensor calibration.
+*   **📈 Controller Mapping & Tuning Oscilloscope**:
+    *   Map signals to action tokens (`left`, `right`, `up`, `down`, `action`, `sec_action`, `tert_action`).
+    *   Exposes 7 live threshold sliders (Blink, Clench, Focus, Calm, Phone Tilt, Phone Flick, Phone Shake).
+    *   Displays a real-time calibration scope plotting waveforms alongside color-coded threshold lines for immediate visual tuning.
 
 ---
 
-## 📺 Live Presentation Synchronization Server
+## 📱 2. Phone IMU Bridge (`phone_imu_bridge.py`)
 
-For local workshops and lectures, you can run a local WebSocket server that syncs the presentation slides across all attendee devices in real time and lets you remote-control the slide deck from your phone.
+Turn any smartphone into an LSL motion controller without installing an app.
 
-### 1. Start the Sync Server
-This establishes a central WebSocket server on port `8080` that manages the slide state, broadcasts lock states, and forwards remote commands.
-
-Run:
-```bash
-uv run presentation_sync_server.py
-```
-
-### 2. Connect as Master
-Load the presentation URL on your main projector computer with the `?role=master` parameter:
-```
-http://localhost:4321/about_me/presentation/bci_advanced/bci_advanced.html?role=master
-```
-
-### 3. Connect as Audience (Listeners)
-When attendees load the standard URL (without parameters, e.g. by scanning the QR code on Slide 1), they join as **Listeners**.
-*   **Locked Mode (Default):** Manual navigation is disabled on the listener's screen. Their view updates automatically as the Master changes slides.
-*   **Independent Mode:** If the Master disables the lock, listeners can browse the slides at their own pace. If they read ahead, they can click the **"Jump to Master"** button to snap back to the presenter's active slide.
-
-### 4. Connect as Phone Remote Controller
-To control the presentation while moving around the room:
-1. Open the **Script Window** (`🎤` button or `S` key) on your laptop.
-2. Scan the **Remote Controller QR code** shown at the bottom of the notes.
-3. Your phone will open the page with `?role=controller`, displaying a touch remote with **Prev/Next** buttons, a **Sync Lock** toggle, and the **Speaker Script** matching the active slide.
+1.  Start the bridge:
+    ```bash
+    uv run phone_imu_bridge.py
+    ```
+2.  Open the secure link on your phone (e.g., `https://<your-ip>:8000`).
+3.  Hold the phone naturally and click **🎯 Zero Sensors** on the dashboard to calibrate. Your phone is now streaming tilt angles, flick forces, shakes, and screen taps directly to the LSL network!
 
 ---
 
-## ⌚ Smartwatch PPG Simulation (No Hardware Required)
+## 🎮 3. BCI-Controlled Games
 
-Since raw smartwatch PPG (optical heart rate) streams are restricted by Wear OS/watch OS for third-party developers, we provide an interactive simulator that streams high-fidelity PPG data over the Lab Streaming Layer (LSL), alongside a real-time spectral heart rate extractor.
+Our games are built using Pygame and feature a **Unified Input System** (`game_input.py`) that unifies standard keyboard/mouse controls with incoming BCI/IMU tokens from the dashboard.
 
-### 1. Start the Smartwatch PPG LSL Streamer
-This simulator models a dual-wavelength sensor (Green LED for HR, Red LED for SpO2) complete with respiratory sinus arrhythmia (RSA), heart rate variability (HRV), baseline drifts, and sensor noise. Adjust the simulated heart rate in real time using your keyboard.
-
-Run:
+### OpenGL Retro Fighter (`lsl_retro_airplane.py`)
+An arcade jet shooter featuring particle systems and synthesized retro audio:
 ```bash
-uv run watch_ppg_streamer.py
+uv run lsl_retro_airplane.py
 ```
-*   **Controls in Terminal:**
-    *   `w` or `[Arrow Up]`: Increase Heart Rate (+5 BPM)
-    *   `s` or `[Arrow Down]`: Decrease Heart Rate (-5 BPM)
-    *   `Space`: Randomize Heart Rate
-    *   `q` or `[Ctrl+C]`: Stop simulator
+*   **Phone Tilt**: Slides the ship continuously (Continuous Analog steering).
+*   **Phone Tap**: Instantly fires primary lasers.
+*   **Phone Shake**: Triggers dual-laser spread shots.
+*   **Muse EEG Eye Blink**: Triggers the ultimate screen-clearing smart bomb.
+*   **Keyboard Backup**: `A`/`D`/`W`/`S` (steer), `Space` (fire), `Shift` (spread), `Ctrl` (bomb).
 
-### 2. Launch the Real-Time PPG Visualizer
-This client connects to the LSL stream, applies a 4th-order Butterworth bandpass filter to remove breathing drift, performs an FFT on a rolling 10-second window, and overlays the calculated heart rate.
-
-Run:
-```bash
-uv run watch_ppg_viewer.py
-```
-
----
-
-## 📐 Smartwatch 3D IMU Trajectory Tracker (No Hardware Required)
-
-In addition to physiological pulse waves, smartwatches collect kinematic data using Inertial Measurement Units (IMU). This demo simulates 3D movements and uses real-time leaky double integration of accelerometer readings to trace the watch's movement path in 3D space.
-
-### 1. Start the Smartwatch IMU LSL Streamer
-Pipes simulated 6-axis IMU (3-axis Acc, 3-axis Gyro) values to the network. You can select different motion patterns interactively in the console.
-
-Run:
-```bash
-uv run watch_imu_streamer.py
-```
-*   **Controls in Terminal:**
-    *   `1`: Stationary (No movement + minor noise)
-    *   `2`: Circular displacement (Translation in XY plane)
-    *   `3`: Figure-8 (Lissajous trajectory)
-    *   `4`: Shaking (Violent high-freq tremor)
-    *   `q` or `[Ctrl+C]`: Stop simulator
-
-### 2. Launch the 3D Trajectory Viewer
-Connects to the IMU stream, subtracts gravity using a low-pass baseline filter, performs real-time double integration to compute position, and plots the trailing path in 3D.
-
-Run:
-```bash
-uv run watch_imu_viewer_3d.py
-```
-
----
-
-## 🧠 Muse EEG & Optical PPG (Requires Hardware)
-
-These scripts interface with the **Muse S (Athena)** headband using the BrainFlow library.
-
-### 1. Start the Muse LSL Streamer
-Launches the persistent BLE hardware session and pipes raw EEG (Ch. 1-4) and PPG Optics (Ch. 1-9) onto LSL nodes `Muse_Athena` and `Muse_Optics`.
-
-Run:
-```bash
-uv run athena_streamer.py
-```
-
-### 2. View the Muse PPG Waveform
-Extracts heart rate metrics from the Muse S optical PPG channels.
-
-Run:
-```bash
-uv run ppg_viewer.py
-```
-
-### 3. Play the Python BCI Snake Game
-A self-contained Pygame-based Snake game. It can be played using standard keys, but runs a background thread that binds to the live `Muse_Athena` EEG stream. It processes AF7/AF8 peaks to decode blinks (turn Left) and TP9/TP10 variance to decode jaw clenches (turn Right), displaying the live waveforms and threshold bars directly in the game UI.
-
-Run:
+### BCI Snake Game (`lsl_snake_game.py`)
 ```bash
 uv run lsl_snake_game.py
 ```
-*   **Controls & Simulators:**
-    *   `W`/`A`/`S`/`D` or `Arrow Keys`: Manual overwrite steering.
-    *   `B`: Simulate an eye blink (Left turn).
-    *   `C`: Simulate a jaw clench (Right turn).
-    *   `Space`: Start / Reset game.
+*   **Tilt / Keys**: Changes direction and launches the game.
+*   **Blink**: Turn Left.
+*   **Jaw Clench**: Turn Right.
+*   **Simulator Hotkeys**: `B` (simulate blink), `C` (simulate clench).
+
+---
+
+## ⌚ 4. Smartwatch PPG & IMU Simulators (No Hardware Required)
+
+We provide interactive simulators that stream high-fidelity PPG (optical heart rate) and kinematic data over LSL:
+
+*   **watch_ppg_streamer.py**: Models red/green PPG sensors with heart rate variability (HRV), respiratory sinus arrhythmia (RSA), and keyboard controls (`W`/`S` to adjust BPM).
+*   **watch_ppg_viewer.py**: Connects to LSL, applies a bandpass filter, and performs FFT-based heart rate extraction.
+*   **watch_imu_streamer.py**: Streams simulated smartwatch 6-axis IMU motions (circular, figure-8, shakes).
+*   **watch_imu_viewer_3d.py**: Connects to the watch IMU LSL node and plots integrated 3D trajectories.
+
+---
+
+## 🧠 5. Muse S (Athena) Connection (Requires Hardware)
+
+Launches the persistent BLE hardware session and pipes raw EEG (Ch. 1-4) and PPG Optics (Ch. 1-9) onto LSL nodes `Muse_Athena` and `Muse_Optics`.
+```bash
+uv run athena_streamer.py
+```
 
 ---
 
 ## 🛠️ Codebase Structure
 
-*   `presentation_sync_server.py`: Central WebSocket server to sync slides across Master, Phone Remotes, and Listener screens.
-*   `lsl_snake_game.py`: Python BCI Snake game driven by LSL EEG (blinks/clenches) or simulator keyboard overlays.
-*   `watch_ppg_streamer.py`: Simulates smartwatch dual-wavelength PPG over LSL with interactive keyboard tuning.
-*   `watch_ppg_viewer.py`: Reads the simulated smartwatch PPG, filters out drift, and processes the signal via FFT.
-*   `watch_imu_streamer.py`: Simulates smartwatch 6-axis IMU over LSL with interactive keyboard pattern switching.
-*   `watch_imu_viewer_3d.py`: Connects to `Smartwatch_IMU` stream and plots the de-drifted integrated 3D trajectory path.
-*   `athena_streamer.py`: Hardware driver that connects to the Muse S and creates LSL EEG and Optical streams.
-*   `ppg_viewer.py`: Signal processor and viewer for the Muse S optical sensors.
-*   `prediction_dashboard.py` / `advanced_dashboard.py`: Real-time state prediction dashboards (e.g. attention, blink detections).
-*   `lsl_viewer.py`: Generic multi-channel LSL time-series data plotter.
+*   `main.py`: PyQt6 Master Control Dashboard.
+*   `game_input.py`: Unified keyboard, mouse, and BCI/stdin action-mapping system.
+*   `phone_imu_bridge.py`: Local WebSocket server to pipe phone sensor values to LSL.
+*   `lsl_retro_airplane.py`: OpenGL Arcade Shooter with continuous steer and particle events.
+*   `lsl_snake_game.py`: BCI Snake game with rolling signal visualizers.
+*   `athena_streamer.py`: Bluetooth driver for the Muse S headband.
+*   `ppg_viewer.py` & `lsl_viewer.py`: PPG heart rate visualizer and generic multi-channel time-series plotter.
