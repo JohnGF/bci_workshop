@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="#0b0f19"
+    android:gravity="center_horizontal">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📲 BCI Phone Controller"
+        android:textColor="#38bdf8"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stream raw accelerometer and gyroscope to the local LSL bridge."
+        android:textColor="#94a3b8"
+        android:textSize="13sp"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"/>
+
+    <EditText
+        android:id="@+id/urlInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="ws://192.168.1.72:8001"
+        android:textColor="#f1f5f9"
+        android:textColorHint="#475569"
+        android:backgroundTint="#334155"
+        android:inputType="textUri"
+        android:textSize="15sp"
+        android:layout_marginBottom="16dp"
+        android:padding="12dp"/>
+
+    <Button
+        android:id="@+id/connectBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Connect"
+        android:textColor="#ffffff"
+        android:backgroundTint="#0284c7"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp"/>
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Status: Disconnected"
+        android:textColor="#94a3b8"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="32dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#1e293b"
+        android:padding="16dp"
+        android:weightSum="2">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ACCEL (m/s²)"
+                android:textColor="#38bdf8"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/accX"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="X: 0.00"
+                android:textColor="#cbd5e1"
+                android:fontFamily="monospace"
+                android:textSize="14sp"/>
+
+            <TextView
+                android:id="@+id/accY"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Y: 0.00"
+                android:textColor="#cbd5e1"
+                android:fontFamily="monospace"
+                android:textSize="14sp"/>
+
+            <TextView
+                android:id="@+id/accZ"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Z: 9.81"
+                android:textColor="#cbd5e1"
+                android:fontFamily="monospace"
+                android:textSize="14sp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GYRO (rad/s)"
+                android:textColor="#818cf8"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/gyroX"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="X: 0.00"
+                android:textColor="#cbd5e1"
+                android:fontFamily="monospace"
+                android:textSize="14sp"/>
+
+            <TextView
+                android:id="@+id/gyroY"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Y: 0.00"
+                android:textColor="#cbd5e1"
+                android:fontFamily="monospace"
+                android:textSize="14sp"/>
+
+            <TextView
+                android:id="@+id/gyroZ"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Z: 0.00"
+                android:textColor="#cbd5e1"
+                android:fontFamily="monospace"
+                android:textSize="14sp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

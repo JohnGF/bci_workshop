@@ -1,0 +1,19 @@
+[project]
+name = "muse-workshop"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "brainflow>=5.22.2",
+    "mne>=1.12.1",
+    "numba>=0.66.0",
+    "numpy>=2.4.6",
+    "pylsl>=1.18.2",
+    "pyqt6>=6.11.0",
+    "pyqtgraph>=0.14.0",
+    "scipy>=1.17.1",
+    "setuptools<82",
+    "pygame>=2.5.2",
+    "PyOpenGL>=3.1.7",
+]
