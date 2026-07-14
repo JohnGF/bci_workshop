@@ -52,6 +52,10 @@ else
     echo "✅ 'uv' is already installed."
 fi
 
+# Prevent VM from overwriting the host's Windows .venv
+export UV_PROJECT_ENVIRONMENT="/home/vagrant/.venv"
+echo 'export UV_PROJECT_ENVIRONMENT="/home/vagrant/.venv"' >> ~/.bashrc
+
 # Install python dependencies via uv
 echo "🐍 Syncing Python dependencies..."
 uv sync

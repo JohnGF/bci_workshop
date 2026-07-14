@@ -10,6 +10,8 @@ services:
       # If using wayland, may need additional configuration
       # Prevent issues with Qt attempting to use Wayland
       - QT_QPA_PLATFORM=xcb
+      # Store the venv outside the mounted volume to prevent overwriting host Windows .venv
+      - UV_PROJECT_ENVIRONMENT=/opt/.venv
     volumes:
       # Mount the X11 unix socket to display windows on the host
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
