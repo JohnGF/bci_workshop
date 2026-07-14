@@ -157,6 +157,7 @@ uv run athena_streamer.py
     ```bash
     LIBGL_ALWAYS_SOFTWARE=1 uv run main.py
     ```
+*   **Vagrant Timeout / Windows Hyper-V Conflict:** If `vagrant up` times out waiting for SSH, and you are on Windows, this is usually caused by a conflict with **Hyper-V** (which is enabled by Docker Desktop and WSL2). Hyper-V causes VirtualBox VMs to run incredibly slowly or freeze on a black screen. **Solution:** Run the project natively on Windows using `uv run main.py` instead of using a VM.
 *   **Ubuntu VM Freezing on Boot:** If your VM freezes with a `watchdog: BUG: soft lockup - CPU#0 stuck` error, ensure you have IOAPIC and Hardware Virtualization extensions enabled in your VM CPU settings.
 *   **No Audio Device Found:** If you run the games inside a Docker container or a VM without sound configured, you will see a warning in the console: `Warning: Audio device not found`. The games have a graceful fallback mechanism and will simply run muted rather than crashing.
 *   **X11 Forwarding on Windows (VcXsrv/Xming):** If you attempt to use Docker's X11 forwarding on a Windows host using VcXsrv, you **must** check the "Disable access control" box when launching XLaunch. Otherwise, the container will be denied permission to draw windows on your screen.

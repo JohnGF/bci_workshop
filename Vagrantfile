@@ -8,6 +8,9 @@ Vagrant.configure("2") do |config|
   # Forward X11 so GUI apps can run seamlessly if the host supports it
   config.ssh.forward_x11 = true
 
+  # Increase boot timeout for slower Windows/VirtualBox initial boots
+  config.vm.boot_timeout = 600
+
   # Configure VirtualBox specific settings
   config.vm.provider "virtualbox" do |vb|
     # Give the VM a name
@@ -31,9 +34,8 @@ Vagrant.configure("2") do |config|
     vb.customize ["modifyvm", :id, "--audio-out", "on"]
     vb.customize ["modifyvm", :id, "--audio-in", "on"]
 
-    # Enable USB Controller for Bluetooth Passthrough
-    vb.customize ["modifyvm", :id, "--usb", "on"]
-    vb.customize ["modifyvm", :id, "--usbehci", "on"]
+    # Enable USB 3.0 Controller for Bluetooth Passthrough
+    vb.customize ["modifyvm", :id, "--usbxhci", "on"]
 
     # Prevent common Ubuntu watchdog CPU lockups in VM
     vb.customize ["modifyvm", :id, "--ioapic", "on"]
