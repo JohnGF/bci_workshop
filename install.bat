@@ -17,16 +17,17 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 :: Check if a corrupted or Linux-based .venv exists (often caused by Docker/Vagrant sharing the folder)
-if exist .venv\ (
-    if not exist .venv\Scripts\python.exe (
+if exist ".venv\" (
+    if not exist ".venv\Scripts\python.exe" (
         echo.
         echo [!] Found a corrupted or Linux-based virtual environment. Cleaning up...
-        rmdir /s /q .venv
+        rmdir /s /q ".venv"
     )
 )
 
 echo.
 echo [2/3] Syncing Python dependencies...
+uv venv
 uv sync
 
 echo.
