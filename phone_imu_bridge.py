@@ -521,7 +521,7 @@ class WebBridgeHTTPHandler(BaseHTTPRequestHandler):
             data = json.loads(post_data.decode('utf-8'))
             payload = data.get("payload", [])
             
-            global latest_acc, latest_gyro
+            global latest_acc, latest_gyro, latest_touch, latest_voice
             for item in payload:
                 name = item.get("name")
                 values = item.get("values", {})
@@ -531,7 +531,7 @@ class WebBridgeHTTPHandler(BaseHTTPRequestHandler):
                     latest_gyro = [values.get("x", 0.0), values.get("y", 0.0), values.get("z", 0.0)]
             
             # Push combined sample to LSL
-            outlet.push_sample(latest_acc + latest_gyro)
+            outlet.push_sample(latest_acc + latest_gyro + [latest_touch, latest_voice])
             
             self.send_response(200)
             self.send_header("Content-type", "application/json")

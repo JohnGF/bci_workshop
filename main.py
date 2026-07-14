@@ -20,7 +20,7 @@ import pyqtgraph as pg
 from scipy.signal import butter, sosfilt, iirnotch, lfilter
 from numba import njit
 
-from PyQt6.QtCore import QTimer, QProcess, QThread, pyqtSignal, Qt, QSize
+from PyQt6.QtCore import QTimer, QProcess, QProcessEnvironment, QThread, pyqtSignal, Qt, QSize
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -476,7 +476,8 @@ class EEGVisualizerWidget(LSLTabBase):
         )
         self.bar_plot_widget.addItem(self.bar_items)
         self.bar_plot_widget.getAxis("bottom").setTicks([list(enumerate(self.band_labels))])
-        self.bar_plot_widget.setYRange(0, 5)
+        # Auto-range the Y axis since EEG power magnitudes vary significantly based on hardware/simulators
+        self.bar_plot_widget.enableAutoRange(axis='y')
         right_panel.addWidget(self.bar_plot_widget, stretch=1)
 
         # Focus / Calm trends Plot
@@ -533,8 +534,8 @@ class EEGVisualizerWidget(LSLTabBase):
         valid_idx = (freqs >= 1.0) & (freqs <= 50.0)
         self.fft_curve.setData(freqs[valid_idx], psd[valid_idx] + 1e-12)
 
-        # Scale and update bar chart
-        self.bar_items.setOpts(height=band_powers * 1e9)
+        # Update bar chart without static 1e9 scaling, relying on the new AutoRange instead
+        self.bar_items.setOpts(height=band_powers)
 
         # Update Focus & Calm predictions using insulated AF8 channel (Index 2)
         af8_data = self.data_buffer[:, 2]
