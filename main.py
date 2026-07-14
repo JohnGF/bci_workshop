@@ -2395,6 +2395,8 @@ class MasterControlDashboard(QMainWindow):
         process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         env = QProcessEnvironment.systemEnvironment()
         env.insert("PYTHONUNBUFFERED", "1")
+        # Force Python to use UTF-8 so emojis printed by child scripts (like Athena) don't crash Windows cp1252 encoders
+        env.insert("PYTHONUTF8", "1")
         process.setProcessEnvironment(env)
         process.readyReadStandardOutput.connect(lambda: self.read_process_output(key))
         process.stateChanged.connect(lambda state: self.process_state_changed(key, state))
@@ -2488,6 +2490,11 @@ class MasterControlDashboard(QMainWindow):
         """Launches pygame or audio triggers as isolated detached processes."""
         self.append_system_log(f"Launching external BCI application: {script_name}...")
         proc = QProcess()
+        # Force UTF-8 so printing emojis in games doesn't crash cp1252 Windows decoders
+        env = QProcessEnvironment.systemEnvironment()
+        env.insert("PYTHONUTF8", "1")
+        proc.setProcessEnvironment(env)
+
         if script_name in ["lsl_snake_game.py", "lsl_retro_airplane.py"]:
             # Pipe standard input, output and error separately so stdin writing works
             proc.setProcessChannelMode(QProcess.ProcessChannelMode.SeparateChannels)

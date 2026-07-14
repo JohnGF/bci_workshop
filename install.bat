@@ -1,4 +1,8 @@
 @echo off
+:: Force UTF-8 encoding so emojis display correctly on Windows Command Prompt
+chcp 65001 > nul
+set PYTHONUTF8=1
+
 echo =================================================
 echo 🧠 BCI Workshop: Native Windows Setup
 echo =================================================
