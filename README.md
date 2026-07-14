@@ -10,19 +10,24 @@ All scripts use the modern Python script metadata format and can be run instantl
 
 Because this project relies heavily on real-time hardware (Bluetooth for the Muse headband, direct local network broadcasts for phone sensors, and OpenGL for 3D games), your installation path depends on your operating system.
 
-### Option A: Native Setup (Best for Native Linux)
-If you are on a native Linux machine, you can run the project directly on your hardware for the best performance.
+### Option A: Native Setup (Recommended)
+This is the fastest, lowest-friction way to run the workshop. Because the codebase uses `brainflow` (which handles native Bluetooth directly) and `uv` (which manages Python dependencies automatically), you can run this natively on Windows, macOS, or Linux without any virtual machines.
 
-1. Install **[uv](https://github.com/astral-sh/uv)**, a fast Python package installer:
-   ```bash
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   ```
-2. Sync dependencies and run:
-   ```bash
-   uv sync
-   uv run main.py
-   ```
-*(Note: You can run this on macOS/Windows, but you may encounter issues with OpenGL acceleration or Bluetooth adapter access depending on your drivers).*
+**For Windows:**
+Simply double-click the `install.bat` file in your File Explorer (or run it from Command Prompt). It will automatically download the required tools and sync the project dependencies.
+
+**For macOS / Linux:**
+Open a terminal in the project folder and run the installer script:
+```bash
+./install.sh
+```
+
+**Running the Dashboard:**
+Once the installer finishes, you launch the entire workshop orchestrator with a single command:
+```bash
+uv run main.py
+```
+*(From this UI dashboard, you can launch the games and the Muse headset connectors with a single click—no further terminal commands needed!)*
 
 ### Option B: Virtual Machine Setup (Best for Windows/macOS)
 **If your host is macOS or Windows, using a Linux Virtual Machine (VM) is the most reliable way to run this.** This allows you to securely pass through your USB Bluetooth adapter and 3D graphics hardware to a Linux environment.
