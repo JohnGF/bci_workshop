@@ -557,10 +557,12 @@ def start_http_server(ip, port):
     if not os.path.exists("cert.pem") or not os.path.exists("key.pem"):
         print("🔑 Generating self-signed SSL certificate for local HTTPS serving...")
         try:
+            local_ip = get_local_ip()
             subprocess.run([
                 "openssl", "req", "-newkey", "rsa:2048", "-new", "-nodes", "-x509", 
                 "-days", "365", "-keyout", "key.pem", "-out", "cert.pem", 
-                "-subj", "/CN=localhost"
+                "-subj", "/CN=localhost",
+                "-addext", f"subjectAltName=DNS:localhost,IP:127.0.0.1,IP:{local_ip}"
             ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             print("✅ SSL Certificate generated successfully.")
         except Exception as e:
