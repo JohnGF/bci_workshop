@@ -2,7 +2,8 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "pylsl",
-#     "websockets"
+#     "websockets",
+#     "cryptography"
 # ]
 # ///
 
@@ -508,7 +509,7 @@ HTML_CONTENT = """<!DOCTYPE html>
 from socketserver import ThreadingMixIn
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
-    pass
+    allow_reuse_address = True
 
 class WebBridgeHTTPHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
@@ -550,23 +551,67 @@ class WebBridgeHTTPHandler(BaseHTTPRequestHandler):
             self.send_response(400)
             self.end_headers()
 
+def generate_self_signed_cert():
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.x509.oid import NameOID
+    from cryptography import x509
+    import datetime
+    import ipaddress
+
+    local_ip = get_local_ip()
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+
+    subject = issuer = x509.Name([
+        x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+    ])
+
+    cert = x509.CertificateBuilder().subject_name(
+        subject
+    ).issuer_name(
+        issuer
+    ).public_key(
+        private_key.public_key()
+    ).serial_number(
+        x509.random_serial_number()
+    ).not_valid_before(
+        datetime.datetime.now(datetime.timezone.utc)
+    ).not_valid_after(
+        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)
+    ).add_extension(
+        x509.SubjectAlternativeName([
+            x509.DNSName("localhost"),
+            x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
+            x509.IPAddress(ipaddress.IPv4Address(local_ip))
+        ]),
+        critical=False,
+    ).sign(private_key, hashes.SHA256())
+
+    with open("key.pem", "wb") as f:
+        f.write(private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.NoEncryption(),
+        ))
+
+    with open("cert.pem", "wb") as f:
+        f.write(cert.public_bytes(serialization.Encoding.PEM))
+
 def start_http_server(ip, port):
     server = ThreadedHTTPServer((ip, port), WebBridgeHTTPHandler)
     
     # Generate self-signed certificate if key files are missing
     if not os.path.exists("cert.pem") or not os.path.exists("key.pem"):
-        print("🔑 Generating self-signed SSL certificate for local HTTPS serving...")
+        print("🔑 Generating self-signed SSL certificate for local HTTPS serving natively...")
         try:
-            local_ip = get_local_ip()
-            subprocess.run([
-                "openssl", "req", "-newkey", "rsa:2048", "-new", "-nodes", "-x509", 
-                "-days", "365", "-keyout", "key.pem", "-out", "cert.pem", 
-                "-subj", "/CN=localhost",
-                "-addext", f"subjectAltName=DNS:localhost,IP:127.0.0.1,IP:{local_ip}"
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            generate_self_signed_cert()
             print("✅ SSL Certificate generated successfully.")
         except Exception as e:
-            print(f"⚠️ Failed to automatically generate SSL certificate via openssl: {e}")
+            print(f"⚠️ Failed to generate native SSL certificate: {e}")
 
     # Wrap the HTTP socket with SSL context
     try:
@@ -635,8 +680,8 @@ async def main():
     print(f"⌛ Listening for Insecure WS (port {ws_port_insecure}) and Secure WSS (port {ws_port_secure})...")
 
     # Start both WebSocket servers concurrently
-    insecure_server = websockets.serve(echo, args.ip, ws_port_insecure)
-    secure_server = websockets.serve(echo, args.ip, ws_port_secure, ssl=ssl_context)
+    insecure_server = websockets.serve(echo, args.ip, ws_port_insecure, reuse_address=True)
+    secure_server = websockets.serve(echo, args.ip, ws_port_secure, ssl=ssl_context, reuse_address=True)
 
     async with insecure_server, secure_server:
         await asyncio.Future()  # Run forever
