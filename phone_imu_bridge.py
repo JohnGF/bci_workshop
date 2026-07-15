@@ -372,9 +372,17 @@ HTML_CONTENT = """<!DOCTYPE html>
         });
 
         function connectWS() {
-            // Target Secure WS server on HTTP_PORT + 2 (8002) if https, else HTTP_PORT + 1 (8001)
+            // Target Secure WS server. If running on standard 443, we map explicitly to 8001/8002 to avoid Windows SMB port collisions
             const isHttps = window.location.protocol === 'https:';
-            const wsPort = parseInt(window.location.port) + (isHttps ? 2 : 1);
+            let basePort = window.location.port ? parseInt(window.location.port) : (isHttps ? 443 : 80);
+
+            let wsPort = 0;
+            if (basePort === 443) {
+                wsPort = isHttps ? 8002 : 8001;
+            } else {
+                wsPort = basePort + (isHttps ? 2 : 1);
+            }
+
             const protocol = isHttps ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.hostname}:${wsPort}`;
             
@@ -585,8 +593,13 @@ async def main():
     if display_ip == "0.0.0.0":
         display_ip = get_local_ip()
 
-    ws_port_insecure = args.port + 1
-    ws_port_secure = args.port + 2
+    if args.port == 443:
+        # Avoid trying to bind to 445 on Windows (Reserved by system for SMB file sharing)
+        ws_port_insecure = 8001
+        ws_port_secure = 8002
+    else:
+        ws_port_insecure = args.port + 1
+        ws_port_secure = args.port + 2
 
     # Start background HTTPS server
     print(f"📡 Starting HTTPS Interface Server on https://{args.ip}:{args.port}...")
