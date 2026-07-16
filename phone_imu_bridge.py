@@ -508,6 +508,21 @@ from socketserver import ThreadingMixIn
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     allow_reuse_address = True
 
+    def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True):
+        super().__init__(server_address, RequestHandlerClass, bind_and_activate)
+        self.ssl_context = None
+
+    def get_request(self):
+        newsocket, fromaddr = self.socket.accept()
+        if self.ssl_context:
+            try:
+                # Wrap socket on accept rather than wrapping the listener to avoid socket hangs on Windows
+                newsocket = self.ssl_context.wrap_socket(newsocket, server_side=True)
+            except Exception as e:
+                newsocket.close()
+                raise e
+        return newsocket, fromaddr
+
 class WebBridgeHTTPHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         # Suppress spamming request logs in the main console
@@ -610,13 +625,13 @@ def start_http_server(ip, port):
         except Exception as e:
             print(f"⚠️ Failed to generate native SSL certificate: {e}")
 
-    # Wrap the HTTP socket with SSL context
+    # Set the SSL context to be wrapped on connection acceptance
     try:
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain("cert.pem", "key.pem")
-        server.socket = context.wrap_socket(server.socket, server_side=True)
+        server.ssl_context = context
     except Exception as e:
-        print(f"❌ Error wrapping HTTP server in SSL: {e}. Check if cert.pem/key.pem exist.")
+        print(f"❌ Error loading SSL certs for HTTP server: {e}. Check if cert.pem/key.pem exist.")
         
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
