@@ -76,6 +76,8 @@ async def echo(websocket):
                     latest_voice = 99.0
                 elif cmd == "right":
                     latest_voice = -99.0
+                elif cmd == "fire":
+                    latest_voice = 55.0
                 outlet.push_sample(latest_acc + latest_gyro + [latest_touch, latest_voice])
                 latest_voice = 0.0
                 continue
@@ -257,7 +259,7 @@ HTML_CONTENT = """<!DOCTYPE html>
         <div class="voice-section">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <input type="checkbox" id="voiceToggle" style="width: 18px; height: 18px; cursor: pointer;">
-                <label for="voiceToggle" style="font-size: 13px; color: #94a3b8; cursor: pointer; font-weight: bold;">🗣️ Voice Commands (Speak "Left" / "Right")</label>
+                <label for="voiceToggle" style="font-size: 13px; color: #94a3b8; cursor: pointer; font-weight: bold;">🗣️ Voice Commands (Speak "Left" / "Right" / "Fire")</label>
             </div>
             <div id="voiceStatus" style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; min-height: 16px;"></div>
         </div>
@@ -322,6 +324,8 @@ HTML_CONTENT = """<!DOCTYPE html>
                     sendVoiceCommand("left");
                 } else if (transcript.includes("right")) {
                     sendVoiceCommand("right");
+                } else if (transcript.includes("fire") || transcript.includes("shoot")) {
+                    sendVoiceCommand("fire");
                 }
             };
 
@@ -723,12 +727,17 @@ async def main():
     print("  4. Tap 'Enable Sensors' to begin streaming.")
     print("  5. Toggle 'Voice Commands' to control with speech!")
     print("--------------------------------------------------")
-    print("Option B: NATIVE APP (Sensor Logger)")
-    print("  1. Connect your phone to the same Wi-Fi network as this PC.")
-    print("  2. In the app Settings -> Live Data Streaming:")
+    print("Option B: CUSTOM ANDROID APP")
+    print("  1. Build and install the minimal streamer APK located in:")
+    print("     /android-imu-streamer")
+    print("  2. Open the app on your phone and connect to URL:")
+    print(f"     ws://{display_ip}:{ws_port_insecure}")
+    print("--------------------------------------------------")
+    print("Option C: THIRD-PARTY APP (Sensor Logger)")
+    print("  1. In the app Settings -> Live Data Streaming:")
     print("     - Set Protocol to 'WebSockets' (JSON).")
     print(f"     - Set URL to: ws://{display_ip}:{ws_port_insecure}")
-    print("  3. Tap orange 'Start' on the main screen to begin streaming.")
+    print("  2. Tap orange 'Start' on the main screen to begin streaming.")
     print("==================================================")
     print(f"⌛ Listening for Insecure WS (port {ws_port_insecure}) and Secure WSS (port {ws_port_secure})...")
 

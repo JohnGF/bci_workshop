@@ -384,11 +384,32 @@ class LSLTabBase(QWidget):
             self.btn_record.setChecked(False)
         self.btn_pause.setChecked(False)
         self.inlet = None
+        self.clear_visualizer()
         self.viz_container.hide()
         self.conn_card.show()
         self.desc_lbl.setText("Disconnected. Start the stream and click Connect.")
         self.desc_lbl.setStyleSheet("color: #94a3b8; font-size: 14px;")
         self.conn_btn.setEnabled(True)
+
+    def clear_visualizer(self):
+        # Remove and destroy any widgets added after the flow_toolbar
+        while self.viz_layout.count() > 1:
+            item = self.viz_layout.takeAt(1)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+            else:
+                self.clear_layout(item.layout())
+
+    def clear_layout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
+                else:
+                    self.clear_layout(item.layout())
 
 
 # ==========================================
@@ -1231,6 +1252,9 @@ class IMUTrajectory3DWidget(LSLTabBase):
                         elif voice_val < -90.0:
                             voice_cmd = "right"
                             break
+                        elif 50.0 < voice_val < 60.0:
+                            voice_cmd = "fire"
+                            break
                 
                 if voice_cmd == "left":
                     cmd = main_win.get_trigger_action("Voice Command 'Left'")
@@ -1238,6 +1262,10 @@ class IMUTrajectory3DWidget(LSLTabBase):
                         main_win.send_command_to_snake_game(cmd)
                 elif voice_cmd == "right":
                     cmd = main_win.get_trigger_action("Voice Command 'Right'")
+                    if cmd:
+                        main_win.send_command_to_snake_game(cmd)
+                elif voice_cmd == "fire":
+                    cmd = main_win.get_trigger_action("Voice Command 'Fire'")
                     if cmd:
                         main_win.send_command_to_snake_game(cmd)
                 else:
@@ -1517,7 +1545,8 @@ class BCIControllerMappingWidget(QWidget):
             "Phone Screen Tap",
             "Phone Shake",
             "Voice Command 'Left'",
-            "Voice Command 'Right'"
+            "Voice Command 'Right'",
+            "Voice Command 'Fire'"
         ]
 
         lbl_left = QLabel("LEFT Command:")

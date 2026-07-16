@@ -59,7 +59,36 @@
         android:textColor="#94a3b8"
         android:textSize="14sp"
         android:textStyle="bold"
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Voice Command Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:layout_marginBottom="20dp">
+
+        <CheckBox
+            android:id="@+id/voiceToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🗣️ Voice Commands (Left / Right / Fire)"
+            android:textColor="#cbd5e1"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:buttonTint="#38bdf8"/>
+
+        <TextView
+            android:id="@+id/voiceStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#64748b"
+            android:textSize="12sp"
+            android:textStyle="italic"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

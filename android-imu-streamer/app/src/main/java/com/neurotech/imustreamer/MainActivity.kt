@@ -18,6 +18,14 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import java.util.Locale
 import android.view.WindowManager
+import android.speech.SpeechRecognizer
+import android.speech.RecognizerIntent
+import android.speech.RecognitionListener
+import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import android.widget.CheckBox
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
 
@@ -34,6 +42,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var gyroX: TextView
     private lateinit var gyroY: TextView
     private lateinit var gyroZ: TextView
+    private lateinit var voiceToggle: CheckBox
+    private lateinit var voiceStatus: TextView
+    private var speechRecognizer: SpeechRecognizer? = null
+    private val REQUEST_RECORD_AUDIO_PERMISSION = 200
 
     private val client = OkHttpClient()
     private var webSocket: WebSocket? = null
@@ -59,6 +71,16 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         gyroX = findViewById(R.id.gyroX)
         gyroY = findViewById(R.id.gyroY)
         gyroZ = findViewById(R.id.gyroZ)
+        voiceToggle = findViewById(R.id.voiceToggle)
+        voiceStatus = findViewById(R.id.voiceStatus)
+
+        voiceToggle.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                startSpeechRecognition()
+            } else {
+                stopSpeechRecognition()
+            }
+        }
 
         // Initialize Sensors
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -139,6 +161,17 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     private fun disconnect() {
         webSocket?.close(1000, "Goodbye")
+        webSocket = null
+        runOnUiThread {
+            isConnected = false
+            connectBtn.isEnabled = true
+            connectBtn.text = "Connect"
+            connectBtn.setBackgroundColor(resources.getColor(android.R.color.holo_blue_dark, theme))
+            statusText.text = "Status: Disconnected"
+            sensorManager.unregisterListener(this@MainActivity)
+            stopSpeechRecognition()
+            voiceToggle.isChecked = false
+        }
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -173,6 +206,99 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
         // No-op
+    }
+
+    private fun checkAudioPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestAudioPermission() {
+        ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.RECORD_AUDIO), REQUEST_RECORD_AUDIO_PERMISSION)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startSpeechRecognition()
+            } else {
+                voiceToggle.isChecked = false
+                Toast.makeText(this, "Permission to record audio is required for voice commands", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun startSpeechRecognition() {
+        if (!checkAudioPermission()) {
+            requestAudioPermission()
+            return
+        }
+        
+        if (speechRecognizer == null) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+            speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) {
+                    voiceStatus.text = "Listening..."
+                    voiceStatus.setTextColor(resources.getColor(android.R.color.holo_blue_light, theme))
+                }
+                override fun onBeginningOfSpeech() {}
+                override fun onRmsChanged(rmsd: Float) {}
+                override fun onBufferReceived(buffer: ByteArray?) {}
+                override fun onEndOfSpeech() {}
+                override fun onError(error: Int) {
+                    if (voiceToggle.isChecked) {
+                        runOnUiThread {
+                            speechRecognizer?.startListening(getSpeechIntent())
+                        }
+                    }
+                }
+                override fun onResults(results: Bundle?) {
+                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    if (!matches.isNullOrEmpty()) {
+                        val text = matches[0].trim().lowercase(Locale.US)
+                        voiceStatus.text = "Heard: \"$text\""
+                        
+                        if (text.contains("left")) {
+                            sendVoiceCommand("left")
+                        } else if (text.contains("right")) {
+                            sendVoiceCommand("right")
+                        } else if (text.contains("fire") || text.contains("shoot")) {
+                            sendVoiceCommand("fire")
+                        }
+                    }
+                    if (voiceToggle.isChecked) {
+                        runOnUiThread {
+                            speechRecognizer?.startListening(getSpeechIntent())
+                        }
+                    }
+                }
+                override fun onPartialResults(partialResults: Bundle?) {}
+                override fun onEvent(eventType: Int, params: Bundle?) {}
+            })
+        }
+        
+        speechRecognizer?.startListening(getSpeechIntent())
+    }
+    
+    private fun getSpeechIntent(): Intent {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US.toString())
+        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+        return intent
+    }
+    
+    private fun stopSpeechRecognition() {
+        speechRecognizer?.stopListening()
+        speechRecognizer?.destroy()
+        speechRecognizer = null
+        voiceStatus.text = ""
+    }
+    
+    private fun sendVoiceCommand(cmd: String) {
+        if (isConnected) {
+            webSocket?.send("""{"voice": "$cmd"}""")
+        }
     }
 
     override fun onDestroy() {
