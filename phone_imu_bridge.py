@@ -54,8 +54,12 @@ latest_voice = 0.0
 async def echo(websocket):
     global latest_acc, latest_gyro, latest_touch, latest_voice
     print(f"✅ Phone connected from: {websocket.remote_address}")
+    first_message = True
     try:
         async for message in websocket:
+            if first_message:
+                print("📥 First sensor message received from phone!")
+                first_message = False
             data = json.loads(message)
             
             # 1. Custom Web Browser Touch Action
