@@ -632,7 +632,7 @@ async def main():
     import argparse
     parser = argparse.ArgumentParser(description="Phone IMU LSL Bridge")
     parser.add_argument("--ip", type=str, default="0.0.0.0", help="IP address to bind the WebSocket/HTTP servers to")
-    parser.add_argument("--port", type=int, default=443, help="HTTP Server Port (WebSockets runs on port+1 and port+2)")
+    parser.add_argument("--port", type=int, default=8000, help="HTTP Server Port (WebSockets runs on port+1 and port+2)")
     args, _ = parser.parse_known_args()
 
     # Resolve display IP for console instructions

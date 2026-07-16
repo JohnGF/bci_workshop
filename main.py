@@ -1954,7 +1954,7 @@ class MasterControlDashboard(QMainWindow):
                 "name": "Phone IMU LSL Bridge",
                 "script": "phone_imu_bridge.py",
                 "sim_capable": False,
-                "desc": "Listens for real-time IMU streams from the free 'Sensor Logger' phone app over WebSockets (port 443) and maps to the Smartwatch LSL format.",
+                "desc": "Listens for real-time IMU streams from the free 'Sensor Logger' phone app over WebSockets (port 8000) and maps to the Smartwatch LSL format.",
                 "process": None,
                 "status": "Stopped",
                 "color": "#a855f7"  # purple
