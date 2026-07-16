@@ -564,7 +564,7 @@ def generate_self_signed_cert(ip_address):
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric import rsa
     from cryptography.hazmat.primitives import hashes
-    from cryptography.x509.oid import NameOID
+    from cryptography.x509.oid import NameOID, ExtendedKeyUsageOID
     from cryptography import x509
     import datetime
     import ipaddress
@@ -591,7 +591,7 @@ def generate_self_signed_cert(ip_address):
     ).serial_number(
         x509.random_serial_number()
     ).not_valid_before(
-        datetime.datetime.now(datetime.timezone.utc)
+        datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
     ).not_valid_after(
         datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)
     ).add_extension(
@@ -599,6 +599,28 @@ def generate_self_signed_cert(ip_address):
             x509.DNSName("localhost"),
             x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
             x509.IPAddress(ipaddress.IPv4Address(cert_ip))
+        ]),
+        critical=False,
+    ).add_extension(
+        x509.BasicConstraints(ca=True, path_length=None),
+        critical=True,
+    ).add_extension(
+        x509.KeyUsage(
+            digitalSignature=True,
+            keyEncipherment=True,
+            keyCertSign=True,
+            cRLSign=False,
+            contentCommitment=False,
+            dataEncipherment=False,
+            keyAgreement=False,
+            encipherOnly=False,
+            decipherOnly=False,
+        ),
+        critical=True,
+    ).add_extension(
+        x509.ExtendedKeyUsage([
+            ExtendedKeyUsageOID.SERVER_AUTH,
+            ExtendedKeyUsageOID.CLIENT_AUTH,
         ]),
         critical=False,
     ).sign(private_key, hashes.SHA256())
