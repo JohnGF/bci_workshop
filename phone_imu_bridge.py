@@ -60,7 +60,6 @@ async def echo(websocket):
             
             # 1. Custom Web Browser Touch Action
             if "touch" in data:
-                print("🎯 Phone Web: Touch TAP action detected!")
                 latest_touch = 1.0
                 outlet.push_sample(latest_acc + latest_gyro + [latest_touch, latest_voice])
                 latest_touch = 0.0
@@ -70,10 +69,8 @@ async def echo(websocket):
             elif "voice" in data:
                 cmd = data.get("voice")
                 if cmd == "left":
-                    print("🗣️ Phone Web: Voice command LEFT recognized")
                     latest_voice = 99.0
                 elif cmd == "right":
-                    print("🗣️ Phone Web: Voice command RIGHT recognized")
                     latest_voice = -99.0
                 outlet.push_sample(latest_acc + latest_gyro + [latest_touch, latest_voice])
                 latest_voice = 0.0
@@ -663,6 +660,22 @@ async def main():
     print("==================================================")
     print("📲 Dual-Protocol Phone IMU LSL Bridge Active")
     print("==================================================")
+    if sys.platform == "win32":
+        print("⚠️  WINDOWS SECURITY REMINDER:")
+        print("   - Ensure Windows Defender Firewall allows incoming TCP on ports 8000-8002.")
+        print("   - Set your Wi-Fi Network Profile type to 'Private' in Windows settings.")
+        print("--------------------------------------------------")
+        is_virtual = (
+            display_ip.startswith("172.") or 
+            display_ip.startswith("192.168.56.") or 
+            display_ip.startswith("169.254.")
+        )
+        if is_virtual:
+            print(f"⚠️  VIRTUAL NETWORK IP DETECTED: {display_ip}")
+            print("   This IP seems to belong to a virtual adapter (WSL, Docker, or VM).")
+            print("   Your phone won't connect unless you use your physical Wi-Fi IP address.")
+            print("   Please check your physical Wi-Fi IP using 'ipconfig' in command prompt.")
+            print("--------------------------------------------------")
     print("Option A: ZERO INSTALL (Mobile Web)")
     print("  1. Connect your phone to the same Wi-Fi network as this PC.")
     print(f"  2. Open: https://{display_ip}:{args.port}")

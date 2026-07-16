@@ -39,7 +39,8 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QGroupBox,
-    QSlider
+    QSlider,
+    QSpinBox
 )
 from PyQt6.QtGui import QFont, QColor, QTextCursor, QPainter
 from pylsl import StreamInlet, resolve_byprop
@@ -1617,44 +1618,73 @@ class BCIControllerMappingWidget(QWidget):
         thresh_layout = QVBoxLayout(thresh_group)
         thresh_layout.setSpacing(6)
 
-        # Helper to create a slider with live label
-        def create_slider(label_text, min_val, max_val, default_val, unit=""):
+        # Custom QSpinBox subclass to display float values while storing them as integers
+        class FloatFormattedSpinBox(QSpinBox):
+            def __init__(self, divisor=1.0, precision=1, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.divisor = divisor
+                self.precision = precision
+
+            def textFromValue(self, value):
+                return f"{value / self.divisor:.{self.precision}f}"
+
+            def valueFromText(self, text):
+                try:
+                    clean_text = "".join(c for c in text if c.isdigit() or c == '.' or c == '-')
+                    return int(float(clean_text) * self.divisor)
+                except ValueError:
+                    return self.value()
+
+        # Helper to create a spinbox with a recommended value label
+        def create_slider(label_text, min_val, max_val, default_val, recommended_str, divisor=1.0, precision=0, unit=""):
             row_layout = QHBoxLayout()
             lbl = QLabel(label_text)
-            val_lbl = QLabel(f"{default_val}{unit}")
-            val_lbl.setFixedWidth(50)
-            val_lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
-            slider = QSlider(Qt.Orientation.Horizontal)
-            slider.setRange(min_val, max_val)
-            slider.setValue(default_val)
-            slider.setStyleSheet("""
-                QSlider::groove:horizontal { height: 4px; background: #334155; border-radius: 2px; }
-                QSlider::handle:horizontal { background: #38bdf8; width: 12px; height: 12px; margin: -4px 0; border-radius: 6px; }
+            lbl.setStyleSheet("color: #cbd5e1; font-size: 11px;")
+            
+            if divisor != 1.0:
+                spin = FloatFormattedSpinBox(divisor=divisor, precision=precision)
+            else:
+                spin = QSpinBox()
+                
+            spin.setRange(min_val, max_val)
+            spin.setValue(default_val)
+            if unit and divisor == 1.0:
+                spin.setSuffix(unit)
+            spin.setMinimumHeight(28)
+            spin.setFixedWidth(90)
+            spin.setStyleSheet("""
+                QSpinBox {
+                    background-color: #0f172a;
+                    color: #e2e8f0;
+                    border: 1px solid #334155;
+                    border-radius: 6px;
+                    padding: 2px 6px;
+                    font-size: 11px;
+                    font-weight: bold;
+                }
+                QSpinBox:focus {
+                    border: 1px solid #38bdf8;
+                }
             """)
-            def update_label(v):
-                if "Flick" in label_text:
-                    val_lbl.setText(f"{v/100.0:.2f}")
-                elif "Shake" in label_text:
-                    val_lbl.setText(f"{v/10.0:.1f}")
-                else:
-                    val_lbl.setText(f"{v}{unit}")
-            slider.valueChanged.connect(update_label)
-            # Set initial label
-            update_label(default_val)
+            
+            recom_lbl = QLabel(f"Rec: {recommended_str}")
+            recom_lbl.setStyleSheet("color: #64748b; font-size: 10px; border: none; font-style: italic;")
+            recom_lbl.setFixedWidth(130)
+            recom_lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
             
             row_layout.addWidget(lbl)
-            row_layout.addWidget(slider)
-            row_layout.addWidget(val_lbl)
+            row_layout.addWidget(spin, stretch=1)
+            row_layout.addWidget(recom_lbl)
             thresh_layout.addLayout(row_layout)
-            return slider
+            return spin
 
-        self.blink_thresh_slider = create_slider("Muse Eye Blink:", 15, 120, 45, " uV")
-        self.clench_thresh_slider = create_slider("Muse Jaw Clench:", 10, 80, 35, " uV")
-        self.focus_thresh_slider = create_slider("Muse High Focus:", 25, 90, 60, "%")
-        self.calm_thresh_slider = create_slider("Muse Deep Calm:", 25, 90, 60, "%")
-        self.tilt_thresh_slider = create_slider("Phone Tilt Angle:", 5, 45, 15, "°")
-        self.flick_thresh_slider = create_slider("Phone Flick:", 10, 80, 35) 
-        self.shake_thresh_slider = create_slider("Phone Shake:", 20, 150, 80)
+        self.blink_thresh_slider = create_slider("Muse Eye Blink:", 15, 150, 80, "60-100 uV", unit=" uV")
+        self.clench_thresh_slider = create_slider("Muse Jaw Clench:", 10, 150, 60, "50-80 uV", unit=" uV")
+        self.focus_thresh_slider = create_slider("Muse High Focus:", 25, 90, 60, "55-75%", unit="%")
+        self.calm_thresh_slider = create_slider("Muse Deep Calm:", 25, 90, 60, "55-75%", unit="%")
+        self.tilt_thresh_slider = create_slider("Phone Tilt Angle:", 5, 45, 15, "10-25°", unit="°")
+        self.flick_thresh_slider = create_slider("Phone Flick:", 10, 80, 35, "0.30-0.50", divisor=100.0, precision=2) 
+        self.shake_thresh_slider = create_slider("Phone Shake:", 20, 150, 80, "7.0-11.0", divisor=10.0, precision=1)
         self.shake_thresh_slider.valueChanged.connect(self.sync_imu_shake_threshold)
 
         left_layout.addWidget(thresh_group)
