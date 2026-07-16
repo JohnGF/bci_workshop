@@ -508,22 +508,19 @@ from socketserver import ThreadingMixIn
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     allow_reuse_address = True
 
-    def __init__(self, server_address, RequestHandlerClass, bind_and_activate=True):
-        super().__init__(server_address, RequestHandlerClass, bind_and_activate)
-        self.ssl_context = None
-
-    def get_request(self):
-        newsocket, fromaddr = self.socket.accept()
-        if self.ssl_context:
-            try:
-                # Wrap socket on accept rather than wrapping the listener to avoid socket hangs on Windows
-                newsocket = self.ssl_context.wrap_socket(newsocket, server_side=True)
-            except Exception as e:
-                newsocket.close()
-                raise e
-        return newsocket, fromaddr
-
 class WebBridgeHTTPHandler(BaseHTTPRequestHandler):
+    def setup(self):
+        ssl_context = getattr(self.server, 'ssl_context', None)
+        if ssl_context:
+            try:
+                # Wrap socket on accept inside the worker thread
+                self.request = ssl_context.wrap_socket(self.request, server_side=True)
+            except Exception as e:
+                print(f"⚠️ SSL Handshake Failed inside request thread: {e}")
+                self.request.close()
+                raise ConnectionAbortedError("SSL Handshake Failed") from e
+        super().setup()
+
     def log_message(self, format, *args):
         # Suppress spamming request logs in the main console
         pass
@@ -563,7 +560,7 @@ class WebBridgeHTTPHandler(BaseHTTPRequestHandler):
             self.send_response(400)
             self.end_headers()
 
-def generate_self_signed_cert():
+def generate_self_signed_cert(ip_address):
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric import rsa
     from cryptography.hazmat.primitives import hashes
@@ -572,7 +569,10 @@ def generate_self_signed_cert():
     import datetime
     import ipaddress
 
-    local_ip = get_local_ip()
+    cert_ip = ip_address
+    if cert_ip == "0.0.0.0":
+        cert_ip = get_local_ip()
+
     private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048,
@@ -598,7 +598,7 @@ def generate_self_signed_cert():
         x509.SubjectAlternativeName([
             x509.DNSName("localhost"),
             x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
-            x509.IPAddress(ipaddress.IPv4Address(local_ip))
+            x509.IPAddress(ipaddress.IPv4Address(cert_ip))
         ]),
         critical=False,
     ).sign(private_key, hashes.SHA256())
@@ -616,14 +616,13 @@ def generate_self_signed_cert():
 def start_http_server(ip, port):
     server = ThreadedHTTPServer((ip, port), WebBridgeHTTPHandler)
     
-    # Generate self-signed certificate if key files are missing
-    if not os.path.exists("cert.pem") or not os.path.exists("key.pem"):
-        print("🔑 Generating self-signed SSL certificate for local HTTPS serving natively...")
-        try:
-            generate_self_signed_cert()
-            print("✅ SSL Certificate generated successfully.")
-        except Exception as e:
-            print(f"⚠️ Failed to generate native SSL certificate: {e}")
+    # Always generate self-signed certificate natively on startup to ensure the SAN matches the current IP
+    print(f"🔑 Generating self-signed SSL certificate for IP: {ip if ip != '0.0.0.0' else get_local_ip()}...")
+    try:
+        generate_self_signed_cert(ip)
+        print("✅ SSL Certificate generated successfully.")
+    except Exception as e:
+        print(f"⚠️ Failed to generate native SSL certificate: {e}")
 
     # Set the SSL context to be wrapped on connection acceptance
     try:
