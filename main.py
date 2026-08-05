@@ -1991,23 +1991,14 @@ class MasterControlDashboard(QMainWindow):
                 "status": "Stopped",
                 "color": "#ec4899"  # magenta
             },
-            "ppg_sim": {
-                "name": "PPG Smartwatch Simulator",
-                "script": "watch_ppg_streamer.py",
+            "smartwatch_bridge": {
+                "name": "Smartwatch LSL Bridge",
+                "script": "smartwatch_lsl_bridge.py",
                 "sim_capable": False,
-                "desc": "Simulates Watch green/red optical channels over LSL. Keyboards edit heart rate on the fly.",
+                "desc": "Receives PPG & 6-DOF IMU data from a real Galaxy Watch (or any UDP/WebSocket source) and streams both Smartwatch_PPG and Smartwatch_IMU over LSL. Default: UDP port 5005.",
                 "process": None,
                 "status": "Stopped",
                 "color": "#10b981"  # emerald green
-            },
-            "imu_sim": {
-                "name": "IMU Smartwatch Simulator",
-                "script": "watch_imu_streamer.py",
-                "sim_capable": False,
-                "desc": "Simulates Watch Accel/Gyro coordinates. Allows switching circular, stationary and figure-8 paths.",
-                "process": None,
-                "status": "Stopped",
-                "color": "#0ea5e9"  # sky blue
             },
             "phone_bridge": {
                 "name": "Phone IMU LSL Bridge",
@@ -2320,36 +2311,28 @@ class MasterControlDashboard(QMainWindow):
         sub_panel_layout.setContentsMargins(0, 0, 0, 0)
         sub_panel_layout.setSpacing(6)
 
-        if key == "ppg_sim":
+        if key == "smartwatch_bridge":
             sub_panel.setVisible(True)
-            lbl = QLabel("Manual HR Tuning:")
-            lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #94a3b8;")
-            sub_panel_layout.addWidget(lbl)
-            
-            btn_up = QPushButton("BPM +5")
-            btn_up.clicked.connect(lambda: self.send_to_process("ppg_sim", "w"))
-            sub_panel_layout.addWidget(btn_up)
-            
-            btn_down = QPushButton("BPM -5")
-            btn_down.clicked.connect(lambda: self.send_to_process("ppg_sim", "s"))
-            sub_panel_layout.addWidget(btn_down)
-            
-            btn_rand = QPushButton("Randomize")
-            btn_rand.clicked.connect(lambda: self.send_to_process("ppg_sim", " "))
-            sub_panel_layout.addWidget(btn_rand)
-            sub_panel_layout.addStretch(1)
+            mode_lbl = QLabel("Mode:")
+            mode_lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #94a3b8;")
+            sub_panel_layout.addWidget(mode_lbl)
 
-        elif key == "imu_sim":
-            sub_panel.setVisible(True)
-            lbl = QLabel("Motion Pattern:")
-            lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #94a3b8;")
-            sub_panel_layout.addWidget(lbl)
-            
-            patterns = [("Stationary", "1"), ("Circular", "2"), ("Figure-8", "3"), ("Shaking", "4")]
-            for pat_name, cmd in patterns:
-                btn = QPushButton(pat_name)
-                btn.clicked.connect(lambda checked, c=cmd: self.send_to_process("imu_sim", c))
-                sub_panel_layout.addWidget(btn)
+            self.bridge_mode_combo = QComboBox()
+            self.bridge_mode_combo.addItem("UDP", "udp")
+            self.bridge_mode_combo.addItem("WebSocket", "websocket")
+            self.bridge_mode_combo.addItem("Mock (offline test)", "mock")
+            sub_panel_layout.addWidget(self.bridge_mode_combo)
+
+            port_lbl = QLabel("Port:")
+            port_lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #94a3b8; margin-left: 8px;")
+            sub_panel_layout.addWidget(port_lbl)
+
+            from PyQt6.QtWidgets import QSpinBox
+            self.bridge_port_spin = QSpinBox()
+            self.bridge_port_spin.setRange(1024, 65535)
+            self.bridge_port_spin.setValue(5005)
+            self.bridge_port_spin.setFixedWidth(75)
+            sub_panel_layout.addWidget(self.bridge_port_spin)
             sub_panel_layout.addStretch(1)
 
         elif key == "athena" and s["sim_capable"]:
@@ -2446,6 +2429,13 @@ class MasterControlDashboard(QMainWindow):
         cmd_args = [s["script"]]
         if key == "athena" and self.sim_checkbox.isChecked():
             cmd_args.append("--sim")
+        elif key == "smartwatch_bridge":
+            mode = self.bridge_mode_combo.currentData()
+            port = self.bridge_port_spin.value()
+            if mode == "mock":
+                cmd_args.append("--mock")
+            else:
+                cmd_args.extend(["--mode", mode, "--port", str(port)])
         elif key == "phone_bridge":
             selected_ip = self.ip_combo.currentData()
             cmd_args.extend(["--ip", selected_ip])
@@ -2478,14 +2468,9 @@ class MasterControlDashboard(QMainWindow):
         w["status_lbl"].setStyleSheet("color: #f59e0b;")
         w["light"].setStyleSheet("background-color: #f59e0b; border-radius: 6px;")
 
-        # Send 'q' key to simulator if supported, otherwise terminate
-        if key in ["ppg_sim", "imu_sim"]:
-            self.send_to_process(key, "q")
-            # Wait briefly for standard cleanup, otherwise force terminate
-            QTimer.singleShot(800, lambda: self.force_kill_process(key))
-        else:
-            s["process"].terminate()
-            QTimer.singleShot(1500, lambda: self.force_kill_process(key))
+        # Terminate the bridge process cleanly
+        s["process"].terminate()
+        QTimer.singleShot(1500, lambda: self.force_kill_process(key))
 
     def force_kill_process(self, key):
         s = self.services[key]
@@ -2505,6 +2490,9 @@ class MasterControlDashboard(QMainWindow):
             w["stop_btn"].setEnabled(True)
             if key == "athena":
                 self.sim_checkbox.setEnabled(False)
+            elif key == "smartwatch_bridge":
+                self.bridge_mode_combo.setEnabled(False)
+                self.bridge_port_spin.setEnabled(False)
             elif key == "phone_bridge":
                 self.ip_combo.setEnabled(False)
                 
@@ -2519,6 +2507,9 @@ class MasterControlDashboard(QMainWindow):
             w["stop_btn"].setEnabled(False)
             if key == "athena":
                 self.sim_checkbox.setEnabled(True)
+            elif key == "smartwatch_bridge":
+                self.bridge_mode_combo.setEnabled(True)
+                self.bridge_port_spin.setEnabled(True)
             elif key == "phone_bridge":
                 self.ip_combo.setEnabled(True)
                 
@@ -2658,10 +2649,12 @@ class MasterControlDashboard(QMainWindow):
                 self.eeg_tab.stop_feed()
             if self.muse_ppg_tab.inlet:
                 self.muse_ppg_tab.stop_feed()
-        elif key == "ppg_sim":
+        elif key == "smartwatch_bridge":
             if self.ppg_tab.inlet:
                 self.ppg_tab.stop_feed()
-        elif key in ["imu_sim", "phone_bridge"]:
+            if self.imu_tab.inlet:
+                self.imu_tab.stop_feed()
+        elif key == "phone_bridge":
             if self.imu_tab.inlet:
                 self.imu_tab.stop_feed()
 
