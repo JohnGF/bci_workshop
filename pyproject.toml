@@ -16,4 +16,8 @@ dependencies = [
     "setuptools<82",
     "pygame>=2.5.2",
     "PyOpenGL>=3.1.7",
+    "cryptography>=42.0.0",
+    "sounddevice>=0.4.6",
+    "faster-whisper>=1.0.0",
+    "websockets>=12.0",
 ]

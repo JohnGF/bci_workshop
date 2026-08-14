@@ -1,0 +1,70 @@
+2026-08-14 15:21:20  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 15:21:20  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 15:21:20  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 15:21:20  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 15:21:20  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 15:21:23  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 15:21:23  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 15:21:23  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 15:21:59  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=39.0s
+2026-08-14 15:30:32  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 15:30:32  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 15:30:32  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 15:30:32  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 15:30:32  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 15:30:35  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 15:30:35  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 15:30:35  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 15:33:09  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 15:33:09  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 15:33:09  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 15:33:09  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 15:33:09  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 15:33:12  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 15:33:12  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 15:33:12  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 15:36:37  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 15:36:37  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 15:36:37  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 15:36:37  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 15:36:37  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 15:36:40  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 15:36:40  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 15:36:40  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 15:37:55  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=77.9s
+2026-08-14 15:51:48  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 15:51:48  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 15:51:48  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 15:51:48  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 15:51:48  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 15:51:51  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 15:51:51  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 15:51:51  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 15:54:36  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-14 15:54:36  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-14 16:15:26  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 16:15:26  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 16:15:26  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 16:15:26  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 16:15:26  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 16:15:29  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 16:15:29  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 16:15:29  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 16:20:21  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 16:20:21  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 16:20:21  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 16:20:21  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 16:20:21  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 16:20:24  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 16:20:24  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 16:20:24  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 16:35:10  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=888.9s
+2026-08-14 16:35:17  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 16:35:17  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 16:35:17  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 16:35:17  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 16:35:17  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 16:35:20  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 16:35:20  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 16:35:20  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 17:11:37  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=2180.0s

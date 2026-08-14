@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
@@ -7,6 +8,9 @@
 # ]
 # ///
 
+import logging
+import logging.handlers
+import os
 import time
 from pylsl import StreamInfo, StreamOutlet, cf_float32
 from brainflow.board_shim import (
@@ -16,6 +20,23 @@ from brainflow.board_shim import (
     BrainFlowPresets,
     BrainFlowError,
 )
+
+# ==========================================
+# CONNECTION LOGGER  (connections.log)
+# ==========================================
+_log_dir = os.path.dirname(os.path.abspath(__file__))
+_log_path = os.path.join(_log_dir, "connections.log")
+
+conn_logger = logging.getLogger("connections")
+if not conn_logger.handlers:  # avoid duplicate handlers if imported elsewhere
+    conn_logger.setLevel(logging.DEBUG)
+    _handler = logging.handlers.RotatingFileHandler(
+        _log_path, maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8"
+    )
+    _handler.setFormatter(
+        logging.Formatter("%(asctime)s  %(levelname)-8s  %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    )
+    conn_logger.addHandler(_handler)
 
 
 def main():
@@ -86,6 +107,8 @@ def main():
             print("\n🔄 Connecting to BLE Hardware...")
             board.prepare_session()
             board.start_stream()
+            session_start = time.monotonic()
+            conn_logger.info(f"CONNECT    device=Muse_BLE  board_id={board_id}")
             print("✅ Hardware connected! Streaming live.")
 
             last_data_time = time.time()
@@ -103,6 +126,7 @@ def main():
                     if board.get_board_data_count(preset_eeg) > 0:
                         eeg_matrix = board.get_board_data(preset=preset_eeg)
                         if not eeg_started:
+                            conn_logger.info(f"STREAM_START  device=Muse_BLE  stream=EEG  shape={eeg_matrix.shape}")
                             print(f"📥 EEG stream active. Packet shape: {eeg_matrix.shape}")
                             eeg_started = True
                         outlet_eeg.push_chunk(eeg_matrix[eeg_channels, :].T.tolist())
@@ -115,6 +139,7 @@ def main():
                     if board.get_board_data_count(preset_opt) > 0:
                         opt_data = board.get_board_data(preset=preset_opt)
                         if not opt_started:
+                            conn_logger.info(f"STREAM_START  device=Muse_BLE  stream=Optics  shape={opt_data.shape}")
                             print(f"📥 Optics & Battery stream active. Packet shape: {opt_data.shape}")
                             opt_started = True
                         outlet_opt.push_chunk(opt_data[opt_slice_indices, :].T.tolist())
@@ -136,20 +161,26 @@ def main():
                 if data_pulled:
                     last_data_time = current_time
                 elif (current_time - last_data_time) > timeout_threshold:
+                    duration = current_time - (session_start if 'session_start' in dir() else current_time)
+                    conn_logger.warning(f"TIMEOUT    device=Muse_BLE  no_data_for={timeout_threshold}s  session_duration={duration:.1f}s")
                     print("❌ BLE Timeout: No data received for 5 seconds.")
                     break
 
                 time.sleep(0.02)
 
         except BrainFlowError as e:
+            conn_logger.error(f"ERROR      device=Muse_BLE  error={e}")
             print(f"⚠️ Connection failure: {e}")
 
         except KeyboardInterrupt:
+            conn_logger.info("SHUTDOWN   device=Muse_BLE  reason=KeyboardInterrupt")
             print("\n🛑 Terminating server manually...")
             break
 
         finally:
             if board.is_prepared():
+                duration = time.monotonic() - session_start if 'session_start' in dir() else 0
+                conn_logger.info(f"DISCONNECT device=Muse_BLE  reason=cleanup  session_duration={duration:.1f}s")
                 print("🧹 Cleaning up broken hardware session...")
                 try:
                     board.stop_stream()
@@ -157,6 +188,7 @@ def main():
                     pass
                 board.release_session()
 
+            conn_logger.info("RETRY      device=Muse_BLE  retry_in=3s")
             print("⏳ Retrying connection in 3 seconds...")
             time.sleep(3)
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # /// script
 # requires-python = ">=3.12,<3.13"
 # dependencies = [
@@ -8,19 +9,41 @@
 #     "scipy",
 #     "numba",
 #     "pygame",
-#     "PyOpenGL"
+#     "PyOpenGL",
+#     "cryptography",
+#     "sounddevice"
 # ]
 # ///
 
 import sys
 import os
 import time
+import json
+import logging
+import logging.handlers
 import numpy as np
 import pyqtgraph as pg
 from scipy.signal import butter, sosfilt, iirnotch, lfilter
 from numba import njit
 
 from PyQt6.QtCore import QTimer, QProcess, QProcessEnvironment, QThread, pyqtSignal, Qt, QSize
+
+# ==========================================
+# CONNECTION LOGGER  (connections.log)
+# ==========================================
+_log_dir = os.path.dirname(os.path.abspath(__file__))
+_log_path = os.path.join(_log_dir, "connections.log")
+
+conn_logger = logging.getLogger("connections")
+if not conn_logger.handlers:
+    conn_logger.setLevel(logging.DEBUG)
+    _handler = logging.handlers.RotatingFileHandler(
+        _log_path, maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8"
+    )
+    _handler.setFormatter(
+        logging.Formatter("%(asctime)s  %(levelname)-8s  %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    )
+    conn_logger.addHandler(_handler)
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -40,10 +63,103 @@ from PyQt6.QtWidgets import (
     QProgressBar,
     QGroupBox,
     QSlider,
-    QSpinBox
+    QSpinBox,
+    QFileDialog
 )
 from PyQt6.QtGui import QFont, QColor, QTextCursor, QPainter
 from pylsl import StreamInlet, resolve_byprop
+
+# ==========================================
+# SSL CERT AUTO-PROVISIONING
+# ==========================================
+def ensure_ssl_cert(base_dir: str) -> str | None:
+    """
+    Checks cert.pem / key.pem in base_dir.
+    Generates / regenerates them if:
+      - Either file is missing, OR
+      - The cert expires within the next 7 days.
+    Returns a status string for the log, or None on failure.
+    """
+    cert_path = os.path.join(base_dir, "cert.pem")
+    key_path  = os.path.join(base_dir, "key.pem")
+
+    try:
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+        import datetime, ipaddress, socket as _socket
+
+        need_regen = False
+        reason = ""
+
+        if not os.path.exists(cert_path) or not os.path.exists(key_path):
+            need_regen = True
+            reason = "cert files missing"
+        else:
+            try:
+                with open(cert_path, "rb") as f:
+                    existing = x509.load_pem_x509_certificate(f.read())
+                days_left = (existing.not_valid_after_utc - datetime.datetime.now(datetime.timezone.utc)).days
+                if days_left < 7:
+                    need_regen = True
+                    reason = f"cert expires in {days_left} day(s)"
+            except Exception:
+                need_regen = True
+                reason = "cert unreadable"
+
+        if not need_regen:
+            return None  # All good, nothing to do
+
+        # --- Detect local IP ---
+        s = _socket.socket(_socket.AF_INET, _socket.SOCK_DGRAM)
+        try:
+            s.connect(("8.8.8.8", 1))
+            local_ip = s.getsockname()[0]
+        except Exception:
+            local_ip = "127.0.0.1"
+        finally:
+            s.close()
+
+        # --- Generate new key + cert ---
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        subject = issuer = x509.Name([
+            x509.NameAttribute(NameOID.COMMON_NAME, local_ip),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "BCI Workshop Local"),
+        ])
+        san = x509.SubjectAlternativeName([
+            x509.DNSName("localhost"),
+            x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
+            x509.IPAddress(ipaddress.IPv4Address(local_ip)),
+        ])
+        now = datetime.datetime.now(datetime.timezone.utc)
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(issuer)
+            .public_key(key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(now)
+            .not_valid_after(now + datetime.timedelta(days=3650))
+            .add_extension(san, critical=False)
+            .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
+            .sign(key, hashes.SHA256())
+        )
+        with open(cert_path, "wb") as f:
+            f.write(cert.public_bytes(serialization.Encoding.PEM))
+        with open(key_path, "wb") as f:
+            f.write(key.private_bytes(
+                serialization.Encoding.PEM,
+                serialization.PrivateFormat.TraditionalOpenSSL,
+                serialization.NoEncryption(),
+            ))
+        return f"SSL cert auto-generated for {local_ip} ({reason}). Valid 10 years."
+
+    except ImportError:
+        return "WARNING: 'cryptography' not installed — HTTPS cert not generated."
+    except Exception as e:
+        return f"WARNING: cert generation failed: {e}"
+
 
 # Check if OpenGL is available for the 3D IMU Trajectory Tracker
 try:
@@ -58,14 +174,15 @@ except Exception as e:
 # C-OPTIMIZED NUMBA DSP ENGINE FOR EEG
 # ==========================================
 @njit(fastmath=True, nogil=True, cache=True)
-def integrate_band_powers(freqs, psd, band_edges):
-    """Offloads the slow Python for-loops to Numba C-level execution."""
-    band_powers = np.zeros(len(band_edges) - 1, dtype=np.float32)
+def integrate_custom_bands(freqs, psd, band_ranges):
+    """Integrates arbitrary frequency band ranges without boundary or continuity limits."""
+    n_bands = band_ranges.shape[0]
+    band_powers = np.zeros(n_bands, dtype=np.float32)
     df = freqs[1] - freqs[0]
 
-    for i in range(len(band_edges) - 1):
-        fmin = band_edges[i]
-        fmax = band_edges[i + 1]
+    for i in range(n_bands):
+        fmin = band_ranges[i, 0]
+        fmax = band_ranges[i, 1]
         bp_sum = 0.0
 
         for j in range(len(freqs)):
@@ -76,32 +193,59 @@ def integrate_band_powers(freqs, psd, band_edges):
     return band_powers
 
 
-def hybrid_dsp_pipeline(data_window, sfreq, band_edges):
-    """Executes FFT using NumPy native C-backend, then passes to Numba for integration."""
+def hybrid_dsp_pipeline(data_window, sfreq, band_ranges, notch_freq=50.0, notch_q=30.0, highpass=1.0, lowpass=50.0):
+    """Executes FFT using NumPy native C-backend, then passes arbitrary bands to Numba."""
     N = len(data_window)
+    clean_data = data_window
 
-    # 1. 50Hz Notch Filter (Mains Hum)
-    notch_freq = 50.0
-    quality_factor = 30.0
-    b_notch, a_notch = iirnotch(notch_freq, quality_factor, sfreq)
-    clean_data = lfilter(b_notch, a_notch, data_window)
+    # 1. Notch Filter (Any custom frequency 10Hz-250Hz or Off)
+    if notch_freq is not None and notch_freq > 0 and notch_freq < (sfreq / 2.0):
+        try:
+            b_notch, a_notch = iirnotch(notch_freq, notch_q, sfreq)
+            clean_data = lfilter(b_notch, a_notch, clean_data)
+        except Exception:
+            pass
 
-    # 2. Hanning window
+    # 2. Optional Arbitrary Highpass / Lowpass Bandpass
+    if highpass is not None and highpass > 0 and lowpass is not None and lowpass > highpass and lowpass < (sfreq / 2.0):
+        try:
+            b_band, a_band = butter(2, [highpass, lowpass], btype="bandpass", fs=sfreq)
+            clean_data = lfilter(b_band, a_band, clean_data)
+        except Exception:
+            pass
+    elif highpass is not None and highpass > 0 and highpass < (sfreq / 2.0):
+        try:
+            b_hp, a_hp = butter(2, highpass, btype="highpass", fs=sfreq)
+            clean_data = lfilter(b_hp, a_hp, clean_data)
+        except Exception:
+            pass
+    elif lowpass is not None and lowpass > 0 and lowpass < (sfreq / 2.0):
+        try:
+            b_lp, a_lp = butter(2, lowpass, btype="lowpass", fs=sfreq)
+            clean_data = lfilter(b_lp, a_lp, clean_data)
+        except Exception:
+            pass
+
+    # 3. Hanning window
     window = 0.5 - 0.5 * np.cos(2.0 * np.pi * np.arange(N) / (N - 1))
     windowed = clean_data * window
 
-    # 3. Real FFT
+    # 4. Real FFT
     fft_vals = np.fft.rfft(windowed)
 
-    # 4. Power Spectral Density (PSD)
+    # 5. Power Spectral Density (PSD)
     psd = (np.abs(fft_vals) ** 2) / (sfreq * N)
     if len(psd) > 2:
         psd[1:-1] *= 2.0
 
     freqs = np.linspace(0.0, sfreq / 2.0, len(psd))
 
-    # 5. Numba JIT compiled band power integration
-    band_powers = integrate_band_powers(freqs, psd, band_edges)
+    # 6. Numba JIT compiled band power integration on arbitrary band ranges
+    if band_ranges is not None and len(band_ranges) > 0:
+        band_ranges_arr = np.array(band_ranges, dtype=np.float32)
+        band_powers = integrate_custom_bands(freqs, psd, band_ranges_arr)
+    else:
+        band_powers = np.zeros(0, dtype=np.float32)
 
     return freqs, psd, band_powers
 
@@ -295,6 +439,7 @@ class LSLTabBase(QWidget):
         self.conn_btn.setEnabled(False)
         self.desc_lbl.setText("Searching LSL network nodes for target stream...")
         self.desc_lbl.setStyleSheet("color: #fbbf24; font-size: 14px;") # Warning gold
+        conn_logger.info(f"RESOLVING  stream={self.stream_name}")
 
         self.resolver_thread = LSLResolverThread(self.stream_name, timeout=3.0)
         self.resolver_thread.resolved.connect(self.on_resolved)
@@ -304,15 +449,19 @@ class LSLTabBase(QWidget):
     def on_resolved(self, stream_info):
         try:
             self.inlet = StreamInlet(stream_info)
+            self._lsl_connect_time = time.monotonic()
+            conn_logger.info(f"CONNECT    stream={self.stream_name}  source_id={stream_info.source_id()}")
             self.conn_card.hide()
             self.viz_container.show()
             self.init_visualizer()
             self.timer.start(self.get_timer_interval())
         except Exception as e:
+            conn_logger.error(f"ERROR      stream={self.stream_name}  error={e}")
             QMessageBox.critical(self, "Connection Error", f"Failed to open LSL inlet: {e}")
             self.on_failed()
 
     def on_failed(self):
+        conn_logger.warning(f"FAILED     stream={self.stream_name}  reason=resolve_timeout")
         self.conn_btn.setEnabled(True)
         self.desc_lbl.setText("Failed to resolve stream. Please make sure the streamer is started\nin the Control Room and try again.")
         self.desc_lbl.setStyleSheet("color: #f87171; font-size: 14px;") # Error red
@@ -379,6 +528,8 @@ class LSLTabBase(QWidget):
         return samples
 
     def stop_feed(self):
+        duration = time.monotonic() - getattr(self, '_lsl_connect_time', time.monotonic())
+        conn_logger.info(f"DISCONNECT stream={self.stream_name}  session_duration={duration:.1f}s")
         self.timer.stop()
         if self.is_recording:
             self.btn_record.setChecked(False)
@@ -519,18 +670,84 @@ class EEGVisualizerWidget(LSLTabBase):
         if self.is_paused:
             return
 
-        # Get thresholds from mapping tab dynamically
+        # Get thresholds & DSP settings from mapping tab dynamically
         main_win = self.window()
         blink_thresh = 45.0
         clench_thresh = 35.0
         focus_thresh = 60.0
         calm_thresh = 60.0
         
+        notch_freq = 50.0
+        notch_q = 30.0
+        hp_cutoff = 1.0
+        lp_cutoff = 45.0
+        focus_ch_mode = "af8"
+        ema_alpha = self.ema_alpha
+        blink_ch_mode = 1
+        clench_ch_mode = 0
+        cooldown_period = 0.8
+        
+        # Default frequency band ranges: [Delta, Theta, Alpha, Beta, Gamma]
+        custom_bands = [
+            [0.5, 4.0],   # Delta
+            [4.0, 8.0],   # Theta
+            [8.0, 13.0],  # Alpha
+            [13.0, 30.0], # Beta
+            [30.0, 50.0], # Gamma
+        ]
+        focus_num_range = (13.0, 30.0) # Beta by default
+        focus_den_range = (8.0, 13.0)  # Alpha by default
+        calm_num_range  = (8.0, 13.0)  # Alpha by default
+        calm_den_range  = (4.0, 8.0)   # Theta by default
+
         if hasattr(main_win, "mapping_tab") and main_win.mapping_tab:
-            blink_thresh = float(main_win.mapping_tab.blink_thresh_slider.value())
-            clench_thresh = float(main_win.mapping_tab.clench_thresh_slider.value())
-            focus_thresh = float(main_win.mapping_tab.focus_thresh_slider.value())
-            calm_thresh = float(main_win.mapping_tab.calm_thresh_slider.value())
+            mt = main_win.mapping_tab
+            blink_thresh = float(mt.blink_thresh_slider.value())
+            clench_thresh = float(mt.clench_thresh_slider.value())
+            focus_thresh = float(mt.focus_thresh_slider.value())
+            calm_thresh = float(mt.calm_thresh_slider.value())
+            
+            if hasattr(mt, "eeg_notch_cb"):
+                notch_mode = mt.eeg_notch_cb.currentData()
+                if notch_mode == "custom" and hasattr(mt, "eeg_custom_notch_spin"):
+                    notch_freq = float(mt.eeg_custom_notch_spin.value()) / 10.0
+                else:
+                    notch_freq = notch_mode
+            if hasattr(mt, "eeg_notch_q"):
+                notch_q = float(mt.eeg_notch_q.value())
+            if hasattr(mt, "eeg_bandpass_cb"):
+                bp = mt.eeg_bandpass_cb.currentData()
+                if bp == "custom" and hasattr(mt, "eeg_hp_spin") and hasattr(mt, "eeg_lp_spin"):
+                    hp_cutoff = float(mt.eeg_hp_spin.value()) / 10.0
+                    lp_cutoff = float(mt.eeg_lp_spin.value()) / 10.0
+                elif bp:
+                    hp_cutoff, lp_cutoff = bp
+                else:
+                    hp_cutoff, lp_cutoff = None, None
+            if hasattr(mt, "eeg_focus_ch_cb"):
+                focus_ch_mode = mt.eeg_focus_ch_cb.currentData()
+            if hasattr(mt, "eeg_ema_slider"):
+                ema_alpha = float(mt.eeg_ema_slider.value()) / 100.0
+            if hasattr(mt, "eeg_blink_ch_cb"):
+                blink_ch_mode = mt.eeg_blink_ch_cb.currentData()
+            if hasattr(mt, "eeg_clench_ch_cb"):
+                clench_ch_mode = mt.eeg_clench_ch_cb.currentData()
+            if hasattr(mt, "eeg_cooldown_slider"):
+                cooldown_period = float(mt.eeg_cooldown_slider.value()) / 10.0
+
+            # Pull custom arbitrary band limits if configured
+            if hasattr(mt, "delta_min_spin") and hasattr(mt, "delta_max_spin"):
+                custom_bands[0] = [float(mt.delta_min_spin.value()) / 10.0, float(mt.delta_max_spin.value()) / 10.0]
+                custom_bands[1] = [float(mt.theta_min_spin.value()) / 10.0, float(mt.theta_max_spin.value()) / 10.0]
+                custom_bands[2] = [float(mt.alpha_min_spin.value()) / 10.0, float(mt.alpha_max_spin.value()) / 10.0]
+                custom_bands[3] = [float(mt.beta_min_spin.value()) / 10.0, float(mt.beta_max_spin.value()) / 10.0]
+                custom_bands[4] = [float(mt.gamma_min_spin.value()) / 10.0, float(mt.gamma_max_spin.value()) / 10.0]
+
+            if hasattr(mt, "focus_num_min") and hasattr(mt, "focus_num_max"):
+                focus_num_range = (float(mt.focus_num_min.value()) / 10.0, float(mt.focus_num_max.value()) / 10.0)
+                focus_den_range = (float(mt.focus_den_min.value()) / 10.0, float(mt.focus_den_max.value()) / 10.0)
+                calm_num_range  = (float(mt.calm_num_min.value()) / 10.0, float(mt.calm_num_max.value()) / 10.0)
+                calm_den_range  = (float(mt.calm_den_min.value()) / 10.0, float(mt.calm_den_max.value()) / 10.0)
 
         num_new = len(samples)
         if num_new >= self.win_samples:
@@ -549,34 +766,50 @@ class EEGVisualizerWidget(LSLTabBase):
             self.raw_curves[i].setData(x_axis, centered_data)
 
         # Process DSP metrics on temporal cortex (Average of TP9 [0] and TP10 [3])
-        # Or AF8 (channel 2) for focus prediction
         temporal_sig = (self.data_buffer[:, 0] + self.data_buffer[:, 3]) / 2.0
-        freqs, psd, band_powers = hybrid_dsp_pipeline(temporal_sig, float(self.sfreq), self.band_edges)
+        freqs, psd, band_powers = hybrid_dsp_pipeline(
+            temporal_sig, float(self.sfreq), custom_bands,
+            notch_freq=notch_freq, notch_q=notch_q, highpass=hp_cutoff, lowpass=lp_cutoff
+        )
 
-        valid_idx = (freqs >= 1.0) & (freqs <= 50.0)
+        valid_idx = (freqs >= 0.5) & (freqs <= max(55.0, custom_bands[-1][1] + 5.0))
         self.fft_curve.setData(freqs[valid_idx], psd[valid_idx] + 1e-12)
 
-        # Update bar chart without static 1e9 scaling, relying on the new AutoRange instead
+        # Update bar chart with dynamic arbitrary custom band powers
         self.bar_items.setOpts(height=band_powers)
 
-        # Update Focus & Calm predictions using insulated AF8 channel (Index 2)
-        af8_data = self.data_buffer[:, 2]
-        af8_freqs, af8_psd = self.compute_single_channel_psd(af8_data, self.sfreq)
-        
-        theta = self.get_band_power(af8_freqs, af8_psd, 4.0, 7.0)
-        alpha = self.get_band_power(af8_freqs, af8_psd, 8.0, 12.0)
-        beta = self.get_band_power(af8_freqs, af8_psd, 13.0, 30.0)
+        # Extract target electrode signal for Focus & Calm
+        if focus_ch_mode == "af8" and self.ch_count > 2:
+            target_data = self.data_buffer[:, 2]
+        elif focus_ch_mode == "af7" and self.ch_count > 1:
+            target_data = self.data_buffer[:, 1]
+        elif focus_ch_mode == "frontal_avg" and self.ch_count > 2:
+            target_data = (self.data_buffer[:, 1] + self.data_buffer[:, 2]) / 2.0
+        elif focus_ch_mode == "tp9" and self.ch_count > 0:
+            target_data = self.data_buffer[:, 0]
+        elif focus_ch_mode == "tp10" and self.ch_count > 3:
+            target_data = self.data_buffer[:, 3]
+        else:
+            target_data = self.data_buffer[:, min(2, self.ch_count - 1)]
 
-        # Ratio computations
-        raw_focus = beta / (alpha + 1e-12)
+        f_freqs, f_psd = self.compute_single_channel_psd(
+            target_data, self.sfreq, notch_freq=notch_freq, notch_q=notch_q, highpass=hp_cutoff, lowpass=lp_cutoff
+        )
+        
+        # Calculate cognitive state ratios with completely arbitrary, customized frequency ranges
+        focus_num_val = self.get_band_power(f_freqs, f_psd, focus_num_range[0], focus_num_range[1])
+        focus_den_val = self.get_band_power(f_freqs, f_psd, focus_den_range[0], focus_den_range[1])
+        raw_focus = focus_num_val / (focus_den_val + 1e-12)
         inst_focus = np.clip((raw_focus / 2.0) * 100, 0, 100)
 
-        raw_calm = alpha / (theta + 1e-12)
+        calm_num_val = self.get_band_power(f_freqs, f_psd, calm_num_range[0], calm_num_range[1])
+        calm_den_val = self.get_band_power(f_freqs, f_psd, calm_den_range[0], calm_den_range[1])
+        raw_calm = calm_num_val / (calm_den_val + 1e-12)
         inst_calm = np.clip((raw_calm / 1.5) * 100, 0, 100)
 
-        # Smoothing
-        self.smoothed_focus = (self.ema_alpha * inst_focus) + ((1.0 - self.ema_alpha) * self.smoothed_focus)
-        self.smoothed_calm = (self.ema_alpha * inst_calm) + ((1.0 - self.ema_alpha) * self.smoothed_calm)
+        # Smoothing with dynamic alpha
+        self.smoothed_focus = (ema_alpha * inst_focus) + ((1.0 - ema_alpha) * self.smoothed_focus)
+        self.smoothed_calm = (ema_alpha * inst_calm) + ((1.0 - ema_alpha) * self.smoothed_calm)
 
         # Append to rolling histories
         self.focus_history[:-1] = self.focus_history[1:]
@@ -592,29 +825,45 @@ class EEGVisualizerWidget(LSLTabBase):
         if self.smoothed_focus > focus_thresh and self.smoothed_calm < calm_thresh - 10.0:
             self.state_title_lbl.setText("🧠 ACTIVE FOCUS STATE")
             self.state_title_lbl.setStyleSheet("font-size: 16px; font-weight: bold; color: #06b6d4;")
-            self.state_desc_lbl.setText("Right prefrontal beta activation active. High cognitive engagement.")
+            self.state_desc_lbl.setText(f"Target electrode ({focus_ch_mode.upper()}) beta activation active. High cognitive engagement.")
         elif self.smoothed_calm > calm_thresh and self.smoothed_focus < focus_thresh - 10.0:
             self.state_title_lbl.setText("🧘 DEEP CALM / RELAXED")
             self.state_title_lbl.setStyleSheet("font-size: 16px; font-weight: bold; color: #d946ef;")
-            self.state_desc_lbl.setText("Right prefrontal alpha synchronization active. Restful baseline state.")
+            self.state_desc_lbl.setText(f"Target electrode ({focus_ch_mode.upper()}) alpha synchronization active. Restful baseline state.")
         else:
             self.state_title_lbl.setText("🧠 NEUTRAL COGNITION")
             self.state_title_lbl.setStyleSheet("font-size: 16px; font-weight: bold; color: #ffffff;")
-            self.state_desc_lbl.setText("Stable single-electrode configuration tracking baseline smoothly.")
+            self.state_desc_lbl.setText(f"Electrode {focus_ch_mode.upper()} tracking baseline smoothly with adaptive DSP.")
 
-        # Blink & Clench checks for Snake Game redirect
-        c3_clean = self.data_buffer[:, 1] - np.mean(self.data_buffer[:, 1])
-        tp9_clean = self.data_buffer[:, 0] - np.mean(self.data_buffer[:, 0])
+        # Blink & Clench checks
+        if blink_ch_mode == "avg" and self.ch_count > 2:
+            blink_sig = (self.data_buffer[:, 1] + self.data_buffer[:, 2]) / 2.0
+        elif isinstance(blink_ch_mode, int) and blink_ch_mode < self.ch_count:
+            blink_sig = self.data_buffer[:, blink_ch_mode]
+        else:
+            blink_sig = self.data_buffer[:, min(1, self.ch_count - 1)]
+
+        if clench_ch_mode == "avg" and self.ch_count > 3:
+            clench_sig = (self.data_buffer[:, 0] + self.data_buffer[:, 3]) / 2.0
+        elif isinstance(clench_ch_mode, int) and clench_ch_mode < self.ch_count:
+            clench_sig = self.data_buffer[:, clench_ch_mode]
+        else:
+            clench_sig = self.data_buffer[:, 0]
+
+        blink_clean = blink_sig - np.mean(blink_sig)
+        clench_clean = clench_sig - np.mean(clench_sig)
         
         window_blink = int(self.sfreq * 0.3)
-        b_val = float(np.max(c3_clean[-window_blink:]) - np.min(c3_clean[-window_blink:]))
-        c_val = float(np.std(tp9_clean))
+        b_val = float(np.max(blink_clean[-window_blink:]) - np.min(blink_clean[-window_blink:]))
+        c_val = float(np.std(clench_clean))
+        self.blink_val = b_val
+        self.clench_val = c_val
         
         now = time.time()
         if not hasattr(self, "last_trigger_time"):
             self.last_trigger_time = 0.0
             
-        if now - self.last_trigger_time > 0.8:
+        if now - self.last_trigger_time > cooldown_period:
             main_win = self.window()
             if hasattr(main_win, "get_trigger_action") and hasattr(main_win, "send_command_to_snake_game"):
                 if c_val > clench_thresh:  # Clench trigger
@@ -654,11 +903,23 @@ class EEGVisualizerWidget(LSLTabBase):
             elif self.smoothed_calm < calm_thresh - 10.0:
                 self.triggered_calm = False
 
-    def compute_single_channel_psd(self, data, sfreq):
+    def compute_single_channel_psd(self, data, sfreq, notch_freq=50.0, notch_q=30.0, highpass=1.0, lowpass=50.0):
         N = len(data)
+        clean_data = data
         # Notch filter
-        b, a = iirnotch(50.0, 30.0, sfreq)
-        clean_data = lfilter(b, a, data)
+        if notch_freq is not None and notch_freq > 0 and notch_freq < (sfreq / 2.0):
+            try:
+                b, a = iirnotch(notch_freq, notch_q, sfreq)
+                clean_data = lfilter(b, a, clean_data)
+            except Exception:
+                pass
+        # Bandpass filter
+        if highpass is not None and highpass > 0 and lowpass is not None and lowpass > highpass and lowpass < (sfreq / 2.0):
+            try:
+                b_band, a_band = butter(2, [highpass, lowpass], btype="bandpass", fs=sfreq)
+                clean_data = lfilter(b_band, a_band, clean_data)
+            except Exception:
+                pass
         # Window & FFT
         window = np.hanning(N)
         windowed = clean_data * window
@@ -1000,7 +1261,7 @@ class IMUTrajectory3DWidget(LSLTabBase):
         
         from PyQt6.QtWidgets import QSlider
         self.shake_threshold_slider = QSlider(Qt.Orientation.Horizontal)
-        self.shake_threshold_slider.setRange(30, 150) # translates to 3.0 to 15.0 m/s^2
+        self.shake_threshold_slider.setRange(1, 100000) # translates to 0.1 to 10000.0 m/s^2
         self.shake_threshold_slider.setValue(80) # default 8.0 m/s^2
         self.shake_threshold_slider.valueChanged.connect(self.sync_shake_threshold)
         s_layout.addWidget(self.shake_threshold_slider)
@@ -1470,27 +1731,45 @@ class MusePPGWidget(LSLTabBase):
 
 
 def get_all_local_ips():
+    import sys
     ips = [("All Interfaces (0.0.0.0)", "0.0.0.0")]
+    seen = {"0.0.0.0", "127.0.0.1"}
     try:
         import socket
-        hostname = socket.gethostname()
-        infos = socket.getaddrinfo(hostname, None)
-        seen = set()
-        for info in infos:
-            ip = info[4][0]
-            if "." in ip and not ip.startswith("127.") and ip not in seen:
-                ips.append((f"Interface IP: {ip}", ip))
-                seen.add(ip)
+        # 1. Primary socket connection
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             s.connect(('8.8.8.8', 1))
             primary_ip = s.getsockname()[0]
             if primary_ip not in seen and not primary_ip.startswith("127."):
-                ips.append((f"Primary IP: {primary_ip}", primary_ip))
+                ips.append((f"Primary LAN/Wi-Fi: {primary_ip}", primary_ip))
+                seen.add(primary_ip)
         except Exception:
             pass
         finally:
             s.close()
+
+        # 2. Hostname lookup
+        hostname = socket.gethostname()
+        for info in socket.getaddrinfo(hostname, None):
+            ip = info[4][0]
+            if "." in ip and not ip.startswith("127.") and ip not in seen:
+                ips.append((f"Interface IP: {ip}", ip))
+                seen.add(ip)
+
+        # 3. Windows ipconfig scan (Discovers Mobile Hotspot 192.168.137.1, etc.)
+        if sys.platform == "win32":
+            try:
+                import subprocess, re
+                out = subprocess.check_output(["ipconfig"], text=True, errors="replace")
+                for match in re.finditer(r"IPv4 Address[.\s]+:\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", out):
+                    ip = match.group(1).strip()
+                    if ip not in seen and not ip.startswith("127."):
+                        label = f"📱 Mobile Hotspot ({ip})" if ip.startswith("192.168.137.") else f"Adapter IP: {ip}"
+                        ips.append((label, ip))
+                        seen.add(ip)
+            except Exception:
+                pass
     except Exception:
         pass
     return ips
@@ -1506,27 +1785,106 @@ class BCIControllerMappingWidget(QWidget):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(16)
 
-        # Left Column: Config Panel
+        # Left Column: Config Panel wrapped in Scroll Area
+        left_scroll = QScrollArea()
+        left_scroll.setWidgetResizable(True)
+        left_scroll.setStyleSheet("background-color: transparent; border: none;")
+
         left_panel = QFrame()
         left_panel.setStyleSheet("background-color: #1e293b; border-radius: 12px; border: 1px solid #334155;")
         left_layout = QVBoxLayout(left_panel)
-        left_layout.setContentsMargins(20, 20, 20, 20)
+        left_layout.setContentsMargins(18, 18, 18, 18)
         left_layout.setSpacing(12)
 
-        lbl_title = QLabel("🎮 BCI Controller Mapping Configuration")
+        lbl_title = QLabel("🎮 BCI Controller & DSP Tuning")
         lbl_title.setStyleSheet("font-size: 18px; font-weight: bold; color: #38bdf8; border: none;")
         left_layout.addWidget(lbl_title)
 
-        lbl_desc = QLabel("Map physiological inputs (Muse EEG) and phone sensor actions to game controller actions.")
+        lbl_desc = QLabel("Fine-tune Muse EEG filters, signal DSP parameters, and map sensor inputs to game controls.")
         lbl_desc.setStyleSheet("font-size: 12px; color: #94a3b8; border: none;")
         lbl_desc.setWordWrap(True)
         left_layout.addWidget(lbl_desc)
 
-        left_layout.addSpacing(10)
+        # ── PROFILE PRESETS & IMPORT / EXPORT TOOLBAR ──
+        profile_bar = QFrame()
+        profile_bar.setStyleSheet("background-color: #0f172a; border-radius: 8px; border: 1px solid #334155;")
+        profile_layout = QHBoxLayout(profile_bar)
+        profile_layout.setContentsMargins(10, 8, 10, 8)
+        profile_layout.setSpacing(8)
 
-        # Grid for mappings
+        lbl_prof = QLabel("Profile:")
+        lbl_prof.setStyleSheet("color: #38bdf8; font-size: 11px; font-weight: bold; border: none;")
+        profile_layout.addWidget(lbl_prof)
+
+        self.preset_combo = QComboBox()
+        self.preset_combo.addItem("Select Preset Profile...", None)
+        self.preset_combo.addItem("🎮 Action Gaming & Reflex (Fast, High-Sens)", "gaming")
+        self.preset_combo.addItem("🧘 Deep Meditation & Relaxation (Alpha-Theta)", "meditation")
+        self.preset_combo.addItem("🧠 Peak Focus & SMR Cognitive Work", "focus")
+        self.preset_combo.addItem("⚖️ Default Balanced Workshop Setup", "default")
+        self.preset_combo.setStyleSheet("background-color: #1e293b; color: #f1f5f9; border: 1px solid #475569; padding: 4px; border-radius: 4px; font-size: 11px;")
+        self.preset_combo.currentIndexChanged.connect(self.apply_preset)
+        profile_layout.addWidget(self.preset_combo, stretch=1)
+
+        self.btn_export = QPushButton("💾 Export JSON")
+        self.btn_export.setStyleSheet("""
+            QPushButton {
+                background-color: #065f46;
+                color: #6ee7b7;
+                font-weight: bold;
+                border-radius: 4px;
+                padding: 4px 10px;
+                font-size: 11px;
+                border: 1px solid #059669;
+            }
+            QPushButton:hover {
+                background-color: #047857;
+            }
+        """)
+        self.btn_export.clicked.connect(self.export_settings)
+        profile_layout.addWidget(self.btn_export)
+
+        self.btn_import = QPushButton("📂 Import JSON")
+        self.btn_import.setStyleSheet("""
+            QPushButton {
+                background-color: #1e3a8a;
+                color: #93c5fd;
+                font-weight: bold;
+                border-radius: 4px;
+                padding: 4px 10px;
+                font-size: 11px;
+                border: 1px solid #2563eb;
+            }
+            QPushButton:hover {
+                background-color: #1d4ed8;
+            }
+        """)
+        self.btn_import.clicked.connect(self.import_settings)
+        profile_layout.addWidget(self.btn_import)
+
+        left_layout.addWidget(profile_bar)
+        left_layout.addSpacing(6)
+
+        # ── 1. ACTION MAPPING GRID ──────────────────
+        map_group = QGroupBox("🕹️ Controller Action Mapping")
+        map_group.setStyleSheet("""
+            QGroupBox {
+                color: #38bdf8;
+                font-weight: bold;
+                border: 1px solid #334155;
+                border-radius: 8px;
+                margin-top: 8px;
+                padding-top: 12px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+        """)
+        map_layout = QVBoxLayout(map_group)
         grid = QGridLayout()
-        grid.setSpacing(12)
+        grid.setSpacing(8)
 
         # Options list
         self.options = [
@@ -1549,81 +1907,30 @@ class BCIControllerMappingWidget(QWidget):
             "Voice Command 'Fire'"
         ]
 
-        lbl_left = QLabel("LEFT Command:")
-        lbl_left.setStyleSheet("color: #cbd5e1; font-size: 13px; border: none; font-weight: bold;")
-        grid.addWidget(lbl_left, 0, 0)
+        def create_map_row(label_text, default_idx, row_idx):
+            lbl = QLabel(label_text)
+            lbl.setStyleSheet("color: #cbd5e1; font-size: 12px; border: none; font-weight: bold;")
+            grid.addWidget(lbl, row_idx, 0)
+            cb = QComboBox()
+            cb.addItems(self.options)
+            cb.setCurrentIndex(default_idx)
+            cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 4px; border-radius: 4px; font-size: 11px;")
+            grid.addWidget(cb, row_idx, 1)
+            return cb
 
-        self.map_left_cb = QComboBox()
-        self.map_left_cb.addItems(self.options)
-        self.map_left_cb.setCurrentIndex(4)  # Phone Tilt Left
-        self.map_left_cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 4px; border-radius: 4px; font-size: 12px;")
-        grid.addWidget(self.map_left_cb, 0, 1)
+        self.map_left_cb = create_map_row("LEFT Command:", 4, 0)
+        self.map_right_cb = create_map_row("RIGHT Command:", 5, 1)
+        self.map_up_cb = create_map_row("UP Command:", 6, 2)
+        self.map_down_cb = create_map_row("DOWN Command:", 7, 3)
+        self.map_action_cb = create_map_row("Primary (Pause/Fire):", 12, 4)
+        self.map_sec_cb = create_map_row("Secondary Action:", 13, 5)
+        self.map_tert_cb = create_map_row("Tertiary Action:", 0, 6)
 
-        lbl_right = QLabel("RIGHT Command:")
-        lbl_right.setStyleSheet("color: #cbd5e1; font-size: 13px; border: none; font-weight: bold;")
-        grid.addWidget(lbl_right, 1, 0)
+        map_layout.addLayout(grid)
+        left_layout.addWidget(map_group)
 
-        self.map_right_cb = QComboBox()
-        self.map_right_cb.addItems(self.options)
-        self.map_right_cb.setCurrentIndex(5)  # Phone Tilt Right
-        self.map_right_cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 4px; border-radius: 4px; font-size: 12px;")
-        grid.addWidget(self.map_right_cb, 1, 1)
-
-        lbl_up = QLabel("UP Command:")
-        lbl_up.setStyleSheet("color: #cbd5e1; font-size: 13px; border: none; font-weight: bold;")
-        grid.addWidget(lbl_up, 2, 0)
-
-        self.map_up_cb = QComboBox()
-        self.map_up_cb.addItems(self.options)
-        self.map_up_cb.setCurrentIndex(6)  # Phone Tilt Forward
-        self.map_up_cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 4px; border-radius: 4px; font-size: 12px;")
-        grid.addWidget(self.map_up_cb, 2, 1)
-
-        lbl_down = QLabel("DOWN Command:")
-        lbl_down.setStyleSheet("color: #cbd5e1; font-size: 13px; border: none; font-weight: bold;")
-        grid.addWidget(lbl_down, 3, 0)
-
-        self.map_down_cb = QComboBox()
-        self.map_down_cb.addItems(self.options)
-        self.map_down_cb.setCurrentIndex(7)  # Phone Tilt Backward
-        self.map_down_cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 4px; border-radius: 4px; font-size: 12px;")
-        grid.addWidget(self.map_down_cb, 3, 1)
-
-        lbl_action = QLabel("Primary Action (Pause/Fire):")
-        lbl_action.setStyleSheet("color: #cbd5e1; font-size: 13px; border: none; font-weight: bold;")
-        grid.addWidget(lbl_action, 4, 0)
-
-        self.map_action_cb = QComboBox()
-        self.map_action_cb.addItems(self.options)
-        self.map_action_cb.setCurrentIndex(12)  # Phone Screen Tap
-        self.map_action_cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 4px; border-radius: 4px; font-size: 12px;")
-        grid.addWidget(self.map_action_cb, 4, 1)
-
-        lbl_sec = QLabel("Secondary Action (Extra/Spread):")
-        lbl_sec.setStyleSheet("color: #cbd5e1; font-size: 13px; border: none; font-weight: bold;")
-        grid.addWidget(lbl_sec, 5, 0)
-
-        self.map_sec_cb = QComboBox()
-        self.map_sec_cb.addItems(self.options)
-        self.map_sec_cb.setCurrentIndex(13)  # Phone Shake
-        self.map_sec_cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 4px; border-radius: 4px; font-size: 12px;")
-        grid.addWidget(self.map_sec_cb, 5, 1)
-
-        lbl_tert = QLabel("Tertiary Action (Grid/Bomb):")
-        lbl_tert.setStyleSheet("color: #cbd5e1; font-size: 13px; border: none; font-weight: bold;")
-        grid.addWidget(lbl_tert, 6, 0)
-
-        self.map_tert_cb = QComboBox()
-        self.map_tert_cb.addItems(self.options)
-        self.map_tert_cb.setCurrentIndex(0)  # Muse Eye Blink
-        self.map_tert_cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 4px; border-radius: 4px; font-size: 12px;")
-        grid.addWidget(self.map_tert_cb, 6, 1)
-
-        left_layout.addLayout(grid)
-        left_layout.addSpacing(10)
-
-        # Thresholds tuning group box
-        thresh_group = QGroupBox("🎛️ Sensitivity Thresholds Tuning")
+        # ── 2. SENSITIVITY THRESHOLDS GROUP ─────────
+        thresh_group = QGroupBox("🎛️ Sensitivity Thresholds")
         thresh_group.setStyleSheet("""
             QGroupBox {
                 color: #38bdf8;
@@ -1647,7 +1954,6 @@ class BCIControllerMappingWidget(QWidget):
         thresh_layout = QVBoxLayout(thresh_group)
         thresh_layout.setSpacing(6)
 
-        # Custom QSpinBox subclass to display float values while storing them as integers
         class FloatFormattedSpinBox(QSpinBox):
             def __init__(self, divisor=1.0, precision=1, *args, **kwargs):
                 super().__init__(*args, **kwargs)
@@ -1664,8 +1970,7 @@ class BCIControllerMappingWidget(QWidget):
                 except ValueError:
                     return self.value()
 
-        # Helper to create a spinbox with a recommended value label
-        def create_slider(label_text, min_val, max_val, default_val, recommended_str, divisor=1.0, precision=0, unit=""):
+        def create_slider(parent_layout, label_text, min_val, max_val, default_val, recommended_str, divisor=1.0, precision=0, unit=""):
             row_layout = QHBoxLayout()
             lbl = QLabel(label_text)
             lbl.setStyleSheet("color: #cbd5e1; font-size: 11px;")
@@ -1679,7 +1984,7 @@ class BCIControllerMappingWidget(QWidget):
             spin.setValue(default_val)
             if unit and divisor == 1.0:
                 spin.setSuffix(unit)
-            spin.setMinimumHeight(28)
+            spin.setMinimumHeight(26)
             spin.setFixedWidth(90)
             spin.setStyleSheet("""
                 QSpinBox {
@@ -1698,28 +2003,230 @@ class BCIControllerMappingWidget(QWidget):
             
             recom_lbl = QLabel(f"Rec: {recommended_str}")
             recom_lbl.setStyleSheet("color: #64748b; font-size: 10px; border: none; font-style: italic;")
-            recom_lbl.setFixedWidth(130)
+            recom_lbl.setFixedWidth(120)
             recom_lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
             
             row_layout.addWidget(lbl)
             row_layout.addWidget(spin, stretch=1)
             row_layout.addWidget(recom_lbl)
-            thresh_layout.addLayout(row_layout)
+            parent_layout.addLayout(row_layout)
             return spin
 
-        self.blink_thresh_slider = create_slider("Muse Eye Blink:", 15, 150, 80, "60-100 uV", unit=" uV")
-        self.clench_thresh_slider = create_slider("Muse Jaw Clench:", 10, 150, 60, "50-80 uV", unit=" uV")
-        self.focus_thresh_slider = create_slider("Muse High Focus:", 25, 90, 60, "55-75%", unit="%")
-        self.calm_thresh_slider = create_slider("Muse Deep Calm:", 25, 90, 60, "55-75%", unit="%")
-        self.tilt_thresh_slider = create_slider("Phone Tilt Angle:", 5, 45, 15, "10-25°", unit="°")
-        self.flick_thresh_slider = create_slider("Phone Flick:", 10, 80, 35, "0.30-0.50", divisor=100.0, precision=2) 
-        self.shake_thresh_slider = create_slider("Phone Shake:", 20, 150, 80, "7.0-11.0", divisor=10.0, precision=1)
+        self.blink_thresh_slider = create_slider(thresh_layout, "Muse Eye Blink:", 0, 100000, 80, "No limits (0-100k)", unit=" uV")
+        self.clench_thresh_slider = create_slider(thresh_layout, "Muse Jaw Clench:", 0, 100000, 60, "No limits (0-100k)", unit=" uV")
+        self.focus_thresh_slider = create_slider(thresh_layout, "Muse High Focus:", 0, 10000, 60, "No limits (0-10k)", unit="%")
+        self.calm_thresh_slider = create_slider(thresh_layout, "Muse Deep Calm:", 0, 10000, 60, "No limits (0-10k)", unit="%")
+        self.tilt_thresh_slider = create_slider(thresh_layout, "Phone Tilt Angle:", 0, 360, 15, "0-360°", unit="°")
+        self.flick_thresh_slider = create_slider(thresh_layout, "Phone Flick:", 1, 100000, 35, "0.01-1000+", divisor=100.0, precision=2) 
+        self.shake_thresh_slider = create_slider(thresh_layout, "Phone Shake:", 1, 100000, 80, "0.1-10000+", divisor=10.0, precision=1)
         self.shake_thresh_slider.valueChanged.connect(self.sync_imu_shake_threshold)
 
         left_layout.addWidget(thresh_group)
-        left_layout.addSpacing(10)
+
+        # ── 3. MUSE EEG DSP & FILTER FINE-TUNING ────
+        dsp_group = QGroupBox("🧠 Muse EEG Filter & Signal DSP Tuning")
+        dsp_group.setStyleSheet("""
+            QGroupBox {
+                color: #a855f7;
+                font-weight: bold;
+                border: 1px solid #4c1d95;
+                border-radius: 8px;
+                margin-top: 8px;
+                padding-top: 12px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+            QLabel {
+                color: #cbd5e1;
+                font-size: 11px;
+                border: none;
+            }
+        """)
+        dsp_layout = QVBoxLayout(dsp_group)
+        dsp_layout.setSpacing(6)
+
+        def create_combo_row(parent_layout, label_text, items, default_idx=0):
+            row = QHBoxLayout()
+            lbl = QLabel(label_text)
+            lbl.setStyleSheet("color: #cbd5e1; font-size: 11px;")
+            cb = QComboBox()
+            for name, val in items:
+                cb.addItem(name, val)
+            cb.setCurrentIndex(default_idx)
+            cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 3px 6px; border-radius: 4px; font-size: 11px;")
+            cb.setMinimumHeight(26)
+            row.addWidget(lbl)
+            row.addWidget(cb, stretch=1)
+            parent_layout.addLayout(row)
+            return cb
+
+        self.eeg_notch_cb = create_combo_row(dsp_layout, "Mains Hum Notch:", [
+            ("50 Hz (UK / EU / Asia / AUS)", 50.0),
+            ("60 Hz (Americas / US / JP)", 60.0),
+            ("Custom Notch Frequency", "custom"),
+            ("Disabled (Raw Signals)", None),
+        ], default_idx=0)
+
+        # Custom Notch direct numeric input
+        custom_notch_row = QHBoxLayout()
+        lbl_cnotch = QLabel("  ↳ Custom Notch Hz:")
+        lbl_cnotch.setStyleSheet("color: #94a3b8; font-size: 10px;")
+        self.eeg_custom_notch_spin = FloatFormattedSpinBox(divisor=10.0, precision=1)
+        self.eeg_custom_notch_spin.setRange(10, 2500) # 1.0 Hz - 250.0 Hz
+        self.eeg_custom_notch_spin.setValue(500)      # 50.0 Hz default
+        self.eeg_custom_notch_spin.setSuffix(" Hz")
+        self.eeg_custom_notch_spin.setFixedWidth(85)
+        self.eeg_custom_notch_spin.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #334155; border-radius: 4px; padding: 2px 4px; font-size: 10px;")
+        custom_notch_row.addWidget(lbl_cnotch)
+        custom_notch_row.addWidget(self.eeg_custom_notch_spin)
+        custom_notch_row.addStretch(1)
+        dsp_layout.addLayout(custom_notch_row)
+
+        self.eeg_notch_q = create_slider(dsp_layout, "Notch Sharpness (Q):", 10, 60, 30, "20-40")
+
+        self.eeg_bandpass_cb = create_combo_row(dsp_layout, "Bandpass Pre-Filter:", [
+            ("1.0 - 45.0 Hz (Standard EEG)", (1.0, 45.0)),
+            ("0.5 - 40.0 Hz (Wide Spectrum)", (0.5, 40.0)),
+            ("2.0 - 30.0 Hz (Focus/Alpha Band)", (2.0, 30.0)),
+            ("Custom High/Low Cutoffs", "custom"),
+            ("Off (Raw FFT without Bandpass)", None),
+        ], default_idx=0)
+
+        # Custom HP/LP cutoffs
+        custom_bp_row = QHBoxLayout()
+        lbl_cbp = QLabel("  ↳ Custom HP / LP:")
+        lbl_cbp.setStyleSheet("color: #94a3b8; font-size: 10px;")
+        self.eeg_hp_spin = FloatFormattedSpinBox(divisor=10.0, precision=1)
+        self.eeg_hp_spin.setRange(1, 500)  # 0.1 Hz - 50.0 Hz
+        self.eeg_hp_spin.setValue(10)      # 1.0 Hz
+        self.eeg_hp_spin.setSuffix(" Hz")
+        self.eeg_hp_spin.setFixedWidth(70)
+        self.eeg_hp_spin.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #334155; border-radius: 4px; padding: 2px 4px; font-size: 10px;")
+
+        lbl_slash = QLabel("to")
+        lbl_slash.setStyleSheet("color: #64748b; font-size: 10px;")
+
+        self.eeg_lp_spin = FloatFormattedSpinBox(divisor=10.0, precision=1)
+        self.eeg_lp_spin.setRange(10, 1200) # 1.0 Hz - 120.0 Hz
+        self.eeg_lp_spin.setValue(450)      # 45.0 Hz
+        self.eeg_lp_spin.setSuffix(" Hz")
+        self.eeg_lp_spin.setFixedWidth(75)
+        self.eeg_lp_spin.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #334155; border-radius: 4px; padding: 2px 4px; font-size: 10px;")
+
+        custom_bp_row.addWidget(lbl_cbp)
+        custom_bp_row.addWidget(self.eeg_hp_spin)
+        custom_bp_row.addWidget(lbl_slash)
+        custom_bp_row.addWidget(self.eeg_lp_spin)
+        custom_bp_row.addStretch(1)
+        dsp_layout.addLayout(custom_bp_row)
+
+        self.eeg_focus_ch_cb = create_combo_row(dsp_layout, "Cognitive Target Ch:", [
+            ("AF8 (Right Frontal - Recommended)", "af8"),
+            ("AF7 (Left Frontal)", "af7"),
+            ("Frontal Avg (AF7 + AF8)", "frontal_avg"),
+            ("TP9 (Left Ear / Temporal)", "tp9"),
+            ("TP10 (Right Ear / Temporal)", "tp10"),
+        ], default_idx=0)
+
+        self.eeg_ema_slider = create_slider(dsp_layout, "Cognitive Smoothing Rate:", 1, 25, 4, "0.02-0.08", divisor=100.0, precision=2)
+
+        self.eeg_blink_ch_cb = create_combo_row(dsp_layout, "Blink Electrode Source:", [
+            ("AF7 (Left Frontal - Standard)", 1),
+            ("AF8 (Right Frontal)", 2),
+            ("Frontal Avg (AF7 + AF8)", "avg"),
+        ], default_idx=0)
+
+        self.eeg_clench_ch_cb = create_combo_row(dsp_layout, "Clench Electrode Source:", [
+            ("TP9 (Left Ear - Standard)", 0),
+            ("TP10 (Right Ear)", 3),
+            ("Temporal Avg (TP9 + TP10)", "avg"),
+        ], default_idx=0)
+
+        self.eeg_cooldown_slider = create_slider(dsp_layout, "Trigger Cooldown (Refractory):", 2, 25, 8, "0.5-1.2 s", divisor=10.0, precision=1, unit=" s")
+
+        left_layout.addWidget(dsp_group)
+
+        # ── 4. CUSTOM UNCONSTRAINED FREQUENCY BANDS ──
+        bands_group = QGroupBox("📊 Custom Frequency Bands & Ratio Limits")
+        bands_group.setStyleSheet("""
+            QGroupBox {
+                color: #38bdf8;
+                font-weight: bold;
+                border: 1px solid #0369a1;
+                border-radius: 8px;
+                margin-top: 8px;
+                padding-top: 12px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+            QLabel {
+                color: #cbd5e1;
+                font-size: 11px;
+                border: none;
+            }
+        """)
+        bands_layout = QVBoxLayout(bands_group)
+        bands_layout.setSpacing(5)
+
+        def create_band_range_row(parent_layout, label_text, min_d, max_d, min_init, max_init):
+            row = QHBoxLayout()
+            lbl = QLabel(label_text)
+            lbl.setStyleSheet("color: #cbd5e1; font-size: 11px; font-weight: bold;")
+            lbl.setFixedWidth(65)
+
+            spin_min = FloatFormattedSpinBox(divisor=10.0, precision=1)
+            spin_min.setRange(min_d, max_d)
+            spin_min.setValue(min_init)
+            spin_min.setSuffix(" Hz")
+            spin_min.setFixedWidth(68)
+            spin_min.setStyleSheet("background-color: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 4px; padding: 2px 4px; font-size: 10px;")
+
+            dash = QLabel("—")
+            dash.setStyleSheet("color: #64748b; font-size: 10px;")
+
+            spin_max = FloatFormattedSpinBox(divisor=10.0, precision=1)
+            spin_max.setRange(min_d, max_d)
+            spin_max.setValue(max_init)
+            spin_max.setSuffix(" Hz")
+            spin_max.setFixedWidth(68)
+            spin_max.setStyleSheet("background-color: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 4px; padding: 2px 4px; font-size: 10px;")
+
+            row.addWidget(lbl)
+            row.addWidget(spin_min)
+            row.addWidget(dash)
+            row.addWidget(spin_max)
+            row.addStretch(1)
+            parent_layout.addLayout(row)
+            return spin_min, spin_max
+
+        # Custom limits for standard 5 bands
+        self.delta_min_spin, self.delta_max_spin = create_band_range_row(bands_layout, "Delta:", 1, 150, 5, 40)
+        self.theta_min_spin, self.theta_max_spin = create_band_range_row(bands_layout, "Theta:", 10, 200, 40, 80)
+        self.alpha_min_spin, self.alpha_max_spin = create_band_range_row(bands_layout, "Alpha:", 40, 250, 80, 130)
+        self.beta_min_spin,  self.beta_max_spin  = create_band_range_row(bands_layout, "Beta:",  80, 500, 130, 300)
+        self.gamma_min_spin, self.gamma_max_spin = create_band_range_row(bands_layout, "Gamma:", 200, 1000, 300, 500)
+
+        bands_layout.addSpacing(4)
+        lbl_ratios_hdr = QLabel("Cognitive Formula Frequency Windows:")
+        lbl_ratios_hdr.setStyleSheet("color: #f59e0b; font-size: 10px; font-weight: bold;")
+        bands_layout.addWidget(lbl_ratios_hdr)
+
+        self.focus_num_min, self.focus_num_max = create_band_range_row(bands_layout, "Focus Num:", 10, 800, 130, 300)
+        self.focus_den_min, self.focus_den_max = create_band_range_row(bands_layout, "Focus Den:", 10, 800, 80, 130)
+        self.calm_num_min,  self.calm_num_max  = create_band_range_row(bands_layout, "Calm Num:",  10, 800, 80, 130)
+        self.calm_den_min,  self.calm_den_max  = create_band_range_row(bands_layout, "Calm Den:",  10, 800, 40, 80)
+
+        left_layout.addWidget(bands_group)
+        left_layout.addSpacing(6)
 
         # Calibration / Zero button
+
         self.calib_btn = QPushButton("🎯 Zero / Calibrate Phone Sensors")
         self.calib_btn.setMinimumHeight(38)
         self.calib_btn.setStyleSheet("""
@@ -1739,7 +2246,8 @@ class BCIControllerMappingWidget(QWidget):
         left_layout.addWidget(self.calib_btn)
 
         left_layout.addStretch(1)
-        layout.addWidget(left_panel, stretch=1)
+        left_scroll.setWidget(left_panel)
+        layout.addWidget(left_scroll, stretch=1)
 
         # Right Column: Visual Test Console
         right_panel = QFrame()
@@ -1808,7 +2316,7 @@ class BCIControllerMappingWidget(QWidget):
         self.scope_widget.setMinimumHeight(240)
         self.scope_widget.setBackground('#0b0f19')
         self.scope_widget.showGrid(x=True, y=True, alpha=0.15)
-        self.scope_widget.setYRange(0, 150) # Range up to 150 for blink spikes and scaled shakes
+        self.scope_widget.enableAutoRange(axis='y')
         
         # Track 6 curves: Focus, Calm, Blink, Clench, Tilt, Shake
         self.history_len = 100
@@ -1970,6 +2478,229 @@ class BCIControllerMappingWidget(QWidget):
         self.line_tilt.setValue(self.tilt_thresh_slider.value())
         self.line_shake.setValue(self.shake_thresh_slider.value())
 
+    def get_settings_dict(self):
+        """Serializes all controller mappings, thresholds, custom bands, and DSP filters to a dict."""
+        return {
+            "version": "1.0",
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "mappings": {
+                "left": self.map_left_cb.currentText(),
+                "right": self.map_right_cb.currentText(),
+                "up": self.map_up_cb.currentText(),
+                "down": self.map_down_cb.currentText(),
+                "action": self.map_action_cb.currentText(),
+                "sec": self.map_sec_cb.currentText(),
+                "tert": self.map_tert_cb.currentText(),
+            },
+            "thresholds": {
+                "blink_uv": self.blink_thresh_slider.value(),
+                "clench_uv": self.clench_thresh_slider.value(),
+                "focus_pct": self.focus_thresh_slider.value(),
+                "calm_pct": self.calm_thresh_slider.value(),
+                "tilt_deg": self.tilt_thresh_slider.value(),
+                "flick": self.flick_thresh_slider.value() / 100.0,
+                "shake": self.shake_thresh_slider.value() / 10.0,
+            },
+            "dsp": {
+                "notch_index": self.eeg_notch_cb.currentIndex(),
+                "custom_notch_hz": self.eeg_custom_notch_spin.value() / 10.0,
+                "notch_q": self.eeg_notch_q.value(),
+                "bandpass_index": self.eeg_bandpass_cb.currentIndex(),
+                "custom_hp_hz": self.eeg_hp_spin.value() / 10.0,
+                "custom_lp_hz": self.eeg_lp_spin.value() / 10.0,
+                "focus_target_index": self.eeg_focus_ch_cb.currentIndex(),
+                "smoothing_alpha": self.eeg_ema_slider.value() / 100.0,
+                "blink_ch_index": self.eeg_blink_ch_cb.currentIndex(),
+                "clench_ch_index": self.eeg_clench_ch_cb.currentIndex(),
+                "cooldown_sec": self.eeg_cooldown_slider.value() / 10.0,
+            },
+            "frequency_bands": {
+                "delta": [self.delta_min_spin.value() / 10.0, self.delta_max_spin.value() / 10.0],
+                "theta": [self.theta_min_spin.value() / 10.0, self.theta_max_spin.value() / 10.0],
+                "alpha": [self.alpha_min_spin.value() / 10.0, self.alpha_max_spin.value() / 10.0],
+                "beta":  [self.beta_min_spin.value() / 10.0,  self.beta_max_spin.value() / 10.0],
+                "gamma": [self.gamma_min_spin.value() / 10.0, self.gamma_max_spin.value() / 10.0],
+            },
+            "cognitive_ratios": {
+                "focus_num": [self.focus_num_min.value() / 10.0, self.focus_num_max.value() / 10.0],
+                "focus_den": [self.focus_den_min.value() / 10.0, self.focus_den_max.value() / 10.0],
+                "calm_num":  [self.calm_num_min.value() / 10.0,  self.calm_num_max.value() / 10.0],
+                "calm_den":  [self.calm_den_min.value() / 10.0,  self.calm_den_max.value() / 10.0],
+            }
+        }
+
+    def apply_settings_dict(self, cfg):
+        """Restores mapping, threshold, and DSP configuration from a dictionary."""
+        try:
+            if "mappings" in cfg:
+                m = cfg["mappings"]
+                for cb, key in [(self.map_left_cb, "left"), (self.map_right_cb, "right"),
+                                (self.map_up_cb, "up"), (self.map_down_cb, "down"),
+                                (self.map_action_cb, "action"), (self.map_sec_cb, "sec"),
+                                (self.map_tert_cb, "tert")]:
+                    if key in m and m[key] in self.options:
+                        cb.setCurrentText(m[key])
+
+            if "thresholds" in cfg:
+                t = cfg["thresholds"]
+                if "blink_uv" in t: self.blink_thresh_slider.setValue(int(t["blink_uv"]))
+                if "clench_uv" in t: self.clench_thresh_slider.setValue(int(t["clench_uv"]))
+                if "focus_pct" in t: self.focus_thresh_slider.setValue(int(t["focus_pct"]))
+                if "calm_pct" in t: self.calm_thresh_slider.setValue(int(t["calm_pct"]))
+                if "tilt_deg" in t: self.tilt_thresh_slider.setValue(int(t["tilt_deg"]))
+                if "flick" in t: self.flick_thresh_slider.setValue(int(float(t["flick"]) * 100))
+                if "shake" in t: self.shake_thresh_slider.setValue(int(float(t["shake"]) * 10))
+
+            if "dsp" in cfg:
+                d = cfg["dsp"]
+                if "notch_index" in d and d["notch_index"] < self.eeg_notch_cb.count():
+                    self.eeg_notch_cb.setCurrentIndex(d["notch_index"])
+                if "custom_notch_hz" in d:
+                    self.eeg_custom_notch_spin.setValue(int(float(d["custom_notch_hz"]) * 10))
+                if "notch_q" in d:
+                    self.eeg_notch_q.setValue(int(d["notch_q"]))
+                if "bandpass_index" in d and d["bandpass_index"] < self.eeg_bandpass_cb.count():
+                    self.eeg_bandpass_cb.setCurrentIndex(d["bandpass_index"])
+                if "custom_hp_hz" in d:
+                    self.eeg_hp_spin.setValue(int(float(d["custom_hp_hz"]) * 10))
+                if "custom_lp_hz" in d:
+                    self.eeg_lp_spin.setValue(int(float(d["custom_lp_hz"]) * 10))
+                if "focus_target_index" in d and d["focus_target_index"] < self.eeg_focus_ch_cb.count():
+                    self.eeg_focus_ch_cb.setCurrentIndex(d["focus_target_index"])
+                if "smoothing_alpha" in d:
+                    self.eeg_ema_slider.setValue(int(float(d["smoothing_alpha"]) * 100))
+                if "blink_ch_index" in d and d["blink_ch_index"] < self.eeg_blink_ch_cb.count():
+                    self.eeg_blink_ch_cb.setCurrentIndex(d["blink_ch_index"])
+                if "clench_ch_index" in d and d["clench_ch_index"] < self.eeg_clench_ch_cb.count():
+                    self.eeg_clench_ch_cb.setCurrentIndex(d["clench_ch_index"])
+                if "cooldown_sec" in d:
+                    self.eeg_cooldown_slider.setValue(int(float(d["cooldown_sec"]) * 10))
+
+            if "frequency_bands" in cfg:
+                fb = cfg["frequency_bands"]
+                if "delta" in fb:
+                    self.delta_min_spin.setValue(int(float(fb["delta"][0]) * 10))
+                    self.delta_max_spin.setValue(int(float(fb["delta"][1]) * 10))
+                if "theta" in fb:
+                    self.theta_min_spin.setValue(int(float(fb["theta"][0]) * 10))
+                    self.theta_max_spin.setValue(int(float(fb["theta"][1]) * 10))
+                if "alpha" in fb:
+                    self.alpha_min_spin.setValue(int(float(fb["alpha"][0]) * 10))
+                    self.alpha_max_spin.setValue(int(float(fb["alpha"][1]) * 10))
+                if "beta" in fb:
+                    self.beta_min_spin.setValue(int(float(fb["beta"][0]) * 10))
+                    self.beta_max_spin.setValue(int(float(fb["beta"][1]) * 10))
+                if "gamma" in fb:
+                    self.gamma_min_spin.setValue(int(float(fb["gamma"][0]) * 10))
+                    self.gamma_max_spin.setValue(int(float(fb["gamma"][1]) * 10))
+
+            if "cognitive_ratios" in cfg:
+                cr = cfg["cognitive_ratios"]
+                if "focus_num" in cr:
+                    self.focus_num_min.setValue(int(float(cr["focus_num"][0]) * 10))
+                    self.focus_num_max.setValue(int(float(cr["focus_num"][1]) * 10))
+                if "focus_den" in cr:
+                    self.focus_den_min.setValue(int(float(cr["focus_den"][0]) * 10))
+                    self.focus_den_max.setValue(int(float(cr["focus_den"][1]) * 10))
+                if "calm_num" in cr:
+                    self.calm_num_min.setValue(int(float(cr["calm_num"][0]) * 10))
+                    self.calm_num_max.setValue(int(float(cr["calm_num"][1]) * 10))
+                if "calm_den" in cr:
+                    self.calm_den_min.setValue(int(float(cr["calm_den"][0]) * 10))
+                    self.calm_den_max.setValue(int(float(cr["calm_den"][1]) * 10))
+
+            main_win = self.window()
+            if hasattr(main_win, "append_system_log"):
+                main_win.append_system_log("Applied BCI Controller configuration profile.")
+        except Exception as e:
+            QMessageBox.warning(self, "Import Error", f"Failed to apply configuration:\n{e}")
+
+    def export_settings(self):
+        file_path, _ = QFileDialog.getSaveFileName(self, "Export BCI Settings Profile", "bci_profile.json", "JSON Files (*.json)")
+        if file_path:
+            try:
+                cfg = self.get_settings_dict()
+                with open(file_path, "w", encoding="utf-8") as f:
+                    json.dump(cfg, f, indent=2)
+                QMessageBox.information(self, "Settings Exported", f"Successfully exported settings to:\n{os.path.basename(file_path)}")
+            except Exception as e:
+                QMessageBox.critical(self, "Export Error", f"Could not save profile:\n{e}")
+
+    def import_settings(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Import BCI Settings Profile", "", "JSON Files (*.json);;All Files (*)")
+        if file_path:
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    cfg = json.load(f)
+                self.apply_settings_dict(cfg)
+                QMessageBox.information(self, "Settings Loaded", f"Successfully loaded configuration profile from:\n{os.path.basename(file_path)}")
+            except Exception as e:
+                QMessageBox.critical(self, "Import Error", f"Could not read profile JSON:\n{e}")
+
+    def apply_preset(self, index):
+        key = self.preset_combo.currentData()
+        if not key:
+            return
+
+        if key == "gaming":
+            self.map_left_cb.setCurrentText("Phone Tilt Left")
+            self.map_right_cb.setCurrentText("Phone Tilt Right")
+            self.map_up_cb.setCurrentText("Phone Flick Up")
+            self.map_down_cb.setCurrentText("Phone Flick Down")
+            self.map_action_cb.setCurrentText("Phone Screen Tap")
+            self.map_sec_cb.setCurrentText("Muse Eye Blink")
+            self.map_tert_cb.setCurrentText("Muse Jaw Clench")
+            self.blink_thresh_slider.setValue(60)
+            self.clench_thresh_slider.setValue(45)
+            self.tilt_thresh_slider.setValue(10)
+            self.flick_thresh_slider.setValue(25)
+            self.shake_thresh_slider.setValue(60)
+            self.eeg_ema_slider.setValue(12)
+            self.eeg_cooldown_slider.setValue(4)
+
+        elif key == "meditation":
+            self.map_action_cb.setCurrentText("Muse Deep Calm")
+            self.focus_thresh_slider.setValue(50)
+            self.calm_thresh_slider.setValue(55)
+            self.eeg_ema_slider.setValue(3)
+            self.alpha_min_spin.setValue(70)
+            self.alpha_max_spin.setValue(130)
+            self.theta_min_spin.setValue(35)
+            self.theta_max_spin.setValue(75)
+
+        elif key == "focus":
+            self.map_action_cb.setCurrentText("Muse High Focus")
+            self.focus_thresh_slider.setValue(60)
+            self.eeg_ema_slider.setValue(5)
+            self.beta_min_spin.setValue(140)
+            self.beta_max_spin.setValue(280)
+            self.focus_num_min.setValue(140)
+            self.focus_num_max.setValue(280)
+
+        elif key == "default":
+            self.map_left_cb.setCurrentText("Phone Tilt Left")
+            self.map_right_cb.setCurrentText("Phone Tilt Right")
+            self.map_up_cb.setCurrentText("Phone Tilt Forward")
+            self.map_down_cb.setCurrentText("Phone Tilt Backward")
+            self.map_action_cb.setCurrentText("Phone Screen Tap")
+            self.map_sec_cb.setCurrentText("Phone Shake")
+            self.map_tert_cb.setCurrentText("Muse Eye Blink")
+            self.blink_thresh_slider.setValue(80)
+            self.clench_thresh_slider.setValue(60)
+            self.focus_thresh_slider.setValue(60)
+            self.calm_thresh_slider.setValue(60)
+            self.tilt_thresh_slider.setValue(15)
+            self.flick_thresh_slider.setValue(35)
+            self.shake_thresh_slider.setValue(80)
+            self.eeg_ema_slider.setValue(4)
+            self.eeg_cooldown_slider.setValue(8)
+            self.delta_min_spin.setValue(5); self.delta_max_spin.setValue(40)
+            self.theta_min_spin.setValue(40); self.theta_max_spin.setValue(80)
+            self.alpha_min_spin.setValue(80); self.alpha_max_spin.setValue(130)
+            self.beta_min_spin.setValue(130); self.beta_max_spin.setValue(300)
+            self.gamma_min_spin.setValue(300); self.gamma_max_spin.setValue(500)
+
+
 
 # ==========================================
 # CENTRAL NERVOUS SYSTEM - MASTER DASHBOARD
@@ -2008,6 +2739,15 @@ class MasterControlDashboard(QMainWindow):
                 "process": None,
                 "status": "Stopped",
                 "color": "#a855f7"  # purple
+            },
+            "whisper_voice": {
+                "name": "Whisper Voice Bridge",
+                "script": "whisper_voice_bridge.py",
+                "sim_capable": False,
+                "desc": "Listens to the PC microphone and uses faster-whisper to transcribe speech in real time. Detected keywords (left / right / fire / stop) are pushed as a Voice_Commands LSL stream.",
+                "process": None,
+                "status": "Stopped",
+                "color": "#f59e0b"  # amber
             }
         }
 
@@ -2347,11 +3087,42 @@ class MasterControlDashboard(QMainWindow):
             lbl = QLabel("IP Interface:")
             lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #94a3b8;")
             sub_panel_layout.addWidget(lbl)
-            
+
             self.ip_combo = QComboBox()
             for label, ip in get_all_local_ips():
                 self.ip_combo.addItem(label, ip)
             sub_panel_layout.addWidget(self.ip_combo)
+            sub_panel_layout.addStretch(1)
+
+        elif key == "whisper_voice":
+            sub_panel.setVisible(True)
+
+            # Mic device selector
+            mic_lbl = QLabel("Microphone:")
+            mic_lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #94a3b8;")
+            sub_panel_layout.addWidget(mic_lbl)
+
+            self.whisper_mic_combo = QComboBox()
+            self.whisper_mic_combo.setMinimumWidth(180)
+            self.whisper_mic_combo.addItem("System Default", None)
+            try:
+                import sounddevice as sd
+                for i, d in enumerate(sd.query_devices()):
+                    if d["max_input_channels"] > 0:
+                        self.whisper_mic_combo.addItem(f"[{i}] {d['name']}", i)
+            except Exception:
+                pass  # sounddevice not yet installed; will show only Default
+            sub_panel_layout.addWidget(self.whisper_mic_combo)
+
+            # Model size selector
+            model_lbl = QLabel("Model:")
+            model_lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #94a3b8; margin-left: 10px;")
+            sub_panel_layout.addWidget(model_lbl)
+
+            self.whisper_model_combo = QComboBox()
+            for m in ["tiny", "base", "small", "medium"]:
+                self.whisper_model_combo.addItem(m, m)
+            sub_panel_layout.addWidget(self.whisper_model_combo)
             sub_panel_layout.addStretch(1)
 
         layout.addWidget(sub_panel)
@@ -2439,6 +3210,17 @@ class MasterControlDashboard(QMainWindow):
         elif key == "phone_bridge":
             selected_ip = self.ip_combo.currentData()
             cmd_args.extend(["--ip", selected_ip])
+            # Auto-provision TLS cert before launch
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            cert_msg = ensure_ssl_cert(base_dir)
+            if cert_msg:
+                self.append_system_log(f"[SSL] {cert_msg}")
+        elif key == "whisper_voice":
+            model = self.whisper_model_combo.currentData()
+            cmd_args.extend(["--model", model])
+            mic_device = self.whisper_mic_combo.currentData()
+            if mic_device is not None:
+                cmd_args.extend(["--input-device", str(mic_device)])
             
         from PyQt6.QtCore import QProcessEnvironment
         process = QProcess()
@@ -2495,6 +3277,9 @@ class MasterControlDashboard(QMainWindow):
                 self.bridge_port_spin.setEnabled(False)
             elif key == "phone_bridge":
                 self.ip_combo.setEnabled(False)
+            elif key == "whisper_voice":
+                self.whisper_mic_combo.setEnabled(False)
+                self.whisper_model_combo.setEnabled(False)
                 
             self.append_system_log(f"Service {s['name']} successfully initialized.")
 
@@ -2512,6 +3297,9 @@ class MasterControlDashboard(QMainWindow):
                 self.bridge_port_spin.setEnabled(True)
             elif key == "phone_bridge":
                 self.ip_combo.setEnabled(True)
+            elif key == "whisper_voice":
+                self.whisper_mic_combo.setEnabled(True)
+                self.whisper_model_combo.setEnabled(True)
                 
             # Log cleanup
             exit_code = s["process"].exitCode()

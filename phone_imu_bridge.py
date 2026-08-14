@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
@@ -9,15 +10,35 @@
 
 import asyncio
 import json
+import logging
+import logging.handlers
 import socket
 import sys
 import threading
 import ssl
 import os
 import subprocess
+import time
 import websockets
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pylsl import StreamInfo, StreamOutlet, cf_float32
+
+# ==========================================
+# CONNECTION LOGGER  (connections.log)
+# ==========================================
+_log_dir = os.path.dirname(os.path.abspath(__file__))
+_log_path = os.path.join(_log_dir, "connections.log")
+
+conn_logger = logging.getLogger("connections")
+conn_logger.setLevel(logging.DEBUG)
+_handler = logging.handlers.RotatingFileHandler(
+    _log_path, maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8"
+)
+_handler.setFormatter(
+    logging.Formatter("%(asctime)s  %(levelname)-8s  %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+)
+conn_logger.addHandler(_handler)
+conn_logger.addHandler(logging.StreamHandler())  # mirror to console as well
 
 # Resolve local IP address to print instructions
 def get_local_ip():
@@ -33,10 +54,10 @@ def get_local_ip():
     return IP
 
 # Setup LSL
-info = StreamInfo("Smartwatch_IMU", "IMU", 8, 100, cf_float32, "phone_imu_bridge_uid777")
+info = StreamInfo("Smartwatch_IMU", "IMU", 7, 100, cf_float32, "phone_imu_bridge_uid777")
 channels = info.desc().append_child("channels")
-labels = ["Acc_X", "Acc_Y", "Acc_Z", "Gyro_X", "Gyro_Y", "Gyro_Z", "Touch", "Voice"]
-units = ["m/s^2", "m/s^2", "m/s^2", "rad/s", "rad/s", "rad/s", "state", "command"]
+labels = ["Acc_X", "Acc_Y", "Acc_Z", "Gyro_X", "Gyro_Y", "Gyro_Z", "Touch"]
+units  = ["m/s^2", "m/s^2", "m/s^2", "rad/s", "rad/s", "rad/s", "state"]
 for lbl, unit in zip(labels, units):
     ch = channels.append_child("channel")
     ch.append_child_value("label", lbl)
@@ -49,15 +70,18 @@ outlet = StreamOutlet(info)
 latest_acc = [0.0, 0.0, 9.81]
 latest_gyro = [0.0, 0.0, 0.0]
 latest_touch = 0.0
-latest_voice = 0.0
 
 async def echo(websocket):
-    global latest_acc, latest_gyro, latest_touch, latest_voice
-    print(f"✅ Phone connected from: {websocket.remote_address}")
+    global latest_acc, latest_gyro, latest_touch
+    remote = websocket.remote_address
+    session_start = time.monotonic()
+    conn_logger.info(f"CONNECT    remote={remote}")
+    print(f"✅ Phone connected from: {remote}")
     first_message = True
     try:
         async for message in websocket:
             if first_message:
+                conn_logger.info(f"FIRST_MSG  remote={remote}  (first sensor data received)")
                 print("📥 First sensor message received from phone!")
                 first_message = False
             data = json.loads(message)
@@ -65,32 +89,18 @@ async def echo(websocket):
             # 1. Custom Web Browser Touch Action
             if "touch" in data:
                 latest_touch = 1.0
-                outlet.push_sample(latest_acc + latest_gyro + [latest_touch, latest_voice])
+                outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
                 latest_touch = 0.0
                 continue
-                
-            # 2. Custom Web Browser Voice Command format
-            elif "voice" in data:
-                cmd = data.get("voice")
-                if cmd == "left":
-                    latest_voice = 99.0
-                elif cmd == "right":
-                    latest_voice = -99.0
-                elif cmd == "fire":
-                    latest_voice = 55.0
-                outlet.push_sample(latest_acc + latest_gyro + [latest_touch, latest_voice])
-                latest_voice = 0.0
-                continue
             
-            # 3. Custom Web Browser direct sensor format
+            # 2. Custom Web Browser direct sensor format
             elif "acc" in data and "gyro" in data:
                 latest_acc = data.get("acc", [0.0, 0.0, 9.81])
                 latest_gyro = data.get("gyro", [0.0, 0.0, 0.0])
-                outlet.push_sample(latest_acc + latest_gyro + [latest_touch, latest_voice])
+                outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
                 latest_touch = 0.0
-                latest_voice = 0.0
             
-            # 4. Third-Party 'Sensor Logger' app format (fallback)
+            # 3. Third-Party 'Sensor Logger' app format (fallback)
             else:
                 payload = data.get("payload", [])
                 for item in payload:
@@ -100,14 +110,19 @@ async def echo(websocket):
                         latest_acc = [values.get("x", 0.0), values.get("y", 0.0), values.get("z", 0.0)]
                     elif name == "gyroscope":
                         latest_gyro = [values.get("x", 0.0), values.get("y", 0.0), values.get("z", 0.0)]
-                outlet.push_sample(latest_acc + latest_gyro + [latest_touch, latest_voice])
+                outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
                 latest_touch = 0.0
-                latest_voice = 0.0
             
     except websockets.exceptions.ConnectionClosed as e:
+        duration = time.monotonic() - session_start
+        conn_logger.info(f"DISCONNECT remote={remote}  reason={e}  duration={duration:.1f}s")
         print(f"🛑 Phone disconnected: {e}")
     except Exception as e:
+        conn_logger.error(f"ERROR      remote={remote}  error={e}")
         print(f"⚠️ Parsing Error: {e}")
+    else:
+        duration = time.monotonic() - session_start
+        conn_logger.info(f"DISCONNECT remote={remote}  reason=stream_ended  duration={duration:.1f}s")
 
 # ==========================================
 # EMBEDDED ZERO-INSTALL MOBILE WEB INTERFACE
@@ -119,263 +134,389 @@ HTML_CONTENT = """<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>📲 BCI Mobile Controller</title>
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
         body {
             background-color: #0b0f19;
             color: #f1f5f9;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ── CONNECT SCREEN ───────────────────────────── */
+        #connectScreen {
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 90vh;
-            user-select: none;
-            overflow: hidden;
+            height: 100vh;
+            padding: 20px;
         }
         .card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 24px;
-            width: 90%;
+            border-radius: 20px;
+            padding: 28px 24px;
+            width: 100%;
             max-width: 380px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
             text-align: center;
         }
         h1 {
             font-size: 22px;
             font-weight: 800;
-            margin-top: 0;
-            color: #38bdf8;
+            margin-bottom: 8px;
             background: linear-gradient(to right, #38bdf8, #818cf8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        p {
+        .subtitle {
             color: #94a3b8;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.5;
-            margin-bottom: 15px;
-        }
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            background-color: #1e293b;
-        }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 8px;
-            background-color: #ef4444; /* red default */
-        }
-        .status-badge.connected .status-dot {
-            background-color: #10b981; /* green */
-            box-shadow: 0 0 8px #10b981;
+            margin-bottom: 20px;
         }
         .btn {
             background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             color: white;
-            padding: 14px 28px;
+            padding: 15px 28px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
-            box-sizing: border-box;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
             transition: all 0.2s ease;
-            margin-top: 5px;
-            margin-bottom: 15px;
         }
-        .btn:active {
-            transform: scale(0.98);
-            opacity: 0.9;
+        .btn:active { transform: scale(0.97); opacity: 0.9; }
+        .btn.stop {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
         }
-        .sensor-vals {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            text-align: left;
-            font-family: monospace;
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 12px;
+            border-radius: 20px;
             font-size: 12px;
-            background: rgba(15, 23, 42, 0.6);
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            margin-top: 15px;
-        }
-        .val-group {
-            margin-bottom: 4px;
-        }
-        .val-label {
-            color: #64748b;
-        }
-        .val-num {
-            color: #cbd5e1;
             font-weight: bold;
+            margin-bottom: 18px;
+            background-color: #1e293b;
+            border: 1px solid rgba(255,255,255,0.06);
         }
-        .voice-section {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background-color: #ef4444;
+        }
+        .status-badge.connected .status-dot {
+            background-color: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ── LANDING ZONE SCREEN ─────────────────────── */
+        #landingScreen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            flex-direction: column;
+            background: #080c14;
+        }
+        #landingScreen.active { display: flex; }
+
+        /* Top HUD bar */
+        #hud {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: rgba(15, 23, 42, 0.9);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-shrink: 0;
+        }
+        #hudStatus {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #10b981;
+        }
+        #hudDot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse-dot 1.5s infinite;
+        }
+        #stopBtn {
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 8px;
+            color: #f87171;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+        #stopBtn:active { opacity: 0.7; }
+
+        /* The big tap zone */
+        #tapZone {
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            background: radial-gradient(ellipse at center, #0f172a 0%, #080c14 70%);
         }
-        #touchPad:active {
-            transform: scale(0.96);
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-            border-color: #38bdf8 !important;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+
+        /* Pulsing ring graphic */
+        .ring-wrap {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(56,189,248,0.35);
+            animation: expand 3s ease-out infinite;
+        }
+        .ring:nth-child(1) { width: 180px; height: 180px; animation-delay: 0s; }
+        .ring:nth-child(2) { width: 180px; height: 180px; animation-delay: 1s; }
+        .ring:nth-child(3) { width: 180px; height: 180px; animation-delay: 2s; }
+        @keyframes expand {
+            0%   { transform: scale(0.4); opacity: 0.8; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+        .tap-inner {
+            width: 90px; height: 90px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(56,189,248,0.25) 0%, rgba(56,189,248,0.05) 70%);
+            border: 2px solid rgba(56,189,248,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 0 30px rgba(56,189,248,0.15);
+            z-index: 1;
+        }
+        .tap-label {
+            margin-top: 24px;
+            font-size: 13px;
+            color: #475569;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+        #tapFeedback {
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #38bdf8;
+            min-height: 20px;
+            opacity: 0;
+            transition: opacity 0.1s;
+            pointer-events: none;
+        }
+
+        /* Ripple on tap */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(56,189,248,0.25);
+            transform: scale(0);
+            animation: ripple-anim 0.6s ease-out forwards;
+            pointer-events: none;
+        }
+        @keyframes ripple-anim {
+            to { transform: scale(6); opacity: 0; }
+        }
+
+        /* Bottom IMU readout */
+        #imuBar {
+            padding: 12px 18px;
+            background: rgba(15, 23, 42, 0.9);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 16px;
+            flex-shrink: 0;
+        }
+        .imu-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-family: monospace;
+            color: #64748b;
+        }
+        .imu-row span { color: #94a3b8; font-weight: bold; }
+        .imu-head {
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>📲 Mobile LSL Streamer</h1>
-        <p>Stream your phone's real-time motion sensors or voice commands directly to LSL.</p>
-        
-        <div class="status-badge" id="statusBadge">
-            <span class="status-dot"></span>
-            <span id="statusText">Disconnected</span>
-        </div>
 
-        <button class="btn" id="actionBtn">Enable Sensors</button>
+    <!-- ── CONNECT SCREEN ─────────────────────────── -->
+    <div id="connectScreen">
+        <div class="card">
+            <h1>📲 Mobile LSL Streamer</h1>
+            <p class="subtitle">Motion sensors streamed live to LSL.<br>
+            <small style="color:#475569;">Voice is handled by the PC — just move!</small></p>
 
-        <!-- Screen TapPad Area -->
-        <div id="touchPad" style="margin: 15px 0; padding: 25px; border-radius: 10px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 1.5px dashed #475569; text-align: center; font-weight: bold; color: #38bdf8; cursor: pointer; user-select: none; -webkit-user-select: none; transition: all 0.15s ease-in-out;">
-            🎯 TOUCH SCREEN ACTIONPAD
-        </div>
-
-        <div class="voice-section">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="voiceToggle" style="width: 18px; height: 18px; cursor: pointer;">
-                <label for="voiceToggle" style="font-size: 13px; color: #94a3b8; cursor: pointer; font-weight: bold;">🗣️ Voice Commands (Speak "Left" / "Right" / "Fire")</label>
+            <div class="status-badge" id="statusBadge">
+                <span class="status-dot"></span>
+                <span id="statusText">Disconnected</span>
             </div>
-            <div id="voiceStatus" style="font-size: 12px; color: #64748b; margin-top: 8px; font-style: italic; min-height: 16px;"></div>
+
+            <button class="btn" id="actionBtn">Enable Sensors</button>
+        </div>
+    </div>
+
+    <!-- ── FULL-SCREEN LANDING ZONE ───────────────── -->
+    <div id="landingScreen">
+
+        <!-- Top HUD -->
+        <div id="hud">
+            <div id="hudStatus">
+                <div id="hudDot"></div>
+                Streaming Live
+            </div>
+            <button id="stopBtn">✕ Stop</button>
         </div>
 
-        <div class="sensor-vals">
+        <!-- Big tap zone -->
+        <div id="tapZone">
+            <div class="ring-wrap">
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="tap-inner">👆</div>
+            </div>
+            <div class="tap-label">Tap anywhere</div>
+            <div id="tapFeedback">TAP!</div>
+        </div>
+
+        <!-- Bottom IMU bar -->
+        <div id="imuBar">
             <div>
-                <div style="font-weight: bold; margin-bottom: 6px; color: #38bdf8;">ACCEL (m/s²)</div>
-                <div class="val-group"><span class="val-label">X:</span> <span class="val-num" id="accX">0.00</span></div>
-                <div class="val-group"><span class="val-label">Y:</span> <span class="val-num" id="accY">0.00</span></div>
-                <div class="val-group"><span class="val-label">Z:</span> <span class="val-num" id="accZ">9.81</span></div>
+                <div class="imu-head" style="color:#38bdf8;">Accel m/s²</div>
+                <div class="imu-row">X <span id="accX">0.00</span></div>
+                <div class="imu-row">Y <span id="accY">0.00</span></div>
+                <div class="imu-row">Z <span id="accZ">9.81</span></div>
             </div>
             <div>
-                <div style="font-weight: bold; margin-bottom: 6px; color: #818cf8;">GYRO (rad/s)</div>
-                <div class="val-group"><span class="val-label">X:</span> <span class="val-num" id="gyroX">0.00</span></div>
-                <div class="val-group"><span class="val-label">Y:</span> <span class="val-num" id="gyroY">0.00</span></div>
-                <div class="val-group"><span class="val-label">Z:</span> <span class="val-num" id="gyroZ">0.00</span></div>
+                <div class="imu-head" style="color:#818cf8;">Gyro rad/s</div>
+                <div class="imu-row">X <span id="gyroX">0.00</span></div>
+                <div class="imu-row">Y <span id="gyroY">0.00</span></div>
+                <div class="imu-row">Z <span id="gyroZ">0.00</span></div>
             </div>
         </div>
+
     </div>
 
     <script>
         const statusBadge = document.getElementById('statusBadge');
-        const statusText = document.getElementById('statusText');
-        const actionBtn = document.getElementById('actionBtn');
-        const voiceToggle = document.getElementById('voiceToggle');
-        const voiceStatus = document.getElementById('voiceStatus');
-        
-        const accX = document.getElementById('accX');
-        const accY = document.getElementById('accY');
-        const accZ = document.getElementById('accZ');
-        
+        const statusText  = document.getElementById('statusText');
+        const actionBtn   = document.getElementById('actionBtn');
+        const connectScreen  = document.getElementById('connectScreen');
+        const landingScreen  = document.getElementById('landingScreen');
+        const tapZone     = document.getElementById('tapZone');
+        const tapFeedback = document.getElementById('tapFeedback');
+        const stopBtn     = document.getElementById('stopBtn');
+
+        const accX  = document.getElementById('accX');
+        const accY  = document.getElementById('accY');
+        const accZ  = document.getElementById('accZ');
         const gyroX = document.getElementById('gyroX');
         const gyroY = document.getElementById('gyroY');
         const gyroZ = document.getElementById('gyroZ');
 
         let ws = null;
         let isStreaming = false;
-        let recognition = null;
+        let feedbackTimer = null;
 
-        // Initialize Web Speech API
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
-
-            recognition.onresult = (event) => {
-                const lastResultIndex = event.results.length - 1;
-                const transcript = event.results[lastResultIndex][0].transcript.trim().toLowerCase();
-                console.log("Speech recognized: ", transcript);
-                voiceStatus.innerText = `Heard: "${transcript}"`;
-                
-                // Clear word after 1.2s
-                setTimeout(() => {
-                    if (voiceStatus.innerText.includes(transcript)) {
-                        voiceStatus.innerText = "Listening...";
-                    }
-                }, 1200);
-
-                if (transcript.includes("left")) {
-                    sendVoiceCommand("left");
-                } else if (transcript.includes("right")) {
-                    sendVoiceCommand("right");
-                } else if (transcript.includes("fire") || transcript.includes("shoot")) {
-                    sendVoiceCommand("fire");
-                }
-            };
-
-            recognition.onstart = () => {
-                voiceStatus.innerText = "Listening...";
-                voiceStatus.style.color = "#38bdf8";
-            };
-
-            recognition.onend = () => {
-                if (voiceToggle.checked) {
-                    recognition.start(); // Auto-restart if toggle remains active
-                } else {
-                    voiceStatus.innerText = "";
-                }
-            };
-
-            recognition.onerror = (err) => {
-                console.error("Speech Recognition Error:", err.error);
-                if (err.error === 'not-allowed') {
-                    alert("Microphone access was denied.");
-                    voiceToggle.checked = false;
-                }
-            };
-        } else {
-            voiceToggle.disabled = true;
-            voiceStatus.innerText = "Voice Recognition not supported in this browser.";
-            voiceStatus.style.color = "#ef4444";
+        // Spawn a ripple at the touch/click coordinates
+        function spawnRipple(x, y) {
+            const size = 80;
+            const el = document.createElement('div');
+            el.className = 'ripple';
+            el.style.cssText = `width:${size}px;height:${size}px;left:${x - size/2}px;top:${y - size/2}px;`;
+            tapZone.appendChild(el);
+            el.addEventListener('animationend', () => el.remove());
         }
 
-        function sendVoiceCommand(cmd) {
+        // Show TAP! flash
+        function flashFeedback() {
+            tapFeedback.style.opacity = '1';
+            clearTimeout(feedbackTimer);
+            feedbackTimer = setTimeout(() => { tapFeedback.style.opacity = '0'; }, 400);
+        }
+
+        function sendTouchTap(x, y) {
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ voice: cmd }));
+                ws.send(JSON.stringify({ touch: "tap" }));
             }
+            spawnRipple(x, y);
+            flashFeedback();
         }
 
-        voiceToggle.addEventListener('change', () => {
-            if (voiceToggle.checked) {
-                if (recognition) {
-                    try {
-                        recognition.start();
-                    } catch (e) {
-                        console.error("Error starting speech:", e);
-                    }
-                }
-            } else {
-                if (recognition) {
-                    recognition.stop();
-                }
-            }
+        // Tap zone — touch events
+        tapZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const t = e.changedTouches[0];
+            const rect = tapZone.getBoundingClientRect();
+            sendTouchTap(t.clientX - rect.left, t.clientY - rect.top);
+        }, { passive: false });
+
+        // Tap zone — mouse fallback (desktop testing)
+        tapZone.addEventListener('click', (e) => {
+            const rect = tapZone.getBoundingClientRect();
+            sendTouchTap(e.clientX - rect.left, e.clientY - rect.top);
         });
+
+        // Stop button in landing zone
+        stopBtn.addEventListener('click', () => {
+            if (ws) ws.close();
+        });
+
+        function showLanding() {
+            connectScreen.style.display = 'none';
+            landingScreen.classList.add('active');
+        }
+
+        function showConnect() {
+            landingScreen.classList.remove('active');
+            connectScreen.style.display = 'flex';
+        }
 
         function connectWS() {
             // Target Secure WS server. If running on standard 443, we map explicitly to 8001/8002 to avoid Windows SMB port collisions
@@ -398,26 +539,16 @@ HTML_CONTENT = """<!DOCTYPE html>
             ws = new WebSocket(wsUrl);
             
             ws.onopen = () => {
-                statusText.innerText = "Connected";
-                statusBadge.className = "status-badge connected";
-                actionBtn.innerText = "Stop Stream";
-                actionBtn.style.background = "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)";
-                actionBtn.style.boxShadow = "0 4px 12px rgba(239, 68, 68, 0.3)";
                 isStreaming = true;
+                showLanding();
             };
             
             ws.onclose = () => {
+                isStreaming = false;
                 statusText.innerText = "Disconnected";
                 statusBadge.className = "status-badge";
-                actionBtn.innerText = "Start Stream";
-                actionBtn.style.background = "linear-gradient(135deg, #0284c7 0%, #4f46e5 100%)";
-                actionBtn.style.boxShadow = "0 4px 12px rgba(79, 70, 229, 0.3)";
-                isStreaming = false;
-                
-                // Stop speech recognition
-                voiceToggle.checked = false;
-                if (recognition) recognition.stop();
-                voiceStatus.innerText = "";
+                actionBtn.innerText = "Enable Sensors";
+                showConnect();
             };
             
             ws.onerror = (err) => {
@@ -447,12 +578,10 @@ HTML_CONTENT = """<!DOCTYPE html>
             gyroZ.innerText = gZ.toFixed(2);
 
             // Send standard IMU payload
-            const packet = {
+            ws.send(JSON.stringify({
                 acc: [acc.x || 0, acc.y || 0, acc.z || 9.81],
                 gyro: [gX, gY, gZ]
-            };
-            
-            ws.send(JSON.stringify(packet));
+            }));
         }
 
         function requestPermissions() {
@@ -477,25 +606,6 @@ HTML_CONTENT = """<!DOCTYPE html>
             }
         }
 
-        const touchPad = document.getElementById('touchPad');
-        
-        function triggerTouchTap() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ touch: "tap" }));
-                console.log("Touch TAP sent to WebSocket");
-            }
-        }
-        
-        // Listen to both click/tap and touch events
-        touchPad.addEventListener('click', (e) => {
-            e.preventDefault();
-            triggerTouchTap();
-        });
-        touchPad.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            triggerTouchTap();
-        });
-
         actionBtn.addEventListener('click', () => {
             if (isStreaming) {
                 if (ws) ws.close();
@@ -517,30 +627,42 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     allow_reuse_address = True
 
 class WebBridgeHTTPHandler(BaseHTTPRequestHandler):
-    def setup(self):
-        ssl_context = getattr(self.server, 'ssl_context', None)
-        if ssl_context:
-            try:
-                # Wrap socket on accept inside the worker thread
-                self.request = ssl_context.wrap_socket(self.request, server_side=True)
-            except Exception as e:
-                print(f"⚠️ SSL Handshake Failed inside request thread: {e}")
-                self.request.close()
-                raise ConnectionAbortedError("SSL Handshake Failed") from e
-        super().setup()
-
     def log_message(self, format, *args):
-        # Suppress spamming request logs in the main console
-        pass
+        client_ip = self.client_address[0] if self.client_address else "unknown"
+        msg = f"WEB_REQUEST client={client_ip} {format % args}"
+        conn_logger.info(msg)
+        print(f"🌐 [HTTPS] {client_ip} -> {format % args}")
 
     def do_GET(self):
+        client_ip = self.client_address[0] if self.client_address else "unknown"
+        conn_logger.info(f"SERVE_UI client={client_ip} path={self.path}")
+
+        if self.path == "/favicon.ico":
+            self.send_response(204)
+            self.end_headers()
+            return
+
+        # Dynamically load mobile_controller.html from disk so HTML/CSS/JS edits are live instantly
+        html_to_serve = HTML_CONTENT
+        html_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mobile_controller.html")
+        if os.path.exists(html_file_path):
+            try:
+                with open(html_file_path, "r", encoding="utf-8") as f:
+                    html_to_serve = f.read()
+            except Exception as e:
+                conn_logger.warning(f"Failed to read mobile_controller.html from disk: {e}")
+
         self.send_response(200)
-        self.send_header("Content-type", "text/html")
+        self.send_header("Content-type", "text/html; charset=utf-8")
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
         self.end_headers()
-        self.wfile.write(HTML_CONTENT.encode("utf-8"))
+        self.wfile.write(html_to_serve.encode("utf-8"))
 
     def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
+        client_ip = self.client_address[0] if self.client_address else "unknown"
+        content_length = int(self.headers.get('Content-Length', 0))
         post_data = self.rfile.read(content_length)
         
         try:
@@ -557,13 +679,14 @@ class WebBridgeHTTPHandler(BaseHTTPRequestHandler):
                     latest_gyro = [values.get("x", 0.0), values.get("y", 0.0), values.get("z", 0.0)]
             
             # Push combined sample to LSL
-            outlet.push_sample(latest_acc + latest_gyro + [latest_touch, latest_voice])
+            outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
             
             self.send_response(200)
             self.send_header("Content-type", "application/json")
             self.end_headers()
             self.wfile.write(b'{"status": "ok"}')
         except Exception as e:
+            conn_logger.error(f"HTTP_POST_ERROR client={client_ip} error={e}")
             print(f"⚠️ HTTP Push Error: {e}")
             self.send_response(400)
             self.end_headers()
@@ -590,6 +713,27 @@ def generate_self_signed_cert(ip_address):
         x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
     ])
 
+    san_list = [
+        x509.DNSName("localhost"),
+        x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
+    ]
+    seen_ips = {"127.0.0.1"}
+    if cert_ip and cert_ip != "0.0.0.0" and cert_ip not in seen_ips:
+        try:
+            san_list.append(x509.IPAddress(ipaddress.IPv4Address(cert_ip)))
+            seen_ips.add(cert_ip)
+        except Exception:
+            pass
+
+    # Also add the primary local IP
+    primary_ip = get_local_ip()
+    if primary_ip not in seen_ips:
+        try:
+            san_list.append(x509.IPAddress(ipaddress.IPv4Address(primary_ip)))
+            seen_ips.add(primary_ip)
+        except Exception:
+            pass
+
     cert = x509.CertificateBuilder().subject_name(
         subject
     ).issuer_name(
@@ -601,13 +745,9 @@ def generate_self_signed_cert(ip_address):
     ).not_valid_before(
         datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)
     ).not_valid_after(
-        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)
+        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=3650)
     ).add_extension(
-        x509.SubjectAlternativeName([
-            x509.DNSName("localhost"),
-            x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
-            x509.IPAddress(ipaddress.IPv4Address(cert_ip))
-        ]),
+        x509.SubjectAlternativeName(san_list),
         critical=False,
     ).add_extension(
         x509.BasicConstraints(ca=True, path_length=None),
@@ -644,8 +784,6 @@ def generate_self_signed_cert(ip_address):
         f.write(cert.public_bytes(serialization.Encoding.PEM))
 
 def start_http_server(ip, port):
-    server = ThreadedHTTPServer((ip, port), WebBridgeHTTPHandler)
-    
     # Always generate self-signed certificate natively on startup to ensure the SAN matches the current IP
     print(f"🔑 Generating self-signed SSL certificate for IP: {ip if ip != '0.0.0.0' else get_local_ip()}...")
     try:
@@ -654,14 +792,17 @@ def start_http_server(ip, port):
     except Exception as e:
         print(f"⚠️ Failed to generate native SSL certificate: {e}")
 
-    # Set the SSL context to be wrapped on connection acceptance
+    server = ThreadedHTTPServer((ip, port), WebBridgeHTTPHandler)
+
+    # Wrap the listener socket directly in TLS
     try:
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain("cert.pem", "key.pem")
-        server.ssl_context = context
+        server.socket = context.wrap_socket(server.socket, server_side=True)
+        print(f"🔒 HTTPS Server SSL socket established on port {port}.")
     except Exception as e:
-        print(f"❌ Error loading SSL certs for HTTP server: {e}. Check if cert.pem/key.pem exist.")
-        
+        print(f"❌ Error wrapping SSL socket for HTTPS server: {e}. Check cert.pem/key.pem.")
+
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     return server

@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📲 BCI Mobile Controller</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #0b0f19;
+            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ── CONNECT SCREEN ───────────────────────────── */
+        #connectScreen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+        h1 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            color: #94a3b8;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 15px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+            transition: all 0.2s ease;
+        }
+        .btn:active { transform: scale(0.97); opacity: 0.9; }
+        .btn.stop {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 18px;
+            background-color: #1e293b;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background-color: #ef4444;
+        }
+        .status-badge.connected .status-dot {
+            background-color: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ── LANDING ZONE SCREEN ─────────────────────── */
+        #landingScreen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            flex-direction: column;
+            background: #080c14;
+        }
+        #landingScreen.active { display: flex; }
+
+        /* Top HUD bar */
+        #hud {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: rgba(15, 23, 42, 0.9);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-shrink: 0;
+        }
+        #hudStatus {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #10b981;
+        }
+        #hudDot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse-dot 1.5s infinite;
+        }
+        #stopBtn {
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.4);
+            border-radius: 8px;
+            color: #f87171;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+        #stopBtn:active { opacity: 0.7; }
+
+        /* The big tap zone */
+        #tapZone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            background: radial-gradient(ellipse at center, #0f172a 0%, #080c14 70%);
+        }
+
+        /* Pulsing ring graphic */
+        .ring-wrap {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(56,189,248,0.35);
+            animation: expand 3s ease-out infinite;
+        }
+        .ring:nth-child(1) { width: 180px; height: 180px; animation-delay: 0s; }
+        .ring:nth-child(2) { width: 180px; height: 180px; animation-delay: 1s; }
+        .ring:nth-child(3) { width: 180px; height: 180px; animation-delay: 2s; }
+        @keyframes expand {
+            0%   { transform: scale(0.4); opacity: 0.8; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+        .tap-inner {
+            width: 90px; height: 90px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(56,189,248,0.25) 0%, rgba(56,189,248,0.05) 70%);
+            border: 2px solid rgba(56,189,248,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 0 30px rgba(56,189,248,0.15);
+            z-index: 1;
+        }
+        .tap-label {
+            margin-top: 24px;
+            font-size: 13px;
+            color: #475569;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+        #tapFeedback {
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #38bdf8;
+            min-height: 20px;
+            opacity: 0;
+            transition: opacity 0.1s;
+            pointer-events: none;
+        }
+
+        /* Ripple on tap */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(56,189,248,0.25);
+            transform: scale(0);
+            animation: ripple-anim 0.6s ease-out forwards;
+            pointer-events: none;
+        }
+        @keyframes ripple-anim {
+            to { transform: scale(6); opacity: 0; }
+        }
+
+        /* Bottom IMU readout */
+        #imuBar {
+            padding: 12px 18px;
+            background: rgba(15, 23, 42, 0.9);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 16px;
+            flex-shrink: 0;
+        }
+        .imu-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-family: monospace;
+            color: #64748b;
+        }
+        .imu-row span { color: #94a3b8; font-weight: bold; }
+        .imu-head {
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── CONNECT SCREEN ─────────────────────────── -->
+    <div id="connectScreen">
+        <div class="card">
+            <h1>📲 Mobile LSL Streamer</h1>
+            <p class="subtitle">Motion sensors streamed live to LSL.<br>
+            <small style="color:#475569;">Voice is handled by the PC — just move!</small></p>
+
+            <div class="status-badge" id="statusBadge">
+                <span class="status-dot"></span>
+                <span id="statusText">Disconnected</span>
+            </div>
+
+            <button class="btn" id="actionBtn">Enable Sensors</button>
+        </div>
+    </div>
+
+    <!-- ── FULL-SCREEN LANDING ZONE ───────────────── -->
+    <div id="landingScreen">
+
+        <!-- Top HUD -->
+        <div id="hud">
+            <div id="hudStatus">
+                <div id="hudDot"></div>
+                Streaming Live
+            </div>
+            <button id="stopBtn">✕ Stop</button>
+        </div>
+
+        <!-- Big tap zone -->
+        <div id="tapZone">
+            <div class="ring-wrap">
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="ring"></div>
+                <div class="tap-inner">👆</div>
+            </div>
+            <div class="tap-label">Tap anywhere</div>
+            <div id="tapFeedback">TAP!</div>
+        </div>
+
+        <!-- Bottom IMU bar -->
+        <div id="imuBar">
+            <div>
+                <div class="imu-head" style="color:#38bdf8;">Accel m/s²</div>
+                <div class="imu-row">X <span id="accX">0.00</span></div>
+                <div class="imu-row">Y <span id="accY">0.00</span></div>
+                <div class="imu-row">Z <span id="accZ">9.81</span></div>
+            </div>
+            <div>
+                <div class="imu-head" style="color:#818cf8;">Gyro rad/s</div>
+                <div class="imu-row">X <span id="gyroX">0.00</span></div>
+                <div class="imu-row">Y <span id="gyroY">0.00</span></div>
+                <div class="imu-row">Z <span id="gyroZ">0.00</span></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const statusBadge = document.getElementById('statusBadge');
+        const statusText  = document.getElementById('statusText');
+        const actionBtn   = document.getElementById('actionBtn');
+        const connectScreen  = document.getElementById('connectScreen');
+        const landingScreen  = document.getElementById('landingScreen');
+        const tapZone     = document.getElementById('tapZone');
+        const tapFeedback = document.getElementById('tapFeedback');
+        const stopBtn     = document.getElementById('stopBtn');
+
+        const accX  = document.getElementById('accX');
+        const accY  = document.getElementById('accY');
+        const accZ  = document.getElementById('accZ');
+        const gyroX = document.getElementById('gyroX');
+        const gyroY = document.getElementById('gyroY');
+        const gyroZ = document.getElementById('gyroZ');
+
+        let ws = null;
+        let isStreaming = false;
+        let feedbackTimer = null;
+
+        // Spawn a ripple at the touch/click coordinates
+        function spawnRipple(x, y) {
+            const size = 80;
+            const el = document.createElement('div');
+            el.className = 'ripple';
+            el.style.cssText = `width:${size}px;height:${size}px;left:${x - size/2}px;top:${y - size/2}px;`;
+            tapZone.appendChild(el);
+            el.addEventListener('animationend', () => el.remove());
+        }
+
+        // Show TAP! flash
+        function flashFeedback() {
+            tapFeedback.style.opacity = '1';
+            clearTimeout(feedbackTimer);
+            feedbackTimer = setTimeout(() => { tapFeedback.style.opacity = '0'; }, 400);
+        }
+
+        function sendTouchTap(x, y) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ touch: "tap" }));
+            }
+            spawnRipple(x, y);
+            flashFeedback();
+        }
+
+        // Tap zone — touch events
+        tapZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const t = e.changedTouches[0];
+            const rect = tapZone.getBoundingClientRect();
+            sendTouchTap(t.clientX - rect.left, t.clientY - rect.top);
+        }, { passive: false });
+
+        // Tap zone — mouse fallback (desktop testing)
+        tapZone.addEventListener('click', (e) => {
+            const rect = tapZone.getBoundingClientRect();
+            sendTouchTap(e.clientX - rect.left, e.clientY - rect.top);
+        });
+
+        // Stop button in landing zone
+        stopBtn.addEventListener('click', () => {
+            if (ws) ws.close();
+        });
+
+        function showLanding() {
+            connectScreen.style.display = 'none';
+            landingScreen.classList.add('active');
+        }
+
+        function showConnect() {
+            landingScreen.classList.remove('active');
+            connectScreen.style.display = 'flex';
+        }
+
+        function connectWS() {
+            // Target Secure WS server. If running on standard 443, we map explicitly to 8001/8002 to avoid Windows SMB port collisions
+            const isHttps = window.location.protocol === 'https:';
+            let basePort = window.location.port ? parseInt(window.location.port) : (isHttps ? 443 : 80);
+
+            let wsPort = 0;
+            if (basePort === 443) {
+                wsPort = isHttps ? 8002 : 8001;
+            } else {
+                wsPort = basePort + (isHttps ? 2 : 1);
+            }
+
+            const protocol = isHttps ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.hostname}:${wsPort}`;
+            
+            statusText.innerText = "Connecting...";
+            statusBadge.className = "status-badge";
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+                isStreaming = true;
+                showLanding();
+            };
+            
+            ws.onclose = () => {
+                isStreaming = false;
+                statusText.innerText = "Disconnected";
+                statusBadge.className = "status-badge";
+                actionBtn.innerText = "Enable Sensors";
+                showConnect();
+            };
+            
+            ws.onerror = (err) => {
+                console.error("WS error:", err);
+            };
+        }
+
+        function handleMotion(event) {
+            if (!isStreaming || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+            const acc = event.accelerationIncludingGravity || { x: 0, y: 0, z: 9.81 };
+            const rot = event.rotationRate || { alpha: 0, beta: 0, gamma: 0 };
+
+            // Update UI feedback values
+            accX.innerText = acc.x ? acc.x.toFixed(2) : "0.00";
+            accY.innerText = acc.y ? acc.y.toFixed(2) : "0.00";
+            accZ.innerText = acc.z ? acc.z.toFixed(2) : "0.00";
+
+            // Convert rotationRate (degrees/sec) to rad/s for standard IMU
+            const toRad = Math.PI / 180;
+            const gX = rot.alpha ? (rot.alpha * toRad) : 0;
+            const gY = rot.beta ? (rot.beta * toRad) : 0;
+            const gZ = rot.gamma ? (rot.gamma * toRad) : 0;
+
+            gyroX.innerText = gX.toFixed(2);
+            gyroY.innerText = gY.toFixed(2);
+            gyroZ.innerText = gZ.toFixed(2);
+
+            // Send standard IMU payload
+            ws.send(JSON.stringify({
+                acc: [acc.x || 0, acc.y || 0, acc.z || 9.81],
+                gyro: [gX, gY, gZ]
+            }));
+        }
+
+        function requestPermissions() {
+            // iOS 13+ requires explicit permissions request callback on user gesture
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            window.addEventListener('devicemotion', handleMotion, true);
+                            connectWS();
+                        } else {
+                            alert('Motion permission is required to stream sensors.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('DeviceMotion permission error:', error);
+                    });
+            } else {
+                // Android / desktop mock browsers
+                window.addEventListener('devicemotion', handleMotion, true);
+                connectWS();
+            }
+        }
+
+        actionBtn.addEventListener('click', () => {
+            if (isStreaming) {
+                if (ws) ws.close();
+            } else {
+                requestPermissions();
+            }
+        });
+    </script>
+</body>
+</html>
