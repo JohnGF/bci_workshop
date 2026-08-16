@@ -82,6 +82,18 @@ def synthesize_missile_sound():
     sound_arr = np.repeat(sound_arr[:, np.newaxis], 2, axis=1)
     return pygame.sndarray.make_sound(sound_arr)
 
+def synthesize_nova_sound():
+    sample_rate = 44100
+    duration = 0.85
+    t = np.linspace(0, duration, int(sample_rate * duration), False)
+    sub = np.sin(2 * np.pi * np.geomspace(180, 30, len(t)) * t) * 0.45
+    noise = (np.random.rand(len(t)) * 2 - 1) * np.exp(-4.5 * t) * 0.4
+    shimmer = np.sin(2 * np.pi * np.geomspace(1200, 300, len(t)) * t) * np.exp(-6 * t) * 0.2
+    val = np.clip((sub + noise + shimmer) * np.exp(-1.8 * t), -1.0, 1.0) * 0.35
+    sound_arr = (val * 32767).astype(np.int16)
+    sound_arr = np.repeat(sound_arr[:, np.newaxis], 2, axis=1)
+    return pygame.sndarray.make_sound(sound_arr)
+
 # ==========================================
 # RETRO PLANE ARCADE GAME
 # ==========================================
@@ -119,16 +131,19 @@ class RetroPlaneGame:
         self.snd_laser = None
         self.snd_explosion = None
         self.snd_missile = None
+        self.snd_nova = None
         if self.audio_enabled:
             try:
                 self.snd_laser = synthesize_laser_sound()
                 self.snd_explosion = synthesize_explosion_sound()
                 self.snd_missile = synthesize_missile_sound()
+                self.snd_nova = synthesize_nova_sound()
             except Exception as e:
                 print(f"Audio Synthesis Warning: {e}. Running mute.")
                 self.snd_laser = None
                 self.snd_explosion = None
                 self.snd_missile = None
+                self.snd_nova = None
 
         # Game state variables
         self.player_x = WINDOW_WIDTH // 2
@@ -139,6 +154,7 @@ class RetroPlaneGame:
         self.health = 100
         self.game_over = False
         self.damage_flash_counter = 0
+        self.nova_flash_counter = 0
         
         # Scrolling Starfield
         self.stars = []
@@ -153,6 +169,7 @@ class RetroPlaneGame:
         self.lasers = []
         self.missiles = []
         self.shockwaves = []
+        self.nova_events = []
         self.enemies = []
         self.particles = []
         
@@ -181,6 +198,7 @@ class RetroPlaneGame:
         self.shockwaves.clear()
         self.enemies.clear()
         self.particles.clear()
+        self.nova_events.clear()
         self.shield_active = False  # clear buff state on game reset
 
     def handle_inputs(self):
@@ -197,8 +215,9 @@ class RetroPlaneGame:
             elif cmd == "focus_shield_off":
                 self.shield_active = False
                 print("🧠 Focus shield deactivated")
-            elif cmd in ("missile", "calm_missile", "voice_fire"):
+            elif cmd in ("missile", "calm_missile", "voice_fire", "fire", "supernova", "nova"):
                 self.fire_missile()
+                self.trigger_supernova()
 
         # 2. Poll window events (quit, resize, key toggles)
         for event in pygame.event.get():
@@ -214,8 +233,11 @@ class RetroPlaneGame:
                 elif event.key == K_t:
                     self.touch_steering_enabled = not self.touch_steering_enabled
                     print(f"🎮 Touch Screen X/Y Steering Mode: {'ENABLED' if self.touch_steering_enabled else 'DISABLED (Tilt Only)'}")
-                elif event.key in (K_m, K_b, K_f):
+                elif event.key in (K_m, K_b):
                     self.fire_missile()
+                elif event.key in (K_f, K_n):
+                    self.fire_missile()
+                    self.trigger_supernova()
             elif event.type == VIDEORESIZE:
                 WINDOW_WIDTH, WINDOW_HEIGHT = event.w, event.h
                 self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | RESIZABLE)
@@ -254,8 +276,9 @@ class RetroPlaneGame:
                         
         if self.input_mgr.is_tert_action():
             if not self.game_over:
-                # Launch Visible Guided Calm Missiles!
+                # Launch Visible Guided Calm Missiles & Supernova Cleansing Wave!
                 self.fire_missile()
+                self.trigger_supernova()
 
         # 4. Continuous tilt steer or direct Touch Screen X/Y steering if connected standalone
         if self.input_mgr.imu_connected and not self.input_mgr.dashboard_controlled:
@@ -304,6 +327,57 @@ class RetroPlaneGame:
             if self.snd_missile:
                 self.snd_missile.play()
             self.damage_flash_counter = 4
+
+    def trigger_supernova(self, origin_x=None, origin_y=None):
+        """Triggers a brilliant full-screen chromatic Supernova blast cleansing all hostiles."""
+        ox = self.player_x if origin_x is None else origin_x
+        oy = (self.player_y - 20) if origin_y is None else origin_y
+
+        # 1. Spawn Supernova entity
+        self.nova_events.append({
+            "x": ox,
+            "y": oy,
+            "radius": 12.0,
+            "max_radius": 1100.0,
+            "expand_speed": 26.0,
+            "alpha": 1.0,
+            "starburst_angles": [random.uniform(0, 2 * math.pi) for _ in range(48)],
+            "banner_timer": 50
+        })
+
+        # 2. Spawn 70 sparkling prismatic particle shards
+        for _ in range(70):
+            angle = random.uniform(0, 2 * math.pi)
+            speed = random.uniform(3.5, 15.0)
+            col = random.choice([
+                (255, 255, 255),  # Pure White
+                (255, 220, 30),   # Radiant Gold
+                (0, 240, 255),    # Electric Cyan
+                (255, 60, 220),   # Neon Magenta
+                (180, 70, 255)    # Violet Core
+            ])
+            self.particles.append({
+                "x": ox,
+                "y": oy,
+                "vx": math.cos(angle) * speed,
+                "vy": math.sin(angle) * speed,
+                "color": col,
+                "alpha": 1.0,
+                "size": random.uniform(3.0, 7.0)
+            })
+
+        # 3. Cleanse all enemies on screen with bonus points
+        if self.enemies:
+            self.score += len(self.enemies) * 35
+            for enemy in self.enemies:
+                self.spawn_particles(enemy["x"], enemy["y"], (255, 215, 0), count=18, speed_max=8.0)
+            self.enemies.clear()
+
+        # 4. Audio synthesis & screen border flash
+        if self.snd_nova:
+            self.snd_nova.play()
+        self.nova_flash_counter = 18
+        self.damage_flash_counter = 6
 
     def spawn_enemy(self):
         self.enemy_spawn_timer += 1
@@ -431,7 +505,24 @@ class RetroPlaneGame:
                     self.score += 25
             if sw["alpha"] <= 0 or sw["radius"] >= sw["max_radius"]:
                 self.shockwaves.remove(sw)
-                star["x"] = random.randint(0, WINDOW_WIDTH)
+
+        # Update Supernova Events
+        for nova in self.nova_events[:]:
+            nova["radius"] += nova["expand_speed"]
+            nova["alpha"] -= 0.024
+            if "banner_timer" in nova and nova["banner_timer"] > 0:
+                nova["banner_timer"] -= 1
+            # Cleanse any enemies entering expanding wave
+            for enemy in self.enemies[:]:
+                if math.hypot(enemy["x"] - nova["x"], enemy["y"] - nova["y"]) < nova["radius"]:
+                    self.enemies.remove(enemy)
+                    self.spawn_particles(enemy["x"], enemy["y"], (255, 215, 0), count=15)
+                    self.score += 25
+            if nova["alpha"] <= 0 or nova["radius"] >= nova["max_radius"]:
+                self.nova_events.remove(nova)
+
+        if self.nova_flash_counter > 0:
+            self.nova_flash_counter -= 1
 
         # Update Lasers
         for laser in self.lasers[:]:
@@ -477,7 +568,6 @@ class RetroPlaneGame:
                 self.damage_flash_counter = 15
                 if self.health <= 0:
                     self.game_over = True
-
 
         # Update Particles
         for p in self.particles[:]:
@@ -530,7 +620,6 @@ class RetroPlaneGame:
                 glVertex2f(px + r * math.cos(angle), py + r * math.sin(angle))
             glEnd()
             glDisable(GL_BLEND)
-
 
     def draw_enemy(self, enemy):
         ex, ey = enemy["x"], enemy["y"]
@@ -622,6 +711,52 @@ class RetroPlaneGame:
         glEnd()
         glDisable(GL_BLEND)
 
+    def draw_supernova(self, n):
+        """Renders radiant multi-ring chromatic Supernova with radial starburst rays and banner."""
+        nx, ny = n["x"], n["y"]
+        r = n["radius"]
+        alpha = max(0.0, min(1.0, n["alpha"]))
+
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        # 1. Radiant Starburst Rays
+        glLineWidth(2.0)
+        glColor4f(1.0, 0.95, 0.5, alpha * 0.75)
+        glBegin(GL_LINES)
+        for angle in n.get("starburst_angles", []):
+            ray_len = min(r * 1.35, 1200.0)
+            glVertex2f(nx, ny)
+            glVertex2f(nx + ray_len * math.cos(angle), ny + ray_len * math.sin(angle))
+        glEnd()
+
+        # 2. Concentric Chromatic Rings
+        chroma_layers = [
+            ((1.0, 1.0, 1.0), 4.5, 0.0),       # Core White Shockwave
+            ((1.0, 0.85, 0.0), 3.5, -20.0),    # Radiant Gold
+            ((0.0, 0.95, 1.0), 3.0, -45.0),    # Electric Cyan
+            ((0.9, 0.2, 1.0), 2.5, -70.0)      # Cosmic Violet
+        ]
+        
+        num_segments = 36
+        for color, width, offset in chroma_layers:
+            curr_r = r + offset
+            if curr_r <= 0:
+                continue
+            glColor4f(color[0], color[1], color[2], alpha * 0.85)
+            glLineWidth(width)
+            glBegin(GL_LINE_LOOP)
+            for i in range(num_segments):
+                theta = 2.0 * math.pi * i / num_segments
+                glVertex2f(nx + curr_r * math.cos(theta), ny + curr_r * math.sin(theta))
+            glEnd()
+
+        glDisable(GL_BLEND)
+
+        # 3. Supernova Cleansing Banner Text
+        if n.get("banner_timer", 0) > 0:
+            self.draw_text("💥 🌟 SUPERNOVA CLEANSING! 🌟 💥", WINDOW_WIDTH // 2 - 195, 95, self.font_title, (255, 230, 0))
+
     def draw_particle(self, p):
         glColor4f(p["color"][0], p["color"][1], p["color"][2], p["alpha"])
         glPointSize(p["size"])
@@ -683,9 +818,9 @@ class RetroPlaneGame:
         
         # Missile Readiness HUD Badge
         if self.missile_cooldown <= 0:
-            self.draw_text("🚀 MISSILES: READY [VOICE 'FIRE' / M]", WINDOW_WIDTH - 360, 48, self.font, (250, 204, 21))
+            self.draw_text("🚀 MISSILES & NOVA: READY [VOICE 'FIRE' / M / F]", WINDOW_WIDTH - 440, 48, self.font, (250, 204, 21))
         else:
-            self.draw_text("🚀 MISSILES: RELOADING...", WINDOW_WIDTH - 300, 48, self.font, (100, 116, 139))
+            self.draw_text("🚀 RELOADING...", WINDOW_WIDTH - 200, 48, self.font, (100, 116, 139))
 
         # 2. Connection HUD
         bci_label = "CTRL MODE: "
@@ -748,6 +883,10 @@ class RetroPlaneGame:
         # Draw Expanding Shockwaves
         for shockwave in self.shockwaves:
             self.draw_shockwave(shockwave)
+
+        # Draw Supernova Events
+        for nova in self.nova_events:
+            self.draw_supernova(nova)
             
         # Draw Enemies
         for enemy in self.enemies:
@@ -761,6 +900,17 @@ class RetroPlaneGame:
             self.draw_text("Tilt / Blink / Space to Restart", WINDOW_WIDTH//2 - 165, WINDOW_HEIGHT//2 + 5, self.font, (148, 163, 184))
 
         self.draw_hud()
+
+        # Render Supernova golden boundary flash
+        if self.nova_flash_counter > 0:
+            glLineWidth(8.0)
+            glColor4f(1.0, 0.85, 0.0, 0.7)
+            glBegin(GL_LINE_LOOP)
+            glVertex2f(0, 0)
+            glVertex2f(WINDOW_WIDTH, 0)
+            glVertex2f(WINDOW_WIDTH, WINDOW_HEIGHT)
+            glVertex2f(0, WINDOW_HEIGHT)
+            glEnd()
 
         # Render damage flash boundary overlay
         if self.damage_flash_counter > 0:
