@@ -166,27 +166,6 @@ class RetroPlaneGame:
         self.game_over = False
         self.damage_flash_counter = 0
         self.nova_flash_counter = 0
-
-    def toggle_fullscreen(self):
-        """Toggles between resizable windowed mode and borderless/hardware fullscreen."""
-        global WINDOW_WIDTH, WINDOW_HEIGHT
-        self.is_fullscreen = not self.is_fullscreen
-        if self.is_fullscreen:
-            self.saved_window_size = (WINDOW_WIDTH, WINDOW_HEIGHT)
-            info = pygame.display.Info()
-            WINDOW_WIDTH, WINDOW_HEIGHT = info.current_w, info.current_h
-            self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | FULLSCREEN)
-        else:
-            WINDOW_WIDTH, WINDOW_HEIGHT = self.saved_window_size
-            self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | RESIZABLE)
-
-        glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, -1, 1)
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        print(f"🖥️ Display Mode: {'FULLSCREEN' if self.is_fullscreen else 'WINDOWED'} ({WINDOW_WIDTH}x{WINDOW_HEIGHT})")
         
         # Scrolling Starfield
         self.stars = []
@@ -215,6 +194,27 @@ class RetroPlaneGame:
         self.shield_active = False        # High Focus → halves incoming damage
         self.spread_buff_active = False   # Laser Spread Buff → fires 3-way multi-lasers on primary attack
         # ─────────────────────────────────────────────────────────────────────
+
+    def toggle_fullscreen(self):
+        """Toggles between resizable windowed mode and borderless/hardware fullscreen."""
+        global WINDOW_WIDTH, WINDOW_HEIGHT
+        self.is_fullscreen = not self.is_fullscreen
+        if self.is_fullscreen:
+            self.saved_window_size = (WINDOW_WIDTH, WINDOW_HEIGHT)
+            info = pygame.display.Info()
+            WINDOW_WIDTH, WINDOW_HEIGHT = info.current_w, info.current_h
+            self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | FULLSCREEN)
+        else:
+            WINDOW_WIDTH, WINDOW_HEIGHT = self.saved_window_size
+            self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | RESIZABLE)
+
+        glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, -1, 1)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+        print(f"🖥️ Display Mode: {'FULLSCREEN' if self.is_fullscreen else 'WINDOWED'} ({WINDOW_WIDTH}x{WINDOW_HEIGHT})")
 
     def reset_game(self):
         self.player_x = WINDOW_WIDTH // 2
