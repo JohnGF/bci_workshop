@@ -603,8 +603,10 @@ async def main():
 
         if args.port == 443:
             ws_port_insecure, ws_port_secure = 8001, 8002
+            https_port = 8443
         else:
             ws_port_insecure, ws_port_secure = args.port + 1, args.port + 2
+            https_port = args.port + 443 if args.port < 8000 else 8443
 
         apk_url = "https://github.com/JohnGF/galaxy_watch_lsl/releases/download/v1.0.0/app-release-unsigned.apk"
         apk_png_path = save_qr_code_png(apk_url, "apk_qr.png")
@@ -612,11 +614,18 @@ async def main():
         print("📷 QR CODE PNG IMAGES:")
         if apk_png_path:
             print(f"  - App APK Download QR Code Image : {apk_png_path}")
-            print("  - Launching APK QR code in default image viewer...")
-            open_image_in_viewer(apk_png_path)
-        print("==================================================")
 
         start_http_server(args.ip, args.port, ssl_context)
+
+        print("🚀 SERVERS ONLINE & LISTENING:")
+        print(f"  📱 Mobile Web Controller (HTTP):  http://{display_ip}:{args.port}")
+        if ssl_context:
+            print(f"  🔒 Secure Web Controller (HTTPS): https://{display_ip}:{https_port}")
+        print(f"  🔌 Sensor Logger WebSocket (WS):   ws://{display_ip}:{ws_port_insecure}")
+        if ssl_context:
+            print(f"  🔐 Secure Mobile WebSocket (WSS):  wss://{display_ip}:{ws_port_secure}")
+        print("==================================================")
+        print(f"⌛ Bridge is active and waiting for phone sensor stream...\n")
 
         async with websockets.serve(echo, args.ip, ws_port_insecure, reuse_address=True):
             if ssl_context is not None:
@@ -629,6 +638,7 @@ async def main():
     else:
         # Watch UDP mode only
         print("==================================================")
+        print(f"⌛ Galaxy Watch UDP listener active on port {args.udp_port}. Waiting for packets...\n")
         await asyncio.Future()
 
 
