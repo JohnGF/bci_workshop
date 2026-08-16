@@ -13,6 +13,7 @@ import sys
 import time
 import math
 import random
+import argparse
 import threading
 import numpy as np
 import pygame
@@ -98,7 +99,8 @@ def synthesize_nova_sound():
 # RETRO PLANE ARCADE GAME
 # ==========================================
 class RetroPlaneGame:
-    def __init__(self):
+    def __init__(self, fullscreen=False):
+        global WINDOW_WIDTH, WINDOW_HEIGHT
         pygame.init()
         self.audio_enabled = False
         try:
@@ -107,7 +109,16 @@ class RetroPlaneGame:
         except pygame.error as e:
             print(f"Warning: Audio device not found ({e}). Running without audio.")
         
-        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | RESIZABLE)
+        self.is_fullscreen = False
+        self.saved_window_size = (WINDOW_WIDTH, WINDOW_HEIGHT)
+        
+        flags = DOUBLEBUF | OPENGL | (FULLSCREEN if fullscreen else RESIZABLE)
+        if fullscreen:
+            info = pygame.display.Info()
+            WINDOW_WIDTH, WINDOW_HEIGHT = info.current_w, info.current_h
+            self.is_fullscreen = True
+
+        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), flags)
         pygame.display.set_caption("🎮 OpenGL BCI Retro Fighter Jet")
         
         if not opengl_available:
@@ -155,6 +166,27 @@ class RetroPlaneGame:
         self.game_over = False
         self.damage_flash_counter = 0
         self.nova_flash_counter = 0
+
+    def toggle_fullscreen(self):
+        """Toggles between resizable windowed mode and borderless/hardware fullscreen."""
+        global WINDOW_WIDTH, WINDOW_HEIGHT
+        self.is_fullscreen = not self.is_fullscreen
+        if self.is_fullscreen:
+            self.saved_window_size = (WINDOW_WIDTH, WINDOW_HEIGHT)
+            info = pygame.display.Info()
+            WINDOW_WIDTH, WINDOW_HEIGHT = info.current_w, info.current_h
+            self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | FULLSCREEN)
+        else:
+            WINDOW_WIDTH, WINDOW_HEIGHT = self.saved_window_size
+            self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | RESIZABLE)
+
+        glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, -1, 1)
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+        print(f"🖥️ Display Mode: {'FULLSCREEN' if self.is_fullscreen else 'WINDOWED'} ({WINDOW_WIDTH}x{WINDOW_HEIGHT})")
         
         # Scrolling Starfield
         self.stars = []
@@ -225,6 +257,8 @@ class RetroPlaneGame:
             elif cmd in ("toggle_spread_buff", "spread_buff", "spread"):
                 self.spread_buff_active = not self.spread_buff_active
                 print(f"🔥 Spread Cannon Buff: {'ACTIVATED' if self.spread_buff_active else 'DEACTIVATED'}")
+            elif cmd in ("fullscreen", "toggle_fullscreen"):
+                self.toggle_fullscreen()
             elif cmd in ("missile", "calm_missile", "voice_missile"):
                 self.fire_missile()
             elif cmd in ("supernova", "nova", "voice_fire", "fire", "tert_action"):
@@ -238,9 +272,14 @@ class RetroPlaneGame:
                 sys.exit()
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
-                    self.input_mgr.running = False
-                    pygame.quit()
-                    sys.exit()
+                    if self.is_fullscreen:
+                        self.toggle_fullscreen()
+                    else:
+                        self.input_mgr.running = False
+                        pygame.quit()
+                        sys.exit()
+                elif event.key == K_F11 or (event.key == K_RETURN and (event.mod & KMOD_ALT)):
+                    self.toggle_fullscreen()
                 elif event.key == K_t:
                     self.touch_steering_enabled = not self.touch_steering_enabled
                     print(f"🎮 Touch Screen X/Y Steering Mode: {'ENABLED' if self.touch_steering_enabled else 'DISABLED (Tilt Only)'}")
@@ -442,12 +481,6 @@ class RetroPlaneGame:
             if star["y"] > WINDOW_HEIGHT:
                 star["y"] = 0
                 star["x"] = random.randint(0, WINDOW_WIDTH)
-
-        # Update Lasers
-        for laser in self.lasers[:]:
-            laser["y"] -= 9.5
-            if laser["y"] < 0:
-                self.lasers.remove(laser)
 
         # Update Guided Missiles
         for m in self.missiles[:]:
@@ -858,7 +891,7 @@ class RetroPlaneGame:
         else:
             self.draw_text("🚀 RELOADING...", WINDOW_WIDTH - 200, 48, self.font, (100, 116, 139))
 
-        # 2. Connection HUD
+        # 2. Connection HUD & Control Hotkeys
         bci_label = "CTRL MODE: "
         if self.input_mgr.dashboard_controlled:
             bci_label += "DASHBOARD REDIRECT (main.py)"
@@ -872,10 +905,11 @@ class RetroPlaneGame:
             bci_label += ", ".join(nodes) if nodes else "KEYBOARD CONTROL"
             b_color = (34, 197, 94) if nodes else (239, 68, 68)
             
-        self.draw_text(bci_label, 20, 560, self.font, b_color)
-        if self.input_mgr.imu_connected:
-            hint = "[T]: Toggle Touch X/Y vs Tilt Mode"
-            self.draw_text(hint, WINDOW_WIDTH - 260, 560, self.font, (148, 163, 184))
+        hud_bottom_y = WINDOW_HEIGHT - 35
+        self.draw_text(bci_label, 20, hud_bottom_y, self.font, b_color)
+        
+        hints = "[F11]: Fullscreen  |  [T]: Touch/Tilt  |  [X]: Spread  |  [F]: Nova"
+        self.draw_text(hints, WINDOW_WIDTH - 620, hud_bottom_y, self.font, (148, 163, 184))
 
         # 3. BCI Cognitive Buff Status
         buff_y = 55
@@ -984,5 +1018,8 @@ class RetroPlaneGame:
             self.clock.tick(FPS)
 
 if __name__ == "__main__":
-    game = RetroPlaneGame()
+    parser = argparse.ArgumentParser(description="Retro Fighter Jet BCI Arcade Game")
+    parser.add_argument("--fullscreen", "-f", action="store_true", help="Launch in fullscreen mode")
+    args = parser.parse_args()
+    game = RetroPlaneGame(fullscreen=args.fullscreen)
     game.run()
