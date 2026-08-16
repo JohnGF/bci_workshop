@@ -380,6 +380,69 @@ def start_http_server(ip, port, ssl_context=None):
 
 
 # ==========================================
+# UDP LISTENER (Galaxy Watch & Custom Android UDP)
+# ==========================================
+async def start_udp_listener(host, port):
+    global latest_acc, latest_gyro, latest_touch
+    loop = asyncio.get_running_loop()
+
+    class SensorUdpProtocol(asyncio.DatagramProtocol):
+        def __init__(self):
+            super().__init__()
+            self.first_packet = True
+
+        def datagram_received(self, data, addr):
+            global latest_acc, latest_gyro, latest_touch
+            if self.first_packet:
+                conn_logger.info(f"UDP_FIRST_MSG remote={addr} (first UDP sensor packet received)")
+                print(f"📥 First UDP sensor packet received from {addr}!")
+                self.first_packet = False
+            try:
+                text = data.decode("utf-8", errors="ignore").strip()
+                # 1. JSON UDP packet
+                if text.startswith("{"):
+                    try:
+                        p = json.loads(text)
+                        if "acc" in p and "gyro" in p:
+                            latest_acc = p["acc"]
+                            latest_gyro = p["gyro"]
+                            outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
+                            return
+                        elif "accel" in p and "gyro" in p:
+                            latest_acc = p["accel"]
+                            latest_gyro = p["gyro"]
+                            outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
+                            return
+                    except Exception:
+                        pass
+
+                # 2. CSV format: accelX,accelY,accelZ,gyroX,gyroY,gyroZ,[hr],[touchX],[touchY],[isTouched]
+                parts = [float(p) for p in text.split(",") if p.strip()]
+                if len(parts) >= 6:
+                    latest_acc = parts[0:3]
+                    latest_gyro = parts[3:6]
+                    if len(parts) >= 10:
+                        is_touched = parts[9]
+                        latest_touch = 1.0 if is_touched >= 1.0 else 0.0
+                    outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
+                    latest_touch = 0.0
+            except Exception as e:
+                conn_logger.error(f"UDP_PARSE_ERROR remote={addr} error={e}")
+
+    try:
+        transport, protocol = await loop.create_datagram_endpoint(
+            lambda: SensorUdpProtocol(),
+            local_addr=(host, port)
+        )
+        conn_logger.info(f"UDP_LISTEN bound={host}:{port}")
+        print(f"📡 UDP Sensor Receiver active on port {port}")
+        return transport
+    except Exception as e:
+        print(f"⚠️ Could not bind UDP port {port}: {e}")
+        return None
+
+
+# ==========================================
 # MAIN EXECUTION LOOP
 # ==========================================
 async def main():
@@ -387,6 +450,7 @@ async def main():
     parser = argparse.ArgumentParser(description="Phone IMU LSL Bridge")
     parser.add_argument("--ip", type=str, default="0.0.0.0", help="IP address to bind the WebSocket/HTTP servers to")
     parser.add_argument("--port", type=int, default=8000, help="HTTP Server Port (WebSockets runs on port+1 and port+2)")
+    parser.add_argument("--udp-port", type=int, default=5005, help="UDP Port for custom Android / Watch streaming")
     args, _ = parser.parse_known_args()
 
     display_ip = args.ip if args.ip != "0.0.0.0" else get_local_ip()
@@ -399,9 +463,12 @@ async def main():
         ws_port_secure = args.port + 2
 
     # Automatic cleanup of stale zombie instances
-    stale_pids = kill_stale_processes("phone_imu_bridge.py", ports=[args.port, ws_port_insecure, ws_port_secure])
+    stale_pids = kill_stale_processes("phone_imu_bridge.py", ports=[args.port, ws_port_insecure, ws_port_secure, args.udp_port])
     if stale_pids:
         print(f"🧹 Cleaned up {len(stale_pids)} stale background process(es) (PIDs: {stale_pids})")
+
+    # Start UDP listener for custom Android / Watch streaming
+    await start_udp_listener(args.ip, args.udp_port)
 
     # Generate fresh self-signed SSL certificate matching current IP
     try:
@@ -427,21 +494,17 @@ async def main():
     print("==================================================")
     print("📲 Dual-Protocol Phone IMU LSL Bridge Active")
     print("==================================================")
-    print("Option A: ZERO INSTALL (Mobile Web Controller)")
-    print(f"  1. Open on your phone:  https://{display_ip}:{args.port}")
-    print("  2. Tap Advanced -> Proceed to accept self-signed SSL.")
-    print("  3. Tap 'Enable Sensors' to begin streaming.")
+    print(f"Option A: ZERO INSTALL (Mobile Web Controller)")
+    print(f"  - Open on phone: https://{display_ip}:{args.port}")
     print("--------------------------------------------------")
-    print("Option B: CUSTOM ANDROID APP (/android-imu-streamer)")
-    print(f"  - Set URL to:  ws://{display_ip}:{ws_port_insecure}")
-    print("  - Tap 'Connect' to stream IMU orientation.")
+    print(f"Option B: CUSTOM UDP ANDROID APP (UDP Broadcast)")
+    print(f"  - Destination IP:   {display_ip}")
+    print(f"  - Destination Port: {args.udp_port}")
     print("--------------------------------------------------")
-    print("Option C: THIRD-PARTY APP (Sensor Logger)")
-    print("  - In Settings -> Live Data Streaming (WebSockets):")
-    print(f"  - Set URL to:  ws://{display_ip}:{ws_port_insecure}")
-    print("  - Tap 'Start' to begin streaming.")
+    print(f"Option C: WEBSOCKET APPS (Sensor Logger / Custom WS)")
+    print(f"  - Set URL to: ws://{display_ip}:{ws_port_insecure}")
     print("==================================================")
-    print(f"⌛ Listening for Insecure WS (ws://{display_ip}:{ws_port_insecure}) and Secure WSS (wss://{display_ip}:{ws_port_secure})...")
+    print(f"⌛ Listening for UDP packets on port {args.udp_port} & WebSockets on port {ws_port_insecure}...")
 
     # Start both WebSocket servers concurrently
     insecure_server = websockets.serve(echo, args.ip, ws_port_insecure, reuse_address=True)
