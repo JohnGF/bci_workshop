@@ -215,8 +215,9 @@ class RetroPlaneGame:
             elif cmd == "focus_shield_off":
                 self.shield_active = False
                 print("🧠 Focus shield deactivated")
-            elif cmd in ("missile", "calm_missile", "voice_fire", "fire", "supernova", "nova"):
+            elif cmd in ("missile", "calm_missile", "voice_missile"):
                 self.fire_missile()
+            elif cmd in ("supernova", "nova", "voice_fire", "fire", "tert_action"):
                 self.trigger_supernova()
 
         # 2. Poll window events (quit, resize, key toggles)
@@ -236,7 +237,6 @@ class RetroPlaneGame:
                 elif event.key in (K_m, K_b):
                     self.fire_missile()
                 elif event.key in (K_f, K_n):
-                    self.fire_missile()
                     self.trigger_supernova()
             elif event.type == VIDEORESIZE:
                 WINDOW_WIDTH, WINDOW_HEIGHT = event.w, event.h
@@ -276,8 +276,7 @@ class RetroPlaneGame:
                         
         if self.input_mgr.is_tert_action():
             if not self.game_over:
-                # Launch Visible Guided Calm Missiles & Supernova Cleansing Wave!
-                self.fire_missile()
+                # Supernova Cleansing Blast!
                 self.trigger_supernova()
 
         # 4. Continuous tilt steer or direct Touch Screen X/Y steering if connected standalone

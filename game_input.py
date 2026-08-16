@@ -211,8 +211,11 @@ class GameInputManager:
         code_to_cmd = {
             99.0: "left",
             -99.0: "right",
-            55.0: "action",
-            11.0: "action",
+            55.0: "supernova",
+            66.0: "missile",
+            44.0: "action",
+            33.0: "sec_action",
+            11.0: "toggle_start",
         }
         while self.running:
             if self.dashboard_controlled:

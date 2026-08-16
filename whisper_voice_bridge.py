@@ -73,12 +73,19 @@ log = logging.getLogger("whisper_bridge")
 # KEYWORD → COMMAND CODE MAP
 # ==========================================
 KEYWORD_MAP: dict[str, float] = {
-    "left":   99.0,
-    "right": -99.0,
-    "fire":   55.0,
-    "shoot":  55.0,   # alias for fire
-    "stop":   11.0,
-    "pause":  11.0,   # alias for stop
+    "left":      99.0,
+    "right":    -99.0,
+    "fire":      55.0,   # Supernova / Cleansing Blast
+    "nova":      55.0,
+    "supernova": 55.0,
+    "bomb":      55.0,
+    "missile":   66.0,   # Guided Homing Missiles
+    "rocket":    66.0,
+    "laser":     44.0,   # Primary Cannon
+    "shoot":     44.0,
+    "spread":    33.0,   # Secondary Double Spread
+    "stop":      11.0,
+    "pause":     11.0,
 }
 
 SAMPLE_RATE = 16_000   # Whisper expects 16 kHz mono

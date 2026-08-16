@@ -348,6 +348,49 @@ class LSLResolverThread(QThread):
 
 
 # ==========================================
+# ASYNCHRONOUS VOICE COMMANDS LSL LISTENER
+# ==========================================
+class VoiceCommandsListenerThread(QThread):
+    command_received = pyqtSignal(str, float) # (trigger_name, code)
+
+    def __init__(self):
+        super().__init__()
+        self.running = True
+
+    def run(self):
+        code_to_trigger = {
+            99.0: "Voice Command 'Left'",
+            -99.0: "Voice Command 'Right'",
+            55.0: "Voice Command 'Fire'",
+            66.0: "Voice Command 'Missile'",
+            44.0: "Voice Command 'Fire'",
+            33.0: "Voice Command 'Right'",
+            11.0: "Voice Command 'Fire'"
+        }
+        while self.running:
+            try:
+                streams = resolve_byprop("name", "Voice_Commands", timeout=1.5)
+                if streams:
+                    inlet = StreamInlet(streams[0])
+                    while self.running:
+                        samples, _ = inlet.pull_chunk(max_samples=10, timeout=0.2)
+                        if samples:
+                            for s in samples:
+                                code = float(s[0])
+                                trigger_name = code_to_trigger.get(code)
+                                if trigger_name:
+                                    self.command_received.emit(trigger_name, code)
+                                elif 50.0 <= code <= 60.0:
+                                    self.command_received.emit("Voice Command 'Fire'", code)
+            except Exception:
+                time.sleep(1.0)
+            time.sleep(1.0)
+
+    def stop(self):
+        self.running = False
+
+
+# ==========================================
 # BASE CLASS FOR LSL TELEMETRY TABS
 # ==========================================
 class LSLTabBase(QWidget):
@@ -1978,9 +2021,10 @@ class BCIControllerMappingWidget(QWidget):
             "Move Right (right)",
             "Move Up (up)",
             "Move Down (down)",
-            "Primary Action (Fire / Pause)",
-            "Secondary Action (Spread / Food)",
-            "Launch Guided Missile (Smart Bomb / Homing Rockets)"
+            "Primary Action (Laser Cannon)",
+            "Secondary Action (Double Laser Spread)",
+            "Launch Guided Missiles (Rockets)",
+            "Supernova Cleansing Blast (Nova Screen Wipe)"
         ]
 
         self.action_value_map = {
@@ -1989,9 +2033,10 @@ class BCIControllerMappingWidget(QWidget):
             "Move Right (right)": "right",
             "Move Up (up)": "up",
             "Move Down (down)": "down",
-            "Primary Action (Fire / Pause)": "action",
-            "Secondary Action (Spread / Food)": "sec_action",
-            "Launch Guided Missile (Smart Bomb / Homing Rockets)": "tert_action"
+            "Primary Action (Laser Cannon)": "action",
+            "Secondary Action (Double Laser Spread)": "sec_action",
+            "Launch Guided Missiles (Rockets)": "missile",
+            "Supernova Cleansing Blast (Nova Screen Wipe)": "supernova"
         }
 
         # Value to combo item text lookup
@@ -2003,12 +2048,15 @@ class BCIControllerMappingWidget(QWidget):
             "right": "Move Right (right)",
             "up": "Move Up (up)",
             "down": "Move Down (down)",
-            "action": "Primary Action (Fire / Pause)",
-            "sec_action": "Secondary Action (Spread / Food)",
-            "sec": "Secondary Action (Spread / Food)",
-            "tert_action": "Launch Guided Missile (Smart Bomb / Homing Rockets)",
-            "tert": "Launch Guided Missile (Smart Bomb / Homing Rockets)",
-            "missile": "Launch Guided Missile (Smart Bomb / Homing Rockets)"
+            "action": "Primary Action (Laser Cannon)",
+            "sec_action": "Secondary Action (Double Laser Spread)",
+            "sec": "Secondary Action (Double Laser Spread)",
+            "missile": "Launch Guided Missiles (Rockets)",
+            "calm_missile": "Launch Guided Missiles (Rockets)",
+            "supernova": "Supernova Cleansing Blast (Nova Screen Wipe)",
+            "nova": "Supernova Cleansing Blast (Nova Screen Wipe)",
+            "tert_action": "Supernova Cleansing Blast (Nova Screen Wipe)",
+            "tert": "Supernova Cleansing Blast (Nova Screen Wipe)"
         }
 
         # All available trigger inputs
@@ -2029,15 +2077,16 @@ class BCIControllerMappingWidget(QWidget):
             "Phone Shake",
             "Voice Command 'Left'",
             "Voice Command 'Right'",
+            "Voice Command 'Missile'",
             "Voice Command 'Fire'"
         ]
 
         # Default mapping per input trigger
         default_trigger_actions = {
-            "Muse Eye Blink": "Launch Guided Missile (Smart Bomb / Homing Rockets)",
+            "Muse Eye Blink": "Supernova Cleansing Blast (Nova Screen Wipe)",
             "Muse Jaw Clench": "Disabled (None)",
             "Muse High Focus": "Disabled (None)",
-            "Muse Deep Calm": "Disabled (None)",
+            "Muse Deep Calm": "Launch Guided Missiles (Rockets)",
             "Phone Tilt Left": "Move Left (left)",
             "Phone Tilt Right": "Move Right (right)",
             "Phone Tilt Forward": "Move Up (up)",
@@ -2046,11 +2095,12 @@ class BCIControllerMappingWidget(QWidget):
             "Phone Flick Right": "Disabled (None)",
             "Phone Flick Up": "Disabled (None)",
             "Phone Flick Down": "Disabled (None)",
-            "Phone Screen Tap": "Primary Action (Fire / Pause)",
-            "Phone Shake": "Secondary Action (Spread / Food)",
+            "Phone Screen Tap": "Primary Action (Laser Cannon)",
+            "Phone Shake": "Secondary Action (Double Laser Spread)",
             "Voice Command 'Left'": "Move Left (left)",
             "Voice Command 'Right'": "Move Right (right)",
-            "Voice Command 'Fire'": "Launch Guided Missile (Smart Bomb / Homing Rockets)"
+            "Voice Command 'Missile'": "Launch Guided Missiles (Rockets)",
+            "Voice Command 'Fire'": "Supernova Cleansing Blast (Nova Screen Wipe)"
         }
 
         self.input_map_combos = {}
@@ -2927,6 +2977,11 @@ class MasterControlDashboard(QMainWindow):
         self.apply_theme()
         self.init_ui()
 
+        # Start Voice Commands LSL background listener thread
+        self.voice_listener = VoiceCommandsListenerThread()
+        self.voice_listener.command_received.connect(self.handle_voice_command)
+        self.voice_listener.start()
+
     def apply_theme(self):
         self.setStyleSheet("""
             QMainWindow {
@@ -3533,7 +3588,29 @@ class MasterControlDashboard(QMainWindow):
     def send_command_to_snake_game(self, cmd):
         if hasattr(self, "snake_process") and self.snake_process and self.snake_process.state() == QProcess.ProcessState.Running:
             self.snake_process.write(f"{cmd}\n".encode())
-            self.append_system_log(f"Forwarded BCI command '{cmd}' to Snake Game stdin")
+            self.append_system_log(f"Forwarded BCI command '{cmd}' to Game stdin")
+
+    def handle_voice_command(self, trigger_name, code):
+        cmd = self.get_trigger_action(trigger_name)
+        if cmd:
+            self.send_command_to_snake_game(cmd)
+            self.append_system_log(f"🗣️ Voice Trigger: {trigger_name} (code={code}) → Game Action: '{cmd}'")
+        else:
+            # Fallback action defaults if not explicitly mapped
+            if "Fire" in trigger_name:
+                self.send_command_to_snake_game("supernova")
+                self.append_system_log(f"🗣️ Voice Trigger: 'Fire' (code={code}) → Supernova Cleansing Wave")
+            elif "Missile" in trigger_name:
+                self.send_command_to_snake_game("missile")
+                self.append_system_log(f"🗣️ Voice Trigger: 'Missile' (code={code}) → Guided Missiles")
+            elif "Left" in trigger_name:
+                self.send_command_to_snake_game("left")
+                self.append_system_log(f"🗣️ Voice Trigger: 'Left' (code={code}) → Steer Left")
+            elif "Right" in trigger_name:
+                self.send_command_to_snake_game("right")
+                self.append_system_log(f"🗣️ Voice Trigger: 'Right' (code={code}) → Steer Right")
+        if hasattr(self, "mapping_tab") and self.mapping_tab:
+            self.mapping_tab.flash_indicator(trigger_name)
 
     def get_trigger_action(self, source_input):
         """Returns the game command mapped to the given input source."""
