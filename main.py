@@ -1980,7 +1980,7 @@ class BCIControllerMappingWidget(QWidget):
             "Move Down (down)",
             "Primary Action (Fire / Pause)",
             "Secondary Action (Spread / Food)",
-            "Tertiary Action (Smart Bomb / Color)"
+            "Launch Guided Missile (Smart Bomb / Homing Rockets)"
         ]
 
         self.action_value_map = {
@@ -1991,7 +1991,7 @@ class BCIControllerMappingWidget(QWidget):
             "Move Down (down)": "down",
             "Primary Action (Fire / Pause)": "action",
             "Secondary Action (Spread / Food)": "sec_action",
-            "Tertiary Action (Smart Bomb / Color)": "tert_action"
+            "Launch Guided Missile (Smart Bomb / Homing Rockets)": "tert_action"
         }
 
         # Value to combo item text lookup
@@ -2006,8 +2006,9 @@ class BCIControllerMappingWidget(QWidget):
             "action": "Primary Action (Fire / Pause)",
             "sec_action": "Secondary Action (Spread / Food)",
             "sec": "Secondary Action (Spread / Food)",
-            "tert_action": "Tertiary Action (Smart Bomb / Color)",
-            "tert": "Tertiary Action (Smart Bomb / Color)"
+            "tert_action": "Launch Guided Missile (Smart Bomb / Homing Rockets)",
+            "tert": "Launch Guided Missile (Smart Bomb / Homing Rockets)",
+            "missile": "Launch Guided Missile (Smart Bomb / Homing Rockets)"
         }
 
         # All available trigger inputs
@@ -2033,7 +2034,7 @@ class BCIControllerMappingWidget(QWidget):
 
         # Default mapping per input trigger
         default_trigger_actions = {
-            "Muse Eye Blink": "Tertiary Action (Smart Bomb / Color)",
+            "Muse Eye Blink": "Launch Guided Missile (Smart Bomb / Homing Rockets)",
             "Muse Jaw Clench": "Disabled (None)",
             "Muse High Focus": "Disabled (None)",
             "Muse Deep Calm": "Disabled (None)",
@@ -2047,9 +2048,9 @@ class BCIControllerMappingWidget(QWidget):
             "Phone Flick Down": "Disabled (None)",
             "Phone Screen Tap": "Primary Action (Fire / Pause)",
             "Phone Shake": "Secondary Action (Spread / Food)",
-            "Voice Command 'Left'": "Disabled (None)",
-            "Voice Command 'Right'": "Disabled (None)",
-            "Voice Command 'Fire'": "Disabled (None)"
+            "Voice Command 'Left'": "Move Left (left)",
+            "Voice Command 'Right'": "Move Right (right)",
+            "Voice Command 'Fire'": "Launch Guided Missile (Smart Bomb / Homing Rockets)"
         }
 
         self.input_map_combos = {}
@@ -2806,7 +2807,10 @@ class BCIControllerMappingWidget(QWidget):
             set_mapping("Phone Flick Down", "Move Down (down)")
             set_mapping("Phone Screen Tap", "Primary Action (Fire / Pause)")
             set_mapping("Muse Eye Blink", "Secondary Action (Spread / Food)")
-            set_mapping("Muse Jaw Clench", "Tertiary Action (Smart Bomb / Color)")
+            set_mapping("Muse Jaw Clench", "Launch Guided Missile (Smart Bomb / Homing Rockets)")
+            set_mapping("Voice Command 'Fire'", "Launch Guided Missile (Smart Bomb / Homing Rockets)")
+            set_mapping("Voice Command 'Left'", "Move Left (left)")
+            set_mapping("Voice Command 'Right'", "Move Right (right)")
             self.blink_thresh_slider.setValue(60)
             self.clench_thresh_slider.setValue(45)
             self.tilt_thresh_slider.setValue(10)
@@ -2818,6 +2822,7 @@ class BCIControllerMappingWidget(QWidget):
         elif key == "meditation":
             disable_all_mappings()
             set_mapping("Muse Deep Calm", "Primary Action (Fire / Pause)")
+            set_mapping("Voice Command 'Fire'", "Launch Guided Missile (Smart Bomb / Homing Rockets)")
             self.focus_thresh_slider.setValue(50)
             self.calm_thresh_slider.setValue(55)
             self.eeg_ema_slider.setValue(3)
@@ -2829,6 +2834,7 @@ class BCIControllerMappingWidget(QWidget):
         elif key == "focus":
             disable_all_mappings()
             set_mapping("Muse High Focus", "Primary Action (Fire / Pause)")
+            set_mapping("Voice Command 'Fire'", "Launch Guided Missile (Smart Bomb / Homing Rockets)")
             self.focus_thresh_slider.setValue(60)
             self.eeg_ema_slider.setValue(5)
             self.beta_min_spin.setValue(140)
@@ -2844,7 +2850,10 @@ class BCIControllerMappingWidget(QWidget):
             set_mapping("Phone Tilt Backward", "Move Down (down)")
             set_mapping("Phone Screen Tap", "Primary Action (Fire / Pause)")
             set_mapping("Phone Shake", "Secondary Action (Spread / Food)")
-            set_mapping("Muse Eye Blink", "Tertiary Action (Smart Bomb / Color)")
+            set_mapping("Muse Eye Blink", "Launch Guided Missile (Smart Bomb / Homing Rockets)")
+            set_mapping("Voice Command 'Fire'", "Launch Guided Missile (Smart Bomb / Homing Rockets)")
+            set_mapping("Voice Command 'Left'", "Move Left (left)")
+            set_mapping("Voice Command 'Right'", "Move Right (right)")
             self.blink_thresh_slider.setValue(80)
             self.clench_thresh_slider.setValue(60)
             self.focus_thresh_slider.setValue(60)

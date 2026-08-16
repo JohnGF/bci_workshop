@@ -71,6 +71,17 @@ def synthesize_explosion_sound():
     sound_arr = np.repeat(sound_arr[:, np.newaxis], 2, axis=1) # Stereo
     return pygame.sndarray.make_sound(sound_arr)
 
+def synthesize_missile_sound():
+    sample_rate = 44100
+    duration = 0.35
+    t = np.linspace(0, duration, int(sample_rate * duration), False)
+    freq = np.geomspace(200, 850, len(t))
+    noise = (np.random.rand(len(t)) * 2 - 1) * 0.25
+    val = (np.sin(2 * np.pi * freq * t) * 0.2 + noise) * np.exp(-3.5 * t)
+    sound_arr = (val * 32767).astype(np.int16)
+    sound_arr = np.repeat(sound_arr[:, np.newaxis], 2, axis=1)
+    return pygame.sndarray.make_sound(sound_arr)
+
 # ==========================================
 # RETRO PLANE ARCADE GAME
 # ==========================================
@@ -107,14 +118,17 @@ class RetroPlaneGame:
         # Synthesize audio on launch
         self.snd_laser = None
         self.snd_explosion = None
+        self.snd_missile = None
         if self.audio_enabled:
             try:
                 self.snd_laser = synthesize_laser_sound()
                 self.snd_explosion = synthesize_explosion_sound()
+                self.snd_missile = synthesize_missile_sound()
             except Exception as e:
                 print(f"Audio Synthesis Warning: {e}. Running mute.")
                 self.snd_laser = None
                 self.snd_explosion = None
+                self.snd_missile = None
 
         # Game state variables
         self.player_x = WINDOW_WIDTH // 2
@@ -137,11 +151,14 @@ class RetroPlaneGame:
             })
             
         self.lasers = []
+        self.missiles = []
+        self.shockwaves = []
         self.enemies = []
         self.particles = []
         
         self.enemy_spawn_timer = 0
         self.shoot_cooldown = 0
+        self.missile_cooldown = 0
         self.touch_steering_enabled = True
 
         # ── BCI Cognitive Buff State ──────────────────────────────────────────
@@ -160,6 +177,8 @@ class RetroPlaneGame:
         self.game_over = False
         self.damage_flash_counter = 0
         self.lasers.clear()
+        self.missiles.clear()
+        self.shockwaves.clear()
         self.enemies.clear()
         self.particles.clear()
         self.shield_active = False  # clear buff state on game reset
@@ -178,6 +197,8 @@ class RetroPlaneGame:
             elif cmd == "focus_shield_off":
                 self.shield_active = False
                 print("🧠 Focus shield deactivated")
+            elif cmd in ("missile", "calm_missile", "voice_fire"):
+                self.fire_missile()
 
         # 2. Poll window events (quit, resize, key toggles)
         for event in pygame.event.get():
@@ -193,6 +214,8 @@ class RetroPlaneGame:
                 elif event.key == K_t:
                     self.touch_steering_enabled = not self.touch_steering_enabled
                     print(f"🎮 Touch Screen X/Y Steering Mode: {'ENABLED' if self.touch_steering_enabled else 'DISABLED (Tilt Only)'}")
+                elif event.key in (K_m, K_b, K_f):
+                    self.fire_missile()
             elif event.type == VIDEORESIZE:
                 WINDOW_WIDTH, WINDOW_HEIGHT = event.w, event.h
                 self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | RESIZABLE)
@@ -203,7 +226,7 @@ class RetroPlaneGame:
                 glMatrixMode(GL_MODELVIEW)
                 glLoadIdentity()
 
-        # 3. Handle Actions (Steer, Fire, Spread, Bomb) using unified input manager
+        # 3. Handle Actions (Steer, Fire, Spread, Bomb/Missile) using unified input manager
         if self.input_mgr.is_left():
             self.player_target_x = max(30, self.player_target_x - 12.0)
         if self.input_mgr.is_right():
@@ -231,15 +254,8 @@ class RetroPlaneGame:
                         
         if self.input_mgr.is_tert_action():
             if not self.game_over:
-                # Smart Bomb! Wipes all enemies!
-                if self.enemies:
-                    self.score += len(self.enemies) * 10
-                    for enemy in self.enemies:
-                        self.spawn_particles(enemy["x"], enemy["y"], (252, 211, 77))
-                    self.enemies.clear()
-                    if self.snd_explosion:
-                        self.snd_explosion.play()
-                    self.damage_flash_counter = 8  # grid flash
+                # Launch Visible Guided Calm Missiles!
+                self.fire_missile()
 
         # 4. Continuous tilt steer or direct Touch Screen X/Y steering if connected standalone
         if self.input_mgr.imu_connected and not self.input_mgr.dashboard_controlled:
@@ -247,7 +263,6 @@ class RetroPlaneGame:
                 tx = self.input_mgr.latest_touch_x
                 ty = self.input_mgr.latest_touch_y
                 if tx >= 0.0 and ty >= 0.0:
-                    # Normalize watch screen touch (0-360 px or 0-450 px) to full game canvas resolution
                     target_x = (tx / 360.0) * WINDOW_WIDTH
                     target_y = (ty / 360.0) * WINDOW_HEIGHT
                     self.player_target_x = max(30, min(WINDOW_WIDTH - 30, target_x))
@@ -265,9 +280,33 @@ class RetroPlaneGame:
             if self.snd_laser:
                 self.snd_laser.play()
 
+    def fire_missile(self):
+        """Launches visible guided homing missiles with particle exhaust trails."""
+        if self.missile_cooldown <= 0:
+            self.missile_cooldown = 24
+            # Launch twin homing missiles from left and right wing hardpoints
+            self.missiles.append({
+                "x": self.player_x - 20,
+                "y": self.player_y - 8,
+                "vx": -3.2,
+                "vy": -7.5,
+                "speed": 11.5,
+                "life": 120
+            })
+            self.missiles.append({
+                "x": self.player_x + 20,
+                "y": self.player_y - 8,
+                "vx": 3.2,
+                "vy": -7.5,
+                "speed": 11.5,
+                "life": 120
+            })
+            if self.snd_missile:
+                self.snd_missile.play()
+            self.damage_flash_counter = 4
+
     def spawn_enemy(self):
         self.enemy_spawn_timer += 1
-        # Slower initial spawn rate (1.5s), increasing difficulty gradually
         spawn_rate = max(24, 90 - int(self.score / 15))
         if self.enemy_spawn_timer >= spawn_rate:
             self.enemy_spawn_timer = 0
@@ -279,10 +318,10 @@ class RetroPlaneGame:
                 "h": 20
             })
 
-    def spawn_particles(self, x, y, color):
-        for _ in range(15):
+    def spawn_particles(self, x, y, color, count=15, speed_max=6.0):
+        for _ in range(count):
             angle = random.uniform(0, 2 * math.pi)
-            speed = random.uniform(2.0, 6.0)
+            speed = random.uniform(1.5, speed_max)
             self.particles.append({
                 "x": x,
                 "y": y,
@@ -301,6 +340,8 @@ class RetroPlaneGame:
         
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
+        if self.missile_cooldown > 0:
+            self.missile_cooldown -= 1
 
         # Smooth player interpolation
         self.player_x += (self.player_target_x - self.player_x) * 0.16
@@ -311,6 +352,85 @@ class RetroPlaneGame:
             star["y"] += star["speed"]
             if star["y"] > WINDOW_HEIGHT:
                 star["y"] = 0
+                star["x"] = random.randint(0, WINDOW_WIDTH)
+
+        # Update Lasers
+        for laser in self.lasers[:]:
+            laser["y"] -= 9.5
+            if laser["y"] < 0:
+                self.lasers.remove(laser)
+
+        # Update Guided Missiles
+        for m in self.missiles[:]:
+            m["life"] -= 1
+            # 1. Homing physics: steer toward nearest enemy on screen
+            if self.enemies:
+                nearest = min(self.enemies, key=lambda e: (e["x"] - m["x"])**2 + (e["y"] - m["y"])**2)
+                dx = nearest["x"] - m["x"]
+                dy = nearest["y"] - m["y"]
+                dist = math.hypot(dx, dy)
+                if dist > 0:
+                    target_vx = (dx / dist) * m["speed"]
+                    target_vy = (dy / dist) * m["speed"]
+                    m["vx"] += (target_vx - m["vx"]) * 0.20
+                    m["vy"] += (target_vy - m["vy"]) * 0.20
+            else:
+                m["vy"] = -m["speed"]
+
+            m["x"] += m["vx"]
+            m["y"] += m["vy"]
+
+            # 2. Spawn fiery rocket exhaust trail particles
+            if random.random() > 0.15:
+                self.particles.append({
+                    "x": m["x"] + random.uniform(-2, 2),
+                    "y": m["y"] + 10,
+                    "vx": random.uniform(-0.6, 0.6) - m["vx"] * 0.1,
+                    "vy": random.uniform(1.5, 3.5),
+                    "color": (255, random.randint(150, 240), 40),
+                    "alpha": 0.9,
+                    "size": random.uniform(2.5, 4.5)
+                })
+
+            # 3. Check missile collision with enemies
+            m_hit = False
+            m_pos = (m["x"], m["y"])
+            for enemy in self.enemies[:]:
+                e_rect = pygame.Rect(enemy["x"] - enemy["w"]//2, enemy["y"] - enemy["h"]//2, enemy["w"], enemy["h"])
+                if e_rect.collidepoint(m_pos) or math.hypot(enemy["x"] - m["x"], enemy["y"] - m["y"]) < 26:
+                    self.enemies.remove(enemy)
+                    self.spawn_particles(enemy["x"], enemy["y"], (252, 211, 77), count=25, speed_max=8.0)
+                    self.score += 40
+                    m_hit = True
+
+            # 4. Trigger expanding shockwave on hit or detonation
+            if m_hit or m["y"] < -20 or m["life"] <= 0:
+                self.shockwaves.append({
+                    "x": m["x"],
+                    "y": m["y"],
+                    "radius": 8.0,
+                    "max_radius": 110.0,
+                    "alpha": 1.0,
+                    "color": (255, 215, 0)
+                })
+                if self.snd_explosion:
+                    self.snd_explosion.play()
+                self.damage_flash_counter = max(self.damage_flash_counter, 6)
+                if m in self.missiles:
+                    self.missiles.remove(m)
+
+        # Update Expanding Shockwaves
+        for sw in self.shockwaves[:]:
+            sw["radius"] += 7.0
+            sw["alpha"] -= 0.045
+            # Shockwave wipes enemies in blast radius
+            for enemy in self.enemies[:]:
+                if math.hypot(enemy["x"] - sw["x"], enemy["y"] - sw["y"]) < sw["radius"]:
+                    self.enemies.remove(enemy)
+                    self.spawn_particles(enemy["x"], enemy["y"], (255, 220, 50), count=15)
+                    self.score += 25
+            if sw["alpha"] <= 0 or sw["radius"] >= sw["max_radius"]:
+                self.shockwaves.remove(sw)
                 star["x"] = random.randint(0, WINDOW_WIDTH)
 
         # Update Lasers
@@ -443,6 +563,65 @@ class RetroPlaneGame:
         glVertex2f(laser["x"], laser["y"] - 15)
         glEnd()
 
+    def draw_missile(self, m):
+        """Draws a retro glowing vector rocket with nosecone, delta fins, and thruster."""
+        mx, my = m["x"], m["y"]
+        angle = math.atan2(m["vy"], m["vx"]) + math.pi / 2
+        cos_a = math.cos(angle)
+        sin_a = math.sin(angle)
+
+        def rot(dx, dy):
+            return mx + (dx * cos_a - dy * sin_a), my + (dx * sin_a + dy * cos_a)
+
+        # 1. Warhead Nosecone (Neon Gold)
+        glColor3f(1.0, 0.84, 0.0)
+        glLineWidth(2.5)
+        glBegin(GL_LINE_LOOP)
+        glVertex2f(*rot(0, -12))
+        glVertex2f(*rot(-4, -2))
+        glVertex2f(*rot(4, -2))
+        glEnd()
+
+        # 2. Missile Body (Cyan / White)
+        glColor3f(0.2, 0.9, 1.0)
+        glBegin(GL_LINES)
+        glVertex2f(*rot(-4, -2)); glVertex2f(*rot(-4, 8))
+        glVertex2f(*rot(4, -2)); glVertex2f(*rot(4, 8))
+        glEnd()
+
+        # 3. Delta Fins (Neon Orange)
+        glColor3f(1.0, 0.5, 0.0)
+        glBegin(GL_LINES)
+        glVertex2f(*rot(-4, 4)); glVertex2f(*rot(-9, 10))
+        glVertex2f(*rot(4, 4)); glVertex2f(*rot(9, 10))
+        glEnd()
+
+        # 4. Pulsing Thruster Core
+        glColor3f(1.0, 0.9, 0.2)
+        glPointSize(4.0)
+        glBegin(GL_POINTS)
+        glVertex2f(*rot(0, 10))
+        glEnd()
+
+    def draw_shockwave(self, s):
+        """Draws an expanding neon shockwave blast ring."""
+        sx, sy = s["x"], s["y"]
+        r = s["radius"]
+        alpha = max(0.0, s["alpha"])
+
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glColor4f(1.0, 0.85, 0.1, alpha)
+        glLineWidth(3.0)
+
+        n = 24
+        glBegin(GL_LINE_LOOP)
+        for i in range(n):
+            theta = 2.0 * math.pi * i / n
+            glVertex2f(sx + r * math.cos(theta), sy + r * math.sin(theta))
+        glEnd()
+        glDisable(GL_BLEND)
+
     def draw_particle(self, p):
         glColor4f(p["color"][0], p["color"][1], p["color"][2], p["alpha"])
         glPointSize(p["size"])
@@ -502,6 +681,12 @@ class RetroPlaneGame:
             
         self.draw_text(f"SCORE: {self.score}", WINDOW_WIDTH - 150, 20, self.font, (22, 242, 179))
         
+        # Missile Readiness HUD Badge
+        if self.missile_cooldown <= 0:
+            self.draw_text("🚀 MISSILES: READY [VOICE 'FIRE' / M]", WINDOW_WIDTH - 360, 48, self.font, (250, 204, 21))
+        else:
+            self.draw_text("🚀 MISSILES: RELOADING...", WINDOW_WIDTH - 300, 48, self.font, (100, 116, 139))
+
         # 2. Connection HUD
         bci_label = "CTRL MODE: "
         if self.input_mgr.dashboard_controlled:
@@ -524,7 +709,6 @@ class RetroPlaneGame:
         # 3. BCI Cognitive Buff Status
         buff_y = 55
         if self.shield_active:
-            # Cyan highlight box behind text
             glEnable(GL_BLEND)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             glColor4f(0.0, 0.8, 1.0, 0.12)
@@ -537,7 +721,6 @@ class RetroPlaneGame:
             glDisable(GL_BLEND)
             self.draw_text("🧠 FOCUS SHIELD ACTIVE  [-50% DMG]", 18, buff_y, self.font, (0, 220, 255))
             buff_y += 22
-
 
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -557,6 +740,14 @@ class RetroPlaneGame:
         # Draw Lasers
         for laser in self.lasers:
             self.draw_laser(laser)
+
+        # Draw Guided Missiles
+        for missile in self.missiles:
+            self.draw_missile(missile)
+
+        # Draw Expanding Shockwaves
+        for shockwave in self.shockwaves:
+            self.draw_shockwave(shockwave)
             
         # Draw Enemies
         for enemy in self.enemies:
