@@ -164,6 +164,7 @@ class RetroPlaneGame:
         self.score = 0
         self.health = 100
         self.game_over = False
+        self.is_paused = False
         self.damage_flash_counter = 0
         self.nova_flash_counter = 0
         
@@ -224,6 +225,7 @@ class RetroPlaneGame:
         self.score = 0
         self.health = 100
         self.game_over = False
+        self.is_paused = False
         self.damage_flash_counter = 0
         self.lasers.clear()
         self.missiles.clear()
@@ -257,6 +259,12 @@ class RetroPlaneGame:
             elif cmd in ("toggle_spread_buff", "spread_buff", "spread"):
                 self.spread_buff_active = not self.spread_buff_active
                 print(f"🔥 Spread Cannon Buff: {'ACTIVATED' if self.spread_buff_active else 'DEACTIVATED'}")
+            elif cmd in ("pause", "toggle_pause"):
+                self.is_paused = not self.is_paused
+                print(f"⏸️ Game: {'PAUSED' if self.is_paused else 'RESUMED'}")
+            elif cmd in ("restart", "reset"):
+                self.reset_game()
+                print("🔄 Game restarted!")
             elif cmd in ("fullscreen", "toggle_fullscreen"):
                 self.toggle_fullscreen()
             elif cmd in ("missile", "calm_missile", "voice_missile"):
@@ -278,6 +286,12 @@ class RetroPlaneGame:
                         self.input_mgr.running = False
                         pygame.quit()
                         sys.exit()
+                elif event.key == K_p:
+                    self.is_paused = not self.is_paused
+                    print(f"⏸️ Game: {'PAUSED' if self.is_paused else 'RESUMED'}")
+                elif event.key == K_r:
+                    self.reset_game()
+                    print("🔄 Game restarted!")
                 elif event.key == K_F11 or (event.key == K_RETURN and (event.mod & KMOD_ALT)):
                     self.toggle_fullscreen()
                 elif event.key == K_t:
@@ -461,7 +475,7 @@ class RetroPlaneGame:
             })
 
     def update(self):
-        if self.game_over:
+        if self.game_over or self.is_paused:
             return
 
         self.spawn_enemy()
@@ -908,8 +922,8 @@ class RetroPlaneGame:
         hud_bottom_y = WINDOW_HEIGHT - 35
         self.draw_text(bci_label, 20, hud_bottom_y, self.font, b_color)
         
-        hints = "[F11]: Fullscreen  |  [T]: Touch/Tilt  |  [X]: Spread  |  [F]: Nova"
-        self.draw_text(hints, WINDOW_WIDTH - 620, hud_bottom_y, self.font, (148, 163, 184))
+        hints = "[P]: Pause  |  [R]: Restart  |  [F11]: Fullscreen  |  [X]: Spread  |  [F]: Nova"
+        self.draw_text(hints, WINDOW_WIDTH - 730, hud_bottom_y, self.font, (148, 163, 184))
 
         # 3. BCI Cognitive Buff Status
         buff_y = 55
@@ -981,9 +995,24 @@ class RetroPlaneGame:
             self.draw_player()
         else:
             self.draw_text("GAME OVER", WINDOW_WIDTH//2 - 70, WINDOW_HEIGHT//2 - 40, self.font_title, (239, 68, 68))
-            self.draw_text("Tilt / Blink / Space to Restart", WINDOW_WIDTH//2 - 165, WINDOW_HEIGHT//2 + 5, self.font, (148, 163, 184))
+            self.draw_text("Press 'R' or Space to Restart", WINDOW_WIDTH//2 - 145, WINDOW_HEIGHT//2 + 5, self.font, (148, 163, 184))
 
         self.draw_hud()
+
+        # Render Pause Overlay
+        if self.is_paused:
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glColor4f(0.02, 0.05, 0.12, 0.75)
+            glBegin(GL_QUADS)
+            glVertex2f(0, 0)
+            glVertex2f(WINDOW_WIDTH, 0)
+            glVertex2f(WINDOW_WIDTH, WINDOW_HEIGHT)
+            glVertex2f(0, WINDOW_HEIGHT)
+            glEnd()
+            glDisable(GL_BLEND)
+            self.draw_text("⏸️ PAUSED", WINDOW_WIDTH // 2 - 55, WINDOW_HEIGHT // 2 - 35, self.font_title, (56, 189, 248))
+            self.draw_text("Press 'P' to Resume  |  Press 'R' to Restart", WINDOW_WIDTH // 2 - 200, WINDOW_HEIGHT // 2 + 10, self.font, (226, 232, 240))
 
         # Render Supernova golden boundary flash
         if self.nova_flash_counter > 0:
