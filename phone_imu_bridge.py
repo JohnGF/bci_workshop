@@ -137,6 +137,75 @@ def get_all_local_ips():
     return [ip for ip in ips if not ip.startswith("127.")]
 
 
+def kill_stale_processes(script_name: str, ports: list[int] | None = None) -> list[int]:
+    """
+    Finds and terminates any orphaned/zombie background processes
+    running the given script or holding the specified network ports.
+    """
+    import signal
+    current_pid = os.getpid()
+    parent_pid = os.getppid()
+    killed = []
+
+    # 1. Kill by script name match
+    if sys.platform != "win32":
+        try:
+            out = subprocess.run(["pgrep", "-f", script_name], capture_output=True, text=True).stdout
+            for line in out.splitlines():
+                if line.strip():
+                    try:
+                        pid = int(line.strip())
+                        if pid not in (current_pid, parent_pid):
+                            try:
+                                with open(f"/proc/{pid}/cmdline", "rb") as f:
+                                    cmd = f.read().decode("utf-8", errors="ignore").replace("\0", " ")
+                            except Exception:
+                                cmd = ""
+                            if script_name in cmd and "-c" not in cmd:
+                                os.kill(pid, signal.SIGTERM)
+                                time.sleep(0.05)
+                                try:
+                                    os.kill(pid, signal.SIGKILL)
+                                except ProcessLookupError:
+                                    pass
+                                killed.append(pid)
+                    except (ValueError, ProcessLookupError, PermissionError):
+                        pass
+        except Exception:
+            pass
+
+    # 2. Kill by network port (TCP/UDP)
+    if ports:
+        for port in ports:
+            if sys.platform != "win32":
+                try:
+                    out = subprocess.run(["fuser", f"{port}/tcp", f"{port}/udp"], capture_output=True, text=True).stdout + " " + subprocess.run(["fuser", f"{port}/tcp", f"{port}/udp"], capture_output=True, text=True).stderr
+                    for token in out.split():
+                        try:
+                            pid = int(token.strip())
+                            if pid != current_pid:
+                                os.kill(pid, signal.SIGKILL)
+                                killed.append(pid)
+                        except (ValueError, ProcessLookupError, PermissionError):
+                            pass
+                except Exception:
+                    pass
+            else:
+                try:
+                    res = subprocess.run(f'netstat -ano | findstr :{port}', shell=True, capture_output=True, text=True)
+                    for line in res.stdout.splitlines():
+                        parts = line.strip().split()
+                        if len(parts) >= 5:
+                            pid = int(parts[-1])
+                            if pid != current_pid and pid > 4:
+                                subprocess.run(f'taskkill /F /PID {pid}', shell=True, capture_output=True)
+                                killed.append(pid)
+                except Exception:
+                    pass
+
+    return list(set(killed))
+
+
 # ==========================================
 # SSL CONTEXT
 # ==========================================
@@ -476,6 +545,16 @@ async def main():
     )
     parser.add_argument("--udp-port", type=int, default=5005, help="Galaxy Watch UDP Port")
     args, _ = parser.parse_known_args()
+
+    # Automatic cleanup of any stale zombie instances holding bridge ports
+    ws_insecure = args.port + 1 if args.port != 443 else 8001
+    ws_secure = args.port + 2 if args.port != 443 else 8002
+    target_ports = [args.port, ws_insecure, ws_secure, 8443]
+    if args.mode in ("watch_udp", "both"):
+        target_ports.append(args.udp_port)
+    stale_pids = kill_stale_processes("phone_imu_bridge.py", ports=target_ports)
+    if stale_pids:
+        print(f"🧹 Cleaned up {len(stale_pids)} stale/zombie background process(es) (PIDs: {stale_pids})")
 
     display_ip = args.ip if args.ip != "0.0.0.0" else get_local_ip()
     local_ips = get_all_local_ips()

@@ -218,6 +218,59 @@ def get_local_ip():
         return "127.0.0.1"
 
 
+def kill_stale_processes(script_name: str, ports: list[int] | None = None) -> list[int]:
+    """Finds and terminates any orphaned/zombie background processes."""
+    import signal
+    import subprocess
+    current_pid = os.getpid()
+    parent_pid = os.getppid()
+    killed = []
+
+    if sys.platform != "win32":
+        try:
+            out = subprocess.run(["pgrep", "-f", script_name], capture_output=True, text=True).stdout
+            for line in out.splitlines():
+                if line.strip():
+                    try:
+                        pid = int(line.strip())
+                        if pid not in (current_pid, parent_pid):
+                            try:
+                                with open(f"/proc/{pid}/cmdline", "rb") as f:
+                                    cmd = f.read().decode("utf-8", errors="ignore").replace("\0", " ")
+                            except Exception:
+                                cmd = ""
+                            if script_name in cmd and "-c" not in cmd:
+                                os.kill(pid, signal.SIGTERM)
+                                time.sleep(0.05)
+                                try:
+                                    os.kill(pid, signal.SIGKILL)
+                                except ProcessLookupError:
+                                    pass
+                                killed.append(pid)
+                    except (ValueError, ProcessLookupError, PermissionError):
+                        pass
+        except Exception:
+            pass
+
+    if ports:
+        for port in ports:
+            if sys.platform != "win32":
+                try:
+                    out = subprocess.run(["fuser", f"{port}/tcp", f"{port}/udp"], capture_output=True, text=True).stdout + " " + subprocess.run(["fuser", f"{port}/tcp", f"{port}/udp"], capture_output=True, text=True).stderr
+                    for token in out.split():
+                        try:
+                            pid = int(token.strip())
+                            if pid != current_pid:
+                                os.kill(pid, signal.SIGKILL)
+                                killed.append(pid)
+                        except (ValueError, ProcessLookupError, PermissionError):
+                            pass
+                except Exception:
+                    pass
+
+    return list(set(killed))
+
+
 def main():
     parser = argparse.ArgumentParser(description="Smartwatch PPG & IMU to LSL Bridge")
     parser.add_argument('--mode', choices=['websocket', 'udp'], default='udp', help="Transport protocol")
@@ -226,6 +279,11 @@ def main():
     parser.add_argument('--mock', action='store_true', help="Run synthetic mock stream for testing")
 
     args = parser.parse_args()
+
+    # Automatic cleanup of stale zombie instances
+    stale_pids = kill_stale_processes("smartwatch_lsl_bridge.py", ports=[args.port])
+    if stale_pids:
+        print(f"[*] Cleaned up {len(stale_pids)} stale/zombie background process(es) (PIDs: {stale_pids})")
 
     local_ip = get_local_ip()
     print("=" * 70)

@@ -161,6 +161,76 @@ def ensure_ssl_cert(base_dir: str) -> str | None:
         return f"WARNING: cert generation failed: {e}"
 
 
+def kill_stale_processes(script_name: str, ports: list[int] | None = None) -> list[int]:
+    """
+    Finds and terminates any orphaned/zombie background processes
+    running the given script or holding the specified network ports.
+    """
+    import signal
+    import subprocess
+    current_pid = os.getpid()
+    parent_pid = os.getppid()
+    killed = []
+
+    # 1. Kill by script name match
+    if sys.platform != "win32":
+        try:
+            out = subprocess.run(["pgrep", "-f", script_name], capture_output=True, text=True).stdout
+            for line in out.splitlines():
+                if line.strip():
+                    try:
+                        pid = int(line.strip())
+                        if pid not in (current_pid, parent_pid):
+                            try:
+                                with open(f"/proc/{pid}/cmdline", "rb") as f:
+                                    cmd = f.read().decode("utf-8", errors="ignore").replace("\0", " ")
+                            except Exception:
+                                cmd = ""
+                            if script_name in cmd and "-c" not in cmd:
+                                os.kill(pid, signal.SIGTERM)
+                                time.sleep(0.05)
+                                try:
+                                    os.kill(pid, signal.SIGKILL)
+                                except ProcessLookupError:
+                                    pass
+                                killed.append(pid)
+                    except (ValueError, ProcessLookupError, PermissionError):
+                        pass
+        except Exception:
+            pass
+
+    # 2. Kill by network port (TCP/UDP)
+    if ports:
+        for port in ports:
+            if sys.platform != "win32":
+                try:
+                    out = subprocess.run(["fuser", f"{port}/tcp", f"{port}/udp"], capture_output=True, text=True).stdout + " " + subprocess.run(["fuser", f"{port}/tcp", f"{port}/udp"], capture_output=True, text=True).stderr
+                    for token in out.split():
+                        try:
+                            pid = int(token.strip())
+                            if pid != current_pid:
+                                os.kill(pid, signal.SIGKILL)
+                                killed.append(pid)
+                        except (ValueError, ProcessLookupError, PermissionError):
+                            pass
+                except Exception:
+                    pass
+            else:
+                try:
+                    res = subprocess.run(f'netstat -ano | findstr :{port}', shell=True, capture_output=True, text=True)
+                    for line in res.stdout.splitlines():
+                        parts = line.strip().split()
+                        if len(parts) >= 5:
+                            pid = int(parts[-1])
+                            if pid != current_pid and pid > 4:
+                                subprocess.run(f'taskkill /F /PID {pid}', shell=True, capture_output=True)
+                                killed.append(pid)
+                except Exception:
+                    pass
+
+    return list(set(killed))
+
+
 # Check if OpenGL is available for the 3D IMU Trajectory Tracker
 try:
     import pyqtgraph.opengl as gl
@@ -3280,6 +3350,17 @@ class MasterControlDashboard(QMainWindow):
         s = self.services[key]
         if s["process"] is not None:
             return
+
+        # Clean up any stale/zombie background instances holding resources or ports
+        service_ports = {
+            "phone_bridge": [8000, 8001, 8002, 8443],
+            "smartwatch_bridge": [5005, 8080],
+            "athena": None,
+            "whisper_voice": None
+        }
+        stale_pids = kill_stale_processes(s["script"], ports=service_ports.get(key))
+        if stale_pids:
+            self.append_system_log(f"[Cleanup] Terminated {len(stale_pids)} stale background instance(s) for {s['name']} (PIDs: {stale_pids})")
 
         w = self.service_widgets[key]
         w["start_btn"].setEnabled(False)
