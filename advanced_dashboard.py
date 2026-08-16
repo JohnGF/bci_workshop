@@ -89,11 +89,25 @@ class AdvancedEEGDashboard(QMainWindow):
         self.resize(1200, 900)
 
         # 1. Connect to LSL Stream
-        print("🔍 Hooking LSL network stream (Muse_Athena)...")
-        streams = resolve_byprop("name", "Muse_Athena", timeout=5)
-        if not streams:
-            print("❌ Stream not found. Ensure athena_streamer.py is running.")
-            sys.exit(1)
+        import time
+        print(f"[{time.strftime('%H:%M:%S')}] 🔍 Searching for Muse_Athena LSL stream on network...")
+
+        streams = None
+        attempt = 0
+        while not streams:
+            attempt += 1
+            t0 = time.monotonic()
+            print(f"[{time.strftime('%H:%M:%S')}] Attempt #{attempt} — resolving with 10s timeout...")
+            streams = resolve_byprop("name", "Muse_Athena", timeout=10)
+            elapsed = time.monotonic() - t0
+            if streams:
+                info = streams[0]
+                print(f"[{time.strftime('%H:%M:%S')}] ✅ Stream FOUND in {elapsed:.2f}s")
+                print(f"   name={info.name()}  type={info.type()}  ch={info.channel_count()}"
+                      f"  rate={info.nominal_srate()}Hz  uid={info.source_id()}")
+            else:
+                print(f"[{time.strftime('%H:%M:%S')}] ❌ Not found after {elapsed:.2f}s — retrying in 2s...")
+                time.sleep(2)
 
         self.inlet = StreamInlet(streams[0])
         self.sfreq = int(self.inlet.info().nominal_srate())

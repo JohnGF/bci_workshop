@@ -29,6 +29,9 @@ class GameInputManager:
         self.eeg_connected = False
         self.latest_roll = 0.0
         self.latest_shake = 0.0
+        self.latest_touch_x = -1.0
+        self.latest_touch_y = -1.0
+        self.latest_touch_active = False
         self.blink_val = 0.0
         self.clench_val = 0.0
         self.last_trigger_time = 0
@@ -51,6 +54,8 @@ class GameInputManager:
             self.thread_imu.start()
             self.thread_eeg = threading.Thread(target=self._eeg_worker, daemon=True)
             self.thread_eeg.start()
+            self.thread_voice = threading.Thread(target=self._voice_worker, daemon=True)
+            self.thread_voice.start()
 
     def add_command(self, cmd):
         with self.lock:
@@ -112,7 +117,25 @@ class GameInputManager:
                             elif roll > 15.0:
                                 self.add_command("right")
                                 
-                            # Voice command injection spike fallback
+                            # Check screen touch/tap events & X/Y coordinates
+                            touch_state = 0.0
+                            if len(last_sample) >= 10:
+                                tx = last_sample[7]
+                                ty = last_sample[8]
+                                touch_state = last_sample[9]
+                                with self.lock:
+                                    self.latest_touch_x = tx
+                                    self.latest_touch_y = ty
+                                    self.latest_touch_active = (touch_state >= 1.0)
+                            elif len(last_sample) >= 7:
+                                touch_state = last_sample[6]
+                                with self.lock:
+                                    self.latest_touch_active = (touch_state >= 1.0)
+                            
+                            if touch_state >= 1.0:
+                                self.add_command("action")
+
+                            # Gyro scope turn injection fallback
                             if len(last_sample) >= 6:
                                 gz = last_sample[5]
                                 if gz > 90.0:
@@ -139,38 +162,78 @@ class GameInputManager:
                         self.eeg_connected = True
                         self.eeg_stream_name = streams[0].name()
                     print("✅ InputMgr Standalone: EEG Stream Connected successfully!")
-                    
-                    last_trigger = 0.0
+
                     while self.running and not self.dashboard_controlled:
                         samples, _ = inlet.pull_chunk(max_samples=50)
                         if samples:
                             samples_np = np.array(samples)
                             c3_new = samples_np[:, 1] if samples_np.shape[1] > 1 else samples_np[:, 0]
                             tp9_new = samples_np[:, 0]
-                            
+
+                            # Compute signal metrics inside lock, but decide command
+                            # OUTSIDE the lock — add_command() also acquires self.lock
+                            # and Python's Lock is not reentrant, so calling it inside
+                            # would deadlock the main thread permanently.
+                            eeg_cmd = None
                             with self.lock:
                                 self.eeg_buffer_c3 = np.append(self.eeg_buffer_c3[len(c3_new):], c3_new)
                                 self.eeg_buffer_tp9 = np.append(self.eeg_buffer_tp9[len(tp9_new):], tp9_new)
-                                
+
                                 c3_clean = self.eeg_buffer_c3 - np.mean(self.eeg_buffer_c3)
                                 tp9_clean = self.eeg_buffer_tp9 - np.mean(self.eeg_buffer_tp9)
-                                
+
                                 window_blink = 80
                                 self.blink_val = float(np.max(c3_clean[-window_blink:]) - np.min(c3_clean[-window_blink:]))
                                 self.clench_val = float(np.std(tp9_clean))
-                                
+
                                 now_ms = pygame.time.get_ticks()
                                 if now_ms - self.last_trigger_time > 800:
                                     if self.clench_val > 35.0:
-                                        self.add_command("right")
+                                        eeg_cmd = "right"
                                         self.last_trigger_time = now_ms
                                     elif self.blink_val > 45.0:
-                                        self.add_command("left")
+                                        eeg_cmd = "left"
                                         self.last_trigger_time = now_ms
+
+                            # Lock released — safe to call add_command now
+                            if eeg_cmd:
+                                self.add_command(eeg_cmd)
+
                         time.sleep(0.016)
             except Exception:
                 with self.lock:
                     self.eeg_connected = False
+            time.sleep(2.0)
+
+
+    def _voice_worker(self):
+        print("📡 InputMgr Standalone: Searching for Voice_Commands LSL stream...")
+        code_to_cmd = {
+            99.0: "left",
+            -99.0: "right",
+            55.0: "action",
+            11.0: "action",
+        }
+        while self.running:
+            if self.dashboard_controlled:
+                time.sleep(2.0)
+                continue
+            try:
+                streams = resolve_byprop("name", "Voice_Commands", timeout=1.0)
+                if streams:
+                    inlet = StreamInlet(streams[0])
+                    print("✅ InputMgr Standalone: Voice_Commands Stream Connected successfully!")
+                    while self.running and not self.dashboard_controlled:
+                        samples, _ = inlet.pull_chunk(max_samples=10)
+                        if samples:
+                            for s in samples:
+                                code = float(s[0])
+                                cmd = code_to_cmd.get(code)
+                                if cmd:
+                                    self.add_command(cmd)
+                        time.sleep(0.05)
+            except Exception:
+                pass
             time.sleep(2.0)
 
     def simulate_blink(self):

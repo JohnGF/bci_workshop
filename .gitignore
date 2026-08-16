@@ -10,3 +10,8 @@ wheels/
 .venv
 .aider*
 *.pem
+connections.log
+recordings/
+lsl_debug.py
+apk_qr.png
+

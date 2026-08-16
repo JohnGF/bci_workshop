@@ -53,6 +53,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     private val latestAcc = FloatArray(3) { 0f }
     private val latestGyro = FloatArray(3) { 0f }
+    private var lastSendTime = 0L
+    private val SEND_INTERVAL_MS = 20L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -177,6 +179,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event == null || !isConnected) return
 
+        val now = System.currentTimeMillis()
+        if (now - lastSendTime < SEND_INTERVAL_MS) return
+
         if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
             System.arraycopy(event.values, 0, latestAcc, 0, 3)
             accX.text = String.format(Locale.US, "X: %.2f", latestAcc[0])
@@ -189,7 +194,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             gyroZ.text = String.format(Locale.US, "Z: %.2f", latestGyro[2])
         }
 
-        // Send raw IMU payload to LSL Bridge
+        // Send at throttled rate with synchronized data
+        lastSendTime = now
         val payload = """{"acc": [${latestAcc[0]}, ${latestAcc[1]}, ${latestAcc[2]}], "gyro": [${latestGyro[0]}, ${latestGyro[1]}, ${latestGyro[2]}]}"""
         webSocket?.send(payload)
     }
@@ -304,5 +310,20 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     override fun onDestroy() {
         super.onDestroy()
         disconnect()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (isConnected) {
+            sensorManager.unregisterListener(this)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (isConnected) {
+            accelerometer?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
+            gyroscope?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
+        }
     }
 }

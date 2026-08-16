@@ -142,7 +142,14 @@ class RetroPlaneGame:
         
         self.enemy_spawn_timer = 0
         self.shoot_cooldown = 0
-        
+        self.touch_steering_enabled = True
+
+        # ── BCI Cognitive Buff State ──────────────────────────────────────────
+        # focus_shield_on / focus_shield_off commands from main.py
+        self.shield_active = False    # High Focus → halves incoming damage
+        # (calm missile buff uses tert_action directly — no extra state needed)
+        # ─────────────────────────────────────────────────────────────────────
+
     def reset_game(self):
         self.player_x = WINDOW_WIDTH // 2
         self.player_y = 520
@@ -155,14 +162,24 @@ class RetroPlaneGame:
         self.lasers.clear()
         self.enemies.clear()
         self.particles.clear()
+        self.shield_active = False  # clear buff state on game reset
 
     def handle_inputs(self):
         global WINDOW_WIDTH, WINDOW_HEIGHT
         
         # 1. Update GameInputManager states (polls keyboard/mouse and BCI queue)
         self.input_mgr.update()
-        
-        # 2. Poll window events (quit, resize)
+
+        # 1b. Handle BCI cognitive buff commands before standard action routing
+        for cmd in list(self.input_mgr.cmds):
+            if cmd == "focus_shield_on":
+                self.shield_active = True
+                print("🧠 FOCUS SHIELD ACTIVATED — damage halved")
+            elif cmd == "focus_shield_off":
+                self.shield_active = False
+                print("🧠 Focus shield deactivated")
+
+        # 2. Poll window events (quit, resize, key toggles)
         for event in pygame.event.get():
             if event.type == QUIT:
                 self.input_mgr.running = False
@@ -173,6 +190,9 @@ class RetroPlaneGame:
                     self.input_mgr.running = False
                     pygame.quit()
                     sys.exit()
+                elif event.key == K_t:
+                    self.touch_steering_enabled = not self.touch_steering_enabled
+                    print(f"🎮 Touch Screen X/Y Steering Mode: {'ENABLED' if self.touch_steering_enabled else 'DISABLED (Tilt Only)'}")
             elif event.type == VIDEORESIZE:
                 WINDOW_WIDTH, WINDOW_HEIGHT = event.w, event.h
                 self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | RESIZABLE)
@@ -221,12 +241,22 @@ class RetroPlaneGame:
                         self.snd_explosion.play()
                     self.damage_flash_counter = 8  # grid flash
 
-        # 4. Continuous tilt steer if connected standalone
+        # 4. Continuous tilt steer or direct Touch Screen X/Y steering if connected standalone
         if self.input_mgr.imu_connected and not self.input_mgr.dashboard_controlled:
-            roll = self.input_mgr.latest_roll
-            if abs(roll) > 12.0:
-                vel = np.clip(roll * 0.35, -9.0, 9.0)
-                self.player_target_x = max(30, min(WINDOW_WIDTH - 30, self.player_target_x + vel))
+            if self.touch_steering_enabled and self.input_mgr.latest_touch_active:
+                tx = self.input_mgr.latest_touch_x
+                ty = self.input_mgr.latest_touch_y
+                if tx >= 0.0 and ty >= 0.0:
+                    # Normalize watch screen touch (0-360 px or 0-450 px) to full game canvas resolution
+                    target_x = (tx / 360.0) * WINDOW_WIDTH
+                    target_y = (ty / 360.0) * WINDOW_HEIGHT
+                    self.player_target_x = max(30, min(WINDOW_WIDTH - 30, target_x))
+                    self.player_target_y = max(40, min(WINDOW_HEIGHT - 40, target_y))
+            else:
+                roll = self.input_mgr.latest_roll
+                if abs(roll) > 12.0:
+                    vel = np.clip(roll * 0.35, -9.0, 9.0)
+                    self.player_target_x = max(30, min(WINDOW_WIDTH - 30, self.player_target_x + vel))
 
     def fire_laser(self):
         if self.shoot_cooldown <= 0:
@@ -292,11 +322,12 @@ class RetroPlaneGame:
         # Update Enemies
         for enemy in self.enemies[:]:
             enemy["y"] += enemy["speed"]
-            
+
             # Hit bottom bounds (leaked enemy)
             if enemy["y"] > WINDOW_HEIGHT:
                 self.enemies.remove(enemy)
-                self.health = max(0, self.health - 5)  # reduced penalty
+                dmg = 2 if self.shield_active else 5   # shield halves leak penalty
+                self.health = max(0, self.health - dmg)
                 self.damage_flash_counter = 12
                 if self.health <= 0:
                     self.game_over = True
@@ -321,10 +352,12 @@ class RetroPlaneGame:
                 self.spawn_particles(enemy["x"], enemy["y"], COLOR_NEON_YELLOW)
                 if self.snd_explosion:
                     self.snd_explosion.play()
-                self.health = max(0, self.health - 20)  # reduced penalty
+                dmg = 10 if self.shield_active else 20  # shield halves collision damage
+                self.health = max(0, self.health - dmg)
                 self.damage_flash_counter = 15
                 if self.health <= 0:
                     self.game_over = True
+
 
         # Update Particles
         for p in self.particles[:]:
@@ -361,6 +394,23 @@ class RetroPlaneGame:
             glVertex2f(px + 4, py + 10)
             glVertex2f(px, py + 22)
             glEnd()
+
+        # Focus Shield: draw a pulsing cyan hexagonal ring around the player
+        if self.shield_active:
+            alpha = 0.55 + 0.35 * math.sin(pygame.time.get_ticks() * 0.006)
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glColor4f(0.0, 0.85, 1.0, alpha)
+            glLineWidth(2.0)
+            r = 38  # shield ring radius
+            n = 6   # hexagonal
+            glBegin(GL_LINE_LOOP)
+            for i in range(n):
+                angle = 2.0 * math.pi * i / n - math.pi / 2
+                glVertex2f(px + r * math.cos(angle), py + r * math.sin(angle))
+            glEnd()
+            glDisable(GL_BLEND)
+
 
     def draw_enemy(self, enemy):
         ex, ey = enemy["x"], enemy["y"]
@@ -460,11 +510,34 @@ class RetroPlaneGame:
         else:
             nodes = []
             if self.input_mgr.eeg_connected: nodes.append("Muse EEG")
-            if self.input_mgr.imu_connected: nodes.append("Phone IMU")
+            if self.input_mgr.imu_connected:
+                touch_mode_str = "Phone Touch X/Y" if self.touch_steering_enabled else "Phone IMU Tilt"
+                nodes.append(touch_mode_str)
             bci_label += ", ".join(nodes) if nodes else "KEYBOARD CONTROL"
             b_color = (34, 197, 94) if nodes else (239, 68, 68)
             
         self.draw_text(bci_label, 20, 560, self.font, b_color)
+        if self.input_mgr.imu_connected:
+            hint = "[T]: Toggle Touch X/Y vs Tilt Mode"
+            self.draw_text(hint, WINDOW_WIDTH - 260, 560, self.font, (148, 163, 184))
+
+        # 3. BCI Cognitive Buff Status
+        buff_y = 55
+        if self.shield_active:
+            # Cyan highlight box behind text
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glColor4f(0.0, 0.8, 1.0, 0.12)
+            glBegin(GL_QUADS)
+            glVertex2f(14, buff_y - 2)
+            glVertex2f(260, buff_y - 2)
+            glVertex2f(260, buff_y + 18)
+            glVertex2f(14, buff_y + 18)
+            glEnd()
+            glDisable(GL_BLEND)
+            self.draw_text("🧠 FOCUS SHIELD ACTIVE  [-50% DMG]", 18, buff_y, self.font, (0, 220, 255))
+            buff_y += 22
+
 
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)

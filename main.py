@@ -297,9 +297,6 @@ class LSLTabBase(QWidget):
         self.timer.timeout.connect(self.update_data)
         
         self.init_base_ui()
-        
-        # Auto-start connection in the background on widget load
-        QTimer.singleShot(500, self.start_connection)
 
     def init_base_ui(self):
         self.base_layout = QVBoxLayout(self)
@@ -441,7 +438,7 @@ class LSLTabBase(QWidget):
         self.desc_lbl.setStyleSheet("color: #fbbf24; font-size: 14px;") # Warning gold
         conn_logger.info(f"RESOLVING  stream={self.stream_name}")
 
-        self.resolver_thread = LSLResolverThread(self.stream_name, timeout=3.0)
+        self.resolver_thread = LSLResolverThread(self.stream_name, timeout=8.0)
         self.resolver_thread.resolved.connect(self.on_resolved)
         self.resolver_thread.failed.connect(self.on_failed)
         self.resolver_thread.start()
@@ -877,31 +874,45 @@ class EEGVisualizerWidget(LSLTabBase):
                         self.last_trigger_time = now
                         main_win.send_command_to_snake_game(cmd)
 
-        # Focus & Calm trigger redirects using dynamic thresholds
-        if not hasattr(self, "triggered_focus"): self.triggered_focus = False
-        if not hasattr(self, "triggered_calm"): self.triggered_calm = False
-        
+        # ── Persistent Cognitive Buff States ──────────────────────────────────
+        # Focus/Calm are sustained physiological states, not discrete events.
+        # Instead of one-shot triggers, we drive persistent gameplay buffs:
+        #   High Focus  → Shield buff: halves incoming damage while active
+        #   Deep Calm   → Missile buff: fires a Smart Bomb every 5 seconds
+        # ──────────────────────────────────────────────────────────────────────
+        if not hasattr(self, "_focus_buff_active"): self._focus_buff_active = False
+        if not hasattr(self, "_calm_buff_active"):  self._calm_buff_active  = False
+        if not hasattr(self, "_calm_last_missile"):  self._calm_last_missile = 0.0
+
         main_win = self.window()
-        if hasattr(main_win, "get_trigger_action") and hasattr(main_win, "send_command_to_snake_game"):
-            # High Focus
+        if hasattr(main_win, "send_command_to_snake_game"):
+            # ── High Focus → Shield Buff ──
             if self.smoothed_focus > focus_thresh:
-                if not self.triggered_focus:
-                    cmd = main_win.get_trigger_action("Muse High Focus")
-                    if cmd:
-                        main_win.send_command_to_snake_game(cmd)
-                    self.triggered_focus = True
+                if not self._focus_buff_active:
+                    self._focus_buff_active = True
+                    main_win.send_command_to_snake_game("focus_shield_on")
+                    main_win.append_system_log("🧠 FOCUS BUFF ACTIVATED — Shield halves incoming damage")
             elif self.smoothed_focus < focus_thresh - 10.0:
-                self.triggered_focus = False
-                
-            # Deep Calm
+                if self._focus_buff_active:
+                    self._focus_buff_active = False
+                    main_win.send_command_to_snake_game("focus_shield_off")
+                    main_win.append_system_log("🧠 Focus buff faded — Shield deactivated")
+
+            # ── Deep Calm → Periodic Missile Buff ──
             if self.smoothed_calm > calm_thresh:
-                if not self.triggered_calm:
-                    cmd = main_win.get_trigger_action("Muse Deep Calm")
-                    if cmd:
-                        main_win.send_command_to_snake_game(cmd)
-                    self.triggered_calm = True
+                if not self._calm_buff_active:
+                    self._calm_buff_active = True
+                    main_win.append_system_log("🧘 CALM BUFF ACTIVATED — Smart Bomb every 5s while relaxed")
+                # Fire a Smart Bomb every 5 seconds while in calm state
+                if now - self._calm_last_missile >= 5.0:
+                    main_win.send_command_to_snake_game("tert_action")
+                    self._calm_last_missile = now
+                    main_win.append_system_log("🧘 Calm Missile launched!")
             elif self.smoothed_calm < calm_thresh - 10.0:
-                self.triggered_calm = False
+                if self._calm_buff_active:
+                    self._calm_buff_active = False
+                    main_win.append_system_log("🧘 Calm buff faded — no longer relaxed enough")
+        # ──────────────────────────────────────────────────────────────────────
 
     def compute_single_channel_psd(self, data, sfreq, notch_freq=50.0, notch_q=30.0, highpass=1.0, lowpass=50.0):
         N = len(data)
@@ -1696,8 +1707,12 @@ class MusePPGWidget(LSLTabBase):
         num_new = len(data)
 
         # Shift buffers - Muse Optics channel 1 is typically Infrared
-        self.buffer_ir[:-num_new] = self.buffer_ir[num_new:]
-        self.buffer_ir[-num_new:] = data[:, 1]
+        ch_idx = 1 if data.shape[1] > 1 else 0
+        if num_new >= self.win_samples:
+            self.buffer_ir[:] = data[-self.win_samples:, ch_idx]
+        else:
+            self.buffer_ir[:-num_new] = self.buffer_ir[num_new:]
+            self.buffer_ir[-num_new:] = data[:, ch_idx]
 
         # Update Time-Domain Visualization
         filt_ir = sosfilt(self.sos, self.buffer_ir)
@@ -1884,9 +1899,48 @@ class BCIControllerMappingWidget(QWidget):
         """)
         map_layout = QVBoxLayout(map_group)
         grid = QGridLayout()
-        grid.setSpacing(8)
+        grid.setSpacing(6)
 
-        # Options list
+        # Game action options for each input trigger
+        self.action_options = [
+            "Disabled (None)",
+            "Move Left (left)",
+            "Move Right (right)",
+            "Move Up (up)",
+            "Move Down (down)",
+            "Primary Action (Fire / Pause)",
+            "Secondary Action (Spread / Food)",
+            "Tertiary Action (Smart Bomb / Color)"
+        ]
+
+        self.action_value_map = {
+            "Disabled (None)": None,
+            "Move Left (left)": "left",
+            "Move Right (right)": "right",
+            "Move Up (up)": "up",
+            "Move Down (down)": "down",
+            "Primary Action (Fire / Pause)": "action",
+            "Secondary Action (Spread / Food)": "sec_action",
+            "Tertiary Action (Smart Bomb / Color)": "tert_action"
+        }
+
+        # Value to combo item text lookup
+        self.action_key_map = {
+            None: "Disabled (None)",
+            "none": "Disabled (None)",
+            "disabled": "Disabled (None)",
+            "left": "Move Left (left)",
+            "right": "Move Right (right)",
+            "up": "Move Up (up)",
+            "down": "Move Down (down)",
+            "action": "Primary Action (Fire / Pause)",
+            "sec_action": "Secondary Action (Spread / Food)",
+            "sec": "Secondary Action (Spread / Food)",
+            "tert_action": "Tertiary Action (Smart Bomb / Color)",
+            "tert": "Tertiary Action (Smart Bomb / Color)"
+        }
+
+        # All available trigger inputs
         self.options = [
             "Muse Eye Blink",
             "Muse Jaw Clench",
@@ -1907,24 +1961,44 @@ class BCIControllerMappingWidget(QWidget):
             "Voice Command 'Fire'"
         ]
 
-        def create_map_row(label_text, default_idx, row_idx):
-            lbl = QLabel(label_text)
-            lbl.setStyleSheet("color: #cbd5e1; font-size: 12px; border: none; font-weight: bold;")
+        # Default mapping per input trigger
+        default_trigger_actions = {
+            "Muse Eye Blink": "Tertiary Action (Smart Bomb / Color)",
+            "Muse Jaw Clench": "Disabled (None)",
+            "Muse High Focus": "Disabled (None)",
+            "Muse Deep Calm": "Disabled (None)",
+            "Phone Tilt Left": "Move Left (left)",
+            "Phone Tilt Right": "Move Right (right)",
+            "Phone Tilt Forward": "Move Up (up)",
+            "Phone Tilt Backward": "Move Down (down)",
+            "Phone Flick Left": "Disabled (None)",
+            "Phone Flick Right": "Disabled (None)",
+            "Phone Flick Up": "Disabled (None)",
+            "Phone Flick Down": "Disabled (None)",
+            "Phone Screen Tap": "Primary Action (Fire / Pause)",
+            "Phone Shake": "Secondary Action (Spread / Food)",
+            "Voice Command 'Left'": "Disabled (None)",
+            "Voice Command 'Right'": "Disabled (None)",
+            "Voice Command 'Fire'": "Disabled (None)"
+        }
+
+        self.input_map_combos = {}
+
+        def create_input_map_row(input_name, default_action_text, row_idx):
+            lbl = QLabel(input_name + ":")
+            lbl.setStyleSheet("color: #cbd5e1; font-size: 11px; border: none; font-weight: bold;")
             grid.addWidget(lbl, row_idx, 0)
             cb = QComboBox()
-            cb.addItems(self.options)
-            cb.setCurrentIndex(default_idx)
-            cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 4px; border-radius: 4px; font-size: 11px;")
+            cb.addItems(self.action_options)
+            cb.setCurrentText(default_action_text)
+            cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 3px; border-radius: 4px; font-size: 11px;")
             grid.addWidget(cb, row_idx, 1)
+            self.input_map_combos[input_name] = cb
             return cb
 
-        self.map_left_cb = create_map_row("LEFT Command:", 4, 0)
-        self.map_right_cb = create_map_row("RIGHT Command:", 5, 1)
-        self.map_up_cb = create_map_row("UP Command:", 6, 2)
-        self.map_down_cb = create_map_row("DOWN Command:", 7, 3)
-        self.map_action_cb = create_map_row("Primary (Pause/Fire):", 12, 4)
-        self.map_sec_cb = create_map_row("Secondary Action:", 13, 5)
-        self.map_tert_cb = create_map_row("Tertiary Action:", 0, 6)
+        for r_idx, input_name in enumerate(self.options):
+            default_act = default_trigger_actions.get(input_name, "Disabled (None)")
+            create_input_map_row(input_name, default_act, r_idx)
 
         map_layout.addLayout(grid)
         left_layout.addWidget(map_group)
@@ -2012,8 +2086,34 @@ class BCIControllerMappingWidget(QWidget):
             parent_layout.addLayout(row_layout)
             return spin
 
+        def create_combo_row(parent_layout, label_text, items, default_idx=0):
+            row = QHBoxLayout()
+            lbl = QLabel(label_text)
+            lbl.setStyleSheet("color: #cbd5e1; font-size: 11px;")
+            cb = QComboBox()
+            for name, val in items:
+                cb.addItem(name, val)
+            cb.setCurrentIndex(default_idx)
+            cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 3px 6px; border-radius: 4px; font-size: 11px;")
+            cb.setMinimumHeight(26)
+            row.addWidget(lbl)
+            row.addWidget(cb, stretch=1)
+            parent_layout.addLayout(row)
+            return cb
+
         self.blink_thresh_slider = create_slider(thresh_layout, "Muse Eye Blink:", 0, 100000, 80, "No limits (0-100k)", unit=" uV")
+        self.eeg_blink_ch_cb = create_combo_row(thresh_layout, "  ↳ Blink Channel (🟡 yellow):", [
+            ("AF7 (Left Frontal — Standard)", 1),
+            ("AF8 (Right Frontal)", 2),
+            ("Frontal Avg (AF7 + AF8)", "avg"),
+        ], default_idx=0)
+
         self.clench_thresh_slider = create_slider(thresh_layout, "Muse Jaw Clench:", 0, 100000, 60, "No limits (0-100k)", unit=" uV")
+        self.eeg_clench_ch_cb = create_combo_row(thresh_layout, "  ↳ Clench Channel (🔴 red):", [
+            ("TP9 (Left Ear — Standard)", 0),
+            ("TP10 (Right Ear)", 3),
+            ("Temporal Avg (TP9 + TP10)", "avg"),
+        ], default_idx=0)
         self.focus_thresh_slider = create_slider(thresh_layout, "Muse High Focus:", 0, 10000, 60, "No limits (0-10k)", unit="%")
         self.calm_thresh_slider = create_slider(thresh_layout, "Muse Deep Calm:", 0, 10000, 60, "No limits (0-10k)", unit="%")
         self.tilt_thresh_slider = create_slider(thresh_layout, "Phone Tilt Angle:", 0, 360, 15, "0-360°", unit="°")
@@ -2047,21 +2147,6 @@ class BCIControllerMappingWidget(QWidget):
         """)
         dsp_layout = QVBoxLayout(dsp_group)
         dsp_layout.setSpacing(6)
-
-        def create_combo_row(parent_layout, label_text, items, default_idx=0):
-            row = QHBoxLayout()
-            lbl = QLabel(label_text)
-            lbl.setStyleSheet("color: #cbd5e1; font-size: 11px;")
-            cb = QComboBox()
-            for name, val in items:
-                cb.addItem(name, val)
-            cb.setCurrentIndex(default_idx)
-            cb.setStyleSheet("background-color: #0f172a; color: #cbd5e1; border: 1px solid #475569; padding: 3px 6px; border-radius: 4px; font-size: 11px;")
-            cb.setMinimumHeight(26)
-            row.addWidget(lbl)
-            row.addWidget(cb, stretch=1)
-            parent_layout.addLayout(row)
-            return cb
 
         self.eeg_notch_cb = create_combo_row(dsp_layout, "Mains Hum Notch:", [
             ("50 Hz (UK / EU / Asia / AUS)", 50.0),
@@ -2132,18 +2217,6 @@ class BCIControllerMappingWidget(QWidget):
         ], default_idx=0)
 
         self.eeg_ema_slider = create_slider(dsp_layout, "Cognitive Smoothing Rate:", 1, 25, 4, "0.02-0.08", divisor=100.0, precision=2)
-
-        self.eeg_blink_ch_cb = create_combo_row(dsp_layout, "Blink Electrode Source:", [
-            ("AF7 (Left Frontal - Standard)", 1),
-            ("AF8 (Right Frontal)", 2),
-            ("Frontal Avg (AF7 + AF8)", "avg"),
-        ], default_idx=0)
-
-        self.eeg_clench_ch_cb = create_combo_row(dsp_layout, "Clench Electrode Source:", [
-            ("TP9 (Left Ear - Standard)", 0),
-            ("TP10 (Right Ear)", 3),
-            ("Temporal Avg (TP9 + TP10)", "avg"),
-        ], default_idx=0)
 
         self.eeg_cooldown_slider = create_slider(dsp_layout, "Trigger Cooldown (Refractory):", 2, 25, 8, "0.5-1.2 s", divisor=10.0, precision=1, unit=" s")
 
@@ -2317,7 +2390,8 @@ class BCIControllerMappingWidget(QWidget):
         self.scope_widget.setBackground('#0b0f19')
         self.scope_widget.showGrid(x=True, y=True, alpha=0.15)
         self.scope_widget.enableAutoRange(axis='y')
-        
+        self.scope_widget.addLegend(offset=(10, 10))
+
         # Track 6 curves: Focus, Calm, Blink, Clench, Tilt, Shake
         self.history_len = 100
         self.focus_hist = np.zeros(self.history_len)
@@ -2326,14 +2400,15 @@ class BCIControllerMappingWidget(QWidget):
         self.clench_hist = np.zeros(self.history_len)
         self.tilt_hist = np.zeros(self.history_len)
         self.shake_hist = np.zeros(self.history_len)
-        
-        # Color curves
-        self.curve_focus = self.scope_widget.plot(pen=pg.mkPen('#06b6d4', width=2), name="Focus %")
-        self.curve_calm = self.scope_widget.plot(pen=pg.mkPen('#d946ef', width=2), name="Calm %")
-        self.curve_blink = self.scope_widget.plot(pen=pg.mkPen('#fbbf24', width=2), name="Blink uV")
-        self.curve_clench = self.scope_widget.plot(pen=pg.mkPen('#ef4444', width=2), name="Clench uV")
-        self.curve_tilt = self.scope_widget.plot(pen=pg.mkPen('#10b981', width=2), name="Tilt Angle°")
-        self.curve_shake = self.scope_widget.plot(pen=pg.mkPen('#f97316', width=2), name="Shake Force")
+
+        # Color curves — names appear in the legend
+        self.curve_focus = self.scope_widget.plot(pen=pg.mkPen('#06b6d4', width=2), name="🔵 Focus %")
+        self.curve_calm = self.scope_widget.plot(pen=pg.mkPen('#d946ef', width=2), name="🟣 Calm %")
+        self.curve_blink = self.scope_widget.plot(pen=pg.mkPen('#fbbf24', width=2), name="🟡 Blink uV (eye blink)")
+        self.curve_clench = self.scope_widget.plot(pen=pg.mkPen('#ef4444', width=2), name="🔴 Clench uV (jaw clench)")
+        self.curve_tilt = self.scope_widget.plot(pen=pg.mkPen('#10b981', width=2), name="🟢 Tilt Angle°")
+        self.curve_shake = self.scope_widget.plot(pen=pg.mkPen('#f97316', width=2), name="🟠 Shake Force")
+
         
         # Horizontal threshold indicator lines (dashed)
         self.line_focus = pg.InfiniteLine(angle=0, pen=pg.mkPen('#06b6d4', style=Qt.PenStyle.DashLine))
@@ -2393,21 +2468,11 @@ class BCIControllerMappingWidget(QWidget):
     def get_trigger_action(self, source_input):
         # Flash the test monitor LED dynamically in real-time!
         self.flash_indicator(source_input)
-        
-        if self.map_left_cb.currentText() == source_input:
-            return "left"
-        if self.map_right_cb.currentText() == source_input:
-            return "right"
-        if self.map_up_cb.currentText() == source_input:
-            return "up"
-        if self.map_down_cb.currentText() == source_input:
-            return "down"
-        if self.map_action_cb.currentText() == source_input:
-            return "action"
-        if self.map_sec_cb.currentText() == source_input:
-            return "sec_action"
-        if self.map_tert_cb.currentText() == source_input:
-            return "tert_action"
+
+        if hasattr(self, "input_map_combos") and source_input in self.input_map_combos:
+            combo_text = self.input_map_combos[source_input].currentText()
+            return self.action_value_map.get(combo_text, None)
+
         return None
 
     def trigger_calibration(self):
@@ -2480,18 +2545,15 @@ class BCIControllerMappingWidget(QWidget):
 
     def get_settings_dict(self):
         """Serializes all controller mappings, thresholds, custom bands, and DSP filters to a dict."""
+        input_mappings = {}
+        if hasattr(self, "input_map_combos"):
+            for inp_name, cb in self.input_map_combos.items():
+                input_mappings[inp_name] = cb.currentText()
+
         return {
-            "version": "1.0",
+            "version": "2.0",
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "mappings": {
-                "left": self.map_left_cb.currentText(),
-                "right": self.map_right_cb.currentText(),
-                "up": self.map_up_cb.currentText(),
-                "down": self.map_down_cb.currentText(),
-                "action": self.map_action_cb.currentText(),
-                "sec": self.map_sec_cb.currentText(),
-                "tert": self.map_tert_cb.currentText(),
-            },
+            "input_mappings": input_mappings,
             "thresholds": {
                 "blink_uv": self.blink_thresh_slider.value(),
                 "clench_uv": self.clench_thresh_slider.value(),
@@ -2532,14 +2594,30 @@ class BCIControllerMappingWidget(QWidget):
     def apply_settings_dict(self, cfg):
         """Restores mapping, threshold, and DSP configuration from a dictionary."""
         try:
-            if "mappings" in cfg:
-                m = cfg["mappings"]
-                for cb, key in [(self.map_left_cb, "left"), (self.map_right_cb, "right"),
-                                (self.map_up_cb, "up"), (self.map_down_cb, "down"),
-                                (self.map_action_cb, "action"), (self.map_sec_cb, "sec"),
-                                (self.map_tert_cb, "tert")]:
-                    if key in m and m[key] in self.options:
-                        cb.setCurrentText(m[key])
+            # Support both new v2.0 input_mappings and legacy v1.0 mappings
+            if "input_mappings" in cfg and hasattr(self, "input_map_combos"):
+                for inp_name, action_str in cfg["input_mappings"].items():
+                    if inp_name in self.input_map_combos:
+                        if action_str in self.action_options:
+                            self.input_map_combos[inp_name].setCurrentText(action_str)
+                        elif action_str in self.action_key_map:
+                            self.input_map_combos[inp_name].setCurrentText(self.action_key_map[action_str])
+            elif "mappings" in cfg and hasattr(self, "input_map_combos"):
+                # Reset all to disabled first for legacy import
+                for cb in self.input_map_combos.values():
+                    cb.setCurrentText("Disabled (None)")
+                legacy_map = {
+                    "left": "Move Left (left)",
+                    "right": "Move Right (right)",
+                    "up": "Move Up (up)",
+                    "down": "Move Down (down)",
+                    "action": "Primary Action (Fire / Pause)",
+                    "sec": "Secondary Action (Spread / Food)",
+                    "tert": "Tertiary Action (Smart Bomb / Color)"
+                }
+                for action_key, trigger_name in cfg["mappings"].items():
+                    if trigger_name in self.input_map_combos and action_key in legacy_map:
+                        self.input_map_combos[trigger_name].setCurrentText(legacy_map[action_key])
 
             if "thresholds" in cfg:
                 t = cfg["thresholds"]
@@ -2556,54 +2634,53 @@ class BCIControllerMappingWidget(QWidget):
                 if "notch_index" in d and d["notch_index"] < self.eeg_notch_cb.count():
                     self.eeg_notch_cb.setCurrentIndex(d["notch_index"])
                 if "custom_notch_hz" in d:
-                    self.eeg_custom_notch_spin.setValue(int(float(d["custom_notch_hz"]) * 10))
+                    self.eeg_custom_notch_spin.setValue(int(d["custom_notch_hz"] * 10))
                 if "notch_q" in d:
                     self.eeg_notch_q.setValue(int(d["notch_q"]))
                 if "bandpass_index" in d and d["bandpass_index"] < self.eeg_bandpass_cb.count():
                     self.eeg_bandpass_cb.setCurrentIndex(d["bandpass_index"])
                 if "custom_hp_hz" in d:
-                    self.eeg_hp_spin.setValue(int(float(d["custom_hp_hz"]) * 10))
+                    self.eeg_hp_spin.setValue(int(d["custom_hp_hz"] * 10))
                 if "custom_lp_hz" in d:
-                    self.eeg_lp_spin.setValue(int(float(d["custom_lp_hz"]) * 10))
+                    self.eeg_lp_spin.setValue(int(d["custom_lp_hz"] * 10))
                 if "focus_target_index" in d and d["focus_target_index"] < self.eeg_focus_ch_cb.count():
                     self.eeg_focus_ch_cb.setCurrentIndex(d["focus_target_index"])
                 if "smoothing_alpha" in d:
-                    self.eeg_ema_slider.setValue(int(float(d["smoothing_alpha"]) * 100))
-                if "blink_ch_index" in d and d["blink_ch_index"] < self.eeg_blink_ch_cb.count():
+                    self.eeg_ema_slider.setValue(int(d["smoothing_alpha"] * 100))
+                if "blink_ch_index" in d and hasattr(self, "eeg_blink_ch_cb") and d["blink_ch_index"] < self.eeg_blink_ch_cb.count():
                     self.eeg_blink_ch_cb.setCurrentIndex(d["blink_ch_index"])
-                if "clench_ch_index" in d and d["clench_ch_index"] < self.eeg_clench_ch_cb.count():
+                if "clench_ch_index" in d and hasattr(self, "eeg_clench_ch_cb") and d["clench_ch_index"] < self.eeg_clench_ch_cb.count():
                     self.eeg_clench_ch_cb.setCurrentIndex(d["clench_ch_index"])
                 if "cooldown_sec" in d:
-                    self.eeg_cooldown_slider.setValue(int(float(d["cooldown_sec"]) * 10))
+                    self.eeg_cooldown_slider.setValue(int(d["cooldown_sec"] * 10))
 
             if "frequency_bands" in cfg:
                 fb = cfg["frequency_bands"]
                 if "delta" in fb:
-                    self.delta_min_spin.setValue(int(float(fb["delta"][0]) * 10))
-                    self.delta_max_spin.setValue(int(float(fb["delta"][1]) * 10))
+                    self.delta_min_spin.setValue(int(fb["delta"][0] * 10))
+                    self.delta_max_spin.setValue(int(fb["delta"][1] * 10))
                 if "theta" in fb:
-                    self.theta_min_spin.setValue(int(float(fb["theta"][0]) * 10))
-                    self.theta_max_spin.setValue(int(float(fb["theta"][1]) * 10))
+                    self.theta_min_spin.setValue(int(fb["theta"][0] * 10))
+                    self.theta_max_spin.setValue(int(fb["theta"][1] * 10))
                 if "alpha" in fb:
-                    self.alpha_min_spin.setValue(int(float(fb["alpha"][0]) * 10))
-                    self.alpha_max_spin.setValue(int(float(fb["alpha"][1]) * 10))
+                    self.alpha_min_spin.setValue(int(fb["alpha"][0] * 10))
+                    self.alpha_max_spin.setValue(int(fb["alpha"][1] * 10))
                 if "beta" in fb:
-                    self.beta_min_spin.setValue(int(float(fb["beta"][0]) * 10))
-                    self.beta_max_spin.setValue(int(float(fb["beta"][1]) * 10))
+                    self.beta_min_spin.setValue(int(fb["beta"][0] * 10))
+                    self.beta_max_spin.setValue(int(fb["beta"][1] * 10))
                 if "gamma" in fb:
-                    self.gamma_min_spin.setValue(int(float(fb["gamma"][0]) * 10))
-                    self.gamma_max_spin.setValue(int(float(fb["gamma"][1]) * 10))
+                    self.gamma_min_spin.setValue(int(fb["gamma"][0] * 10))
+                    self.gamma_max_spin.setValue(int(fb["gamma"][1] * 10))
 
             if "cognitive_ratios" in cfg:
                 cr = cfg["cognitive_ratios"]
                 if "focus_num" in cr:
-                    self.focus_num_min.setValue(int(float(cr["focus_num"][0]) * 10))
-                    self.focus_num_max.setValue(int(float(cr["focus_num"][1]) * 10))
+                    self.focus_num_min.setValue(int(cr["focus_num"][0] * 10))
+                    self.focus_num_max.setValue(int(cr["focus_num"][1] * 10))
                 if "focus_den" in cr:
-                    self.focus_den_min.setValue(int(float(cr["focus_den"][0]) * 10))
-                    self.focus_den_max.setValue(int(float(cr["focus_den"][1]) * 10))
+                    self.focus_den_min.setValue(int(cr["focus_den"][0] * 10))
+                    self.focus_den_max.setValue(int(cr["focus_den"][1] * 10))
                 if "calm_num" in cr:
-                    self.calm_num_min.setValue(int(float(cr["calm_num"][0]) * 10))
                     self.calm_num_max.setValue(int(float(cr["calm_num"][1]) * 10))
                 if "calm_den" in cr:
                     self.calm_den_min.setValue(int(float(cr["calm_den"][0]) * 10))
@@ -2642,14 +2719,24 @@ class BCIControllerMappingWidget(QWidget):
         if not key:
             return
 
+        def set_mapping(trigger_name, action_label):
+            if hasattr(self, "input_map_combos") and trigger_name in self.input_map_combos:
+                self.input_map_combos[trigger_name].setCurrentText(action_label)
+
+        def disable_all_mappings():
+            if hasattr(self, "input_map_combos"):
+                for cb in self.input_map_combos.values():
+                    cb.setCurrentText("Disabled (None)")
+
         if key == "gaming":
-            self.map_left_cb.setCurrentText("Phone Tilt Left")
-            self.map_right_cb.setCurrentText("Phone Tilt Right")
-            self.map_up_cb.setCurrentText("Phone Flick Up")
-            self.map_down_cb.setCurrentText("Phone Flick Down")
-            self.map_action_cb.setCurrentText("Phone Screen Tap")
-            self.map_sec_cb.setCurrentText("Muse Eye Blink")
-            self.map_tert_cb.setCurrentText("Muse Jaw Clench")
+            disable_all_mappings()
+            set_mapping("Phone Tilt Left", "Move Left (left)")
+            set_mapping("Phone Tilt Right", "Move Right (right)")
+            set_mapping("Phone Flick Up", "Move Up (up)")
+            set_mapping("Phone Flick Down", "Move Down (down)")
+            set_mapping("Phone Screen Tap", "Primary Action (Fire / Pause)")
+            set_mapping("Muse Eye Blink", "Secondary Action (Spread / Food)")
+            set_mapping("Muse Jaw Clench", "Tertiary Action (Smart Bomb / Color)")
             self.blink_thresh_slider.setValue(60)
             self.clench_thresh_slider.setValue(45)
             self.tilt_thresh_slider.setValue(10)
@@ -2659,7 +2746,8 @@ class BCIControllerMappingWidget(QWidget):
             self.eeg_cooldown_slider.setValue(4)
 
         elif key == "meditation":
-            self.map_action_cb.setCurrentText("Muse Deep Calm")
+            disable_all_mappings()
+            set_mapping("Muse Deep Calm", "Primary Action (Fire / Pause)")
             self.focus_thresh_slider.setValue(50)
             self.calm_thresh_slider.setValue(55)
             self.eeg_ema_slider.setValue(3)
@@ -2669,7 +2757,8 @@ class BCIControllerMappingWidget(QWidget):
             self.theta_max_spin.setValue(75)
 
         elif key == "focus":
-            self.map_action_cb.setCurrentText("Muse High Focus")
+            disable_all_mappings()
+            set_mapping("Muse High Focus", "Primary Action (Fire / Pause)")
             self.focus_thresh_slider.setValue(60)
             self.eeg_ema_slider.setValue(5)
             self.beta_min_spin.setValue(140)
@@ -2678,13 +2767,14 @@ class BCIControllerMappingWidget(QWidget):
             self.focus_num_max.setValue(280)
 
         elif key == "default":
-            self.map_left_cb.setCurrentText("Phone Tilt Left")
-            self.map_right_cb.setCurrentText("Phone Tilt Right")
-            self.map_up_cb.setCurrentText("Phone Tilt Forward")
-            self.map_down_cb.setCurrentText("Phone Tilt Backward")
-            self.map_action_cb.setCurrentText("Phone Screen Tap")
-            self.map_sec_cb.setCurrentText("Phone Shake")
-            self.map_tert_cb.setCurrentText("Muse Eye Blink")
+            disable_all_mappings()
+            set_mapping("Phone Tilt Left", "Move Left (left)")
+            set_mapping("Phone Tilt Right", "Move Right (right)")
+            set_mapping("Phone Tilt Forward", "Move Up (up)")
+            set_mapping("Phone Tilt Backward", "Move Down (down)")
+            set_mapping("Phone Screen Tap", "Primary Action (Fire / Pause)")
+            set_mapping("Phone Shake", "Secondary Action (Spread / Food)")
+            set_mapping("Muse Eye Blink", "Tertiary Action (Smart Bomb / Color)")
             self.blink_thresh_slider.setValue(80)
             self.clench_thresh_slider.setValue(60)
             self.focus_thresh_slider.setValue(60)
@@ -2699,6 +2789,7 @@ class BCIControllerMappingWidget(QWidget):
             self.alpha_min_spin.setValue(80); self.alpha_max_spin.setValue(130)
             self.beta_min_spin.setValue(130); self.beta_max_spin.setValue(300)
             self.gamma_min_spin.setValue(300); self.gamma_max_spin.setValue(500)
+
 
 
 
