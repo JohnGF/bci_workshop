@@ -932,14 +932,14 @@ class EEGVisualizerWidget(LSLTabBase):
         self.curve_calm.setData(self.calm_history)
 
         # Update BCI State Banner using dynamic focus/calm thresholds
-        if self.smoothed_focus > focus_thresh and self.smoothed_calm < calm_thresh - 10.0:
+        if self.smoothed_focus >= focus_thresh:
             self.state_title_lbl.setText("🧠 ACTIVE FOCUS STATE")
             self.state_title_lbl.setStyleSheet("font-size: 16px; font-weight: bold; color: #06b6d4;")
-            self.state_desc_lbl.setText(f"Target electrode ({focus_ch_mode.upper()}) beta activation active. High cognitive engagement.")
-        elif self.smoothed_calm > calm_thresh and self.smoothed_focus < focus_thresh - 10.0:
+            self.state_desc_lbl.setText(f"Target electrode ({focus_ch_mode.upper()}) focus index {self.smoothed_focus:.1f}% (Threshold: {focus_thresh:.1f}%).")
+        elif self.smoothed_calm >= calm_thresh:
             self.state_title_lbl.setText("🧘 DEEP CALM / RELAXED")
             self.state_title_lbl.setStyleSheet("font-size: 16px; font-weight: bold; color: #d946ef;")
-            self.state_desc_lbl.setText(f"Target electrode ({focus_ch_mode.upper()}) alpha synchronization active. Restful baseline state.")
+            self.state_desc_lbl.setText(f"Target electrode ({focus_ch_mode.upper()}) calm index {self.smoothed_calm:.1f}% (Threshold: {calm_thresh:.1f}%).")
         else:
             self.state_title_lbl.setText("🧠 NEUTRAL COGNITION")
             self.state_title_lbl.setStyleSheet("font-size: 16px; font-weight: bold; color: #ffffff;")
@@ -989,42 +989,66 @@ class EEGVisualizerWidget(LSLTabBase):
 
         # ── Persistent Cognitive Buff States ──────────────────────────────────
         # Focus/Calm are sustained physiological states, not discrete events.
-        # Instead of one-shot triggers, we drive persistent gameplay buffs:
+        # We maintain robust state synchronization, debounced fade timers, and periodic keepalives:
         #   High Focus  → Shield buff: halves incoming damage while active
-        #   Deep Calm   → Missile buff: fires a Smart Bomb every 5 seconds
+        #   Deep Calm   → Missile buff: launches a Guided Missile every 5 seconds
         # ──────────────────────────────────────────────────────────────────────
         if not hasattr(self, "_focus_buff_active"): self._focus_buff_active = False
+        if not hasattr(self, "_focus_fade_start"):   self._focus_fade_start  = 0.0
+        if not hasattr(self, "_focus_last_sync"):    self._focus_last_sync   = 0.0
+
         if not hasattr(self, "_calm_buff_active"):  self._calm_buff_active  = False
+        if not hasattr(self, "_calm_fade_start"):   self._calm_fade_start   = 0.0
         if not hasattr(self, "_calm_last_missile"):  self._calm_last_missile = 0.0
 
         main_win = self.window()
         if hasattr(main_win, "send_command_to_snake_game"):
             # ── High Focus → Shield Buff ──
-            if self.smoothed_focus > focus_thresh:
+            if self.smoothed_focus >= focus_thresh:
+                self._focus_fade_start = 0.0  # Reset fade timer
                 if not self._focus_buff_active:
                     self._focus_buff_active = True
                     main_win.send_command_to_snake_game("focus_shield_on")
-                    main_win.append_system_log("🧠 FOCUS BUFF ACTIVATED — Shield halves incoming damage")
-            elif self.smoothed_focus < focus_thresh - 10.0:
+                    main_win.append_system_log(f"🧠 FOCUS BUFF ACTIVATED ({self.smoothed_focus:.1f}% >= {focus_thresh:.1f}%) — Shield halves incoming damage")
+                    self._focus_last_sync = now
+                elif now - self._focus_last_sync >= 1.5:
+                    # Periodic heartbeat to ensure game shield stays synced (e.g. after restart)
+                    main_win.send_command_to_snake_game("focus_shield_on")
+                    self._focus_last_sync = now
+            elif self.smoothed_focus < focus_thresh - 8.0:
                 if self._focus_buff_active:
-                    self._focus_buff_active = False
-                    main_win.send_command_to_snake_game("focus_shield_off")
-                    main_win.append_system_log("🧠 Focus buff faded — Shield deactivated")
+                    if self._focus_fade_start == 0.0:
+                        self._focus_fade_start = now  # Start debounce fade timer
+                    elif now - self._focus_fade_start >= 1.5:  # Require 1.5s sustained drop
+                        self._focus_buff_active = False
+                        self._focus_fade_start = 0.0
+                        main_win.send_command_to_snake_game("focus_shield_off")
+                        main_win.append_system_log(f"🧠 Focus buff faded ({self.smoothed_focus:.1f}% < {focus_thresh - 8.0:.1f}%) — Shield deactivated")
+            else:
+                # In hysteresis deadband (between focus_thresh - 8.0 and focus_thresh)
+                self._focus_fade_start = 0.0
 
             # ── Deep Calm → Periodic Missile Buff ──
-            if self.smoothed_calm > calm_thresh:
+            if self.smoothed_calm >= calm_thresh:
+                self._calm_fade_start = 0.0
                 if not self._calm_buff_active:
                     self._calm_buff_active = True
-                    main_win.append_system_log("🧘 CALM BUFF ACTIVATED — Smart Bomb every 5s while relaxed")
-                # Fire a Smart Bomb every 5 seconds while in calm state
+                    main_win.append_system_log(f"🧘 CALM BUFF ACTIVATED ({self.smoothed_calm:.1f}% >= {calm_thresh:.1f}%) — Smart Bomb every 5s while relaxed")
+                # Fire a guided missile every 5 seconds while in calm state
                 if now - self._calm_last_missile >= 5.0:
-                    main_win.send_command_to_snake_game("tert_action")
+                    main_win.send_command_to_snake_game("missile")
                     self._calm_last_missile = now
-                    main_win.append_system_log("🧘 Calm Missile launched!")
-            elif self.smoothed_calm < calm_thresh - 10.0:
+                    main_win.append_system_log(f"🧘 Calm Missile launched! (Relax: {self.smoothed_calm:.1f}%)")
+            elif self.smoothed_calm < calm_thresh - 8.0:
                 if self._calm_buff_active:
-                    self._calm_buff_active = False
-                    main_win.append_system_log("🧘 Calm buff faded — no longer relaxed enough")
+                    if self._calm_fade_start == 0.0:
+                        self._calm_fade_start = now
+                    elif now - self._calm_fade_start >= 1.5:
+                        self._calm_buff_active = False
+                        self._calm_fade_start = 0.0
+                        main_win.append_system_log(f"🧘 Calm buff faded ({self.smoothed_calm:.1f}% < {calm_thresh - 8.0:.1f}%) — no longer relaxed enough")
+            else:
+                self._calm_fade_start = 0.0
         # ──────────────────────────────────────────────────────────────────────
 
     def compute_single_channel_psd(self, data, sfreq, notch_freq=50.0, notch_q=30.0, highpass=1.0, lowpass=50.0):
