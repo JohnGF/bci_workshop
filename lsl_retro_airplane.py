@@ -180,8 +180,8 @@ class RetroPlaneGame:
 
         # ── BCI Cognitive Buff State ──────────────────────────────────────────
         # focus_shield_on / focus_shield_off commands from main.py
-        self.shield_active = False    # High Focus → halves incoming damage
-        # (calm missile buff uses tert_action directly — no extra state needed)
+        self.shield_active = False        # High Focus → halves incoming damage
+        self.spread_buff_active = False   # Laser Spread Buff → fires 3-way multi-lasers on primary attack
         # ─────────────────────────────────────────────────────────────────────
 
     def reset_game(self):
@@ -199,7 +199,8 @@ class RetroPlaneGame:
         self.enemies.clear()
         self.particles.clear()
         self.nova_events.clear()
-        self.shield_active = False  # clear buff state on game reset
+        self.shield_active = False       # clear buff state on game reset
+        self.spread_buff_active = False  # clear spread buff state
 
     def handle_inputs(self):
         global WINDOW_WIDTH, WINDOW_HEIGHT
@@ -207,7 +208,7 @@ class RetroPlaneGame:
         # 1. Update GameInputManager states (polls keyboard/mouse and BCI queue)
         self.input_mgr.update()
 
-        # 1b. Handle BCI cognitive buff commands before standard action routing
+        # 1b. Handle BCI cognitive buff and action commands
         for cmd in list(self.input_mgr.cmds):
             if cmd == "focus_shield_on":
                 self.shield_active = True
@@ -215,6 +216,15 @@ class RetroPlaneGame:
             elif cmd == "focus_shield_off":
                 self.shield_active = False
                 print("🧠 Focus shield deactivated")
+            elif cmd == "spread_buff_on":
+                self.spread_buff_active = True
+                print("🔥 SPREAD CANNON BUFF ACTIVATED — triple multi-laser unlocked")
+            elif cmd == "spread_buff_off":
+                self.spread_buff_active = False
+                print("🔥 Spread cannon buff deactivated")
+            elif cmd in ("toggle_spread_buff", "spread_buff", "spread"):
+                self.spread_buff_active = not self.spread_buff_active
+                print(f"🔥 Spread Cannon Buff: {'ACTIVATED' if self.spread_buff_active else 'DEACTIVATED'}")
             elif cmd in ("missile", "calm_missile", "voice_missile"):
                 self.fire_missile()
             elif cmd in ("supernova", "nova", "voice_fire", "fire", "tert_action"):
@@ -238,6 +248,9 @@ class RetroPlaneGame:
                     self.fire_missile()
                 elif event.key in (K_f, K_n):
                     self.trigger_supernova()
+                elif event.key in (K_s, K_x):
+                    self.spread_buff_active = not self.spread_buff_active
+                    print(f"🔥 Spread Cannon Buff: {'ACTIVATED' if self.spread_buff_active else 'DEACTIVATED'}")
             elif event.type == VIDEORESIZE:
                 WINDOW_WIDTH, WINDOW_HEIGHT = event.w, event.h
                 self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), DOUBLEBUF | OPENGL | RESIZABLE)
@@ -266,13 +279,8 @@ class RetroPlaneGame:
                 
         if self.input_mgr.is_sec_action():
             if not self.game_over:
-                # Double laser spread!
-                if self.shoot_cooldown <= 0:
-                    self.lasers.append({"x": self.player_x - 15, "y": self.player_y - 20})
-                    self.lasers.append({"x": self.player_x + 15, "y": self.player_y - 20})
-                    self.shoot_cooldown = 15
-                    if self.snd_laser:
-                        self.snd_laser.play()
+                # Secondary action toggles the persistent Spread Cannon Buff!
+                self.spread_buff_active = not self.spread_buff_active
                         
         if self.input_mgr.is_tert_action():
             if not self.game_over:
@@ -297,8 +305,16 @@ class RetroPlaneGame:
 
     def fire_laser(self):
         if self.shoot_cooldown <= 0:
-            self.lasers.append({"x": self.player_x, "y": self.player_y - 20})
-            self.shoot_cooldown = 12
+            if self.spread_buff_active:
+                # Triple Laser Spread Buff Pattern!
+                self.lasers.append({"x": self.player_x, "y": self.player_y - 20, "vx": 0.0, "vy": -10.0, "color": (255, 110, 230)})
+                self.lasers.append({"x": self.player_x - 16, "y": self.player_y - 12, "vx": -2.8, "vy": -9.2, "color": (255, 110, 230)})
+                self.lasers.append({"x": self.player_x + 16, "y": self.player_y - 12, "vx": 2.8, "vy": -9.2, "color": (255, 110, 230)})
+                self.shoot_cooldown = 14
+            else:
+                # Standard Single Forward Laser Cannon
+                self.lasers.append({"x": self.player_x, "y": self.player_y - 20, "vx": 0.0, "vy": -9.5, "color": COLOR_NEON_GREEN})
+                self.shoot_cooldown = 12
             if self.snd_laser:
                 self.snd_laser.play()
 
@@ -525,8 +541,9 @@ class RetroPlaneGame:
 
         # Update Lasers
         for laser in self.lasers[:]:
-            laser["y"] -= 9.5
-            if laser["y"] < 0:
+            laser["x"] += laser.get("vx", 0.0)
+            laser["y"] += laser.get("vy", -9.5)
+            if laser["y"] < -20 or laser["x"] < -20 or laser["x"] > WINDOW_WIDTH + 20:
                 self.lasers.remove(laser)
 
         # Update Enemies
@@ -620,6 +637,22 @@ class RetroPlaneGame:
             glEnd()
             glDisable(GL_BLEND)
 
+        # Spread Cannon Buff: Wingtip auxiliary emitters & energy aura
+        if self.spread_buff_active:
+            pulse = 0.65 + 0.35 * math.sin(pygame.time.get_ticks() * 0.012)
+            glColor3f(1.0 * pulse, 0.35 * pulse, 0.9 * pulse)
+            glPointSize(6.0)
+            glBegin(GL_POINTS)
+            glVertex2f(px - 25, py + 10)
+            glVertex2f(px + 25, py + 10)
+            glEnd()
+            # Emitter bracket lines
+            glLineWidth(2.5)
+            glBegin(GL_LINES)
+            glVertex2f(px - 25, py + 10); glVertex2f(px - 25, py + 2)
+            glVertex2f(px + 25, py + 10); glVertex2f(px + 25, py + 2)
+            glEnd()
+
     def draw_enemy(self, enemy):
         ex, ey = enemy["x"], enemy["y"]
         w, h = enemy["w"], enemy["h"]
@@ -644,11 +677,15 @@ class RetroPlaneGame:
         glEnd()
 
     def draw_laser(self, laser):
-        glColor3f(*COLOR_NEON_GREEN)
+        col = laser.get("color", COLOR_NEON_GREEN)
+        glColor3f(*col)
         glLineWidth(3.0)
+        lx, ly = laser["x"], laser["y"]
+        vx = laser.get("vx", 0.0)
+        vy = laser.get("vy", -9.5)
         glBegin(GL_LINES)
-        glVertex2f(laser["x"], laser["y"])
-        glVertex2f(laser["x"], laser["y"] - 15)
+        glVertex2f(lx, ly)
+        glVertex2f(lx - vx * 1.5, ly - vy * 1.5)
         glEnd()
 
     def draw_missile(self, m):
@@ -854,6 +891,20 @@ class RetroPlaneGame:
             glEnd()
             glDisable(GL_BLEND)
             self.draw_text("🧠 FOCUS SHIELD ACTIVE  [-50% DMG]", 18, buff_y, self.font, (0, 220, 255))
+            buff_y += 22
+
+        if self.spread_buff_active:
+            glEnable(GL_BLEND)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glColor4f(1.0, 0.35, 0.9, 0.12)
+            glBegin(GL_QUADS)
+            glVertex2f(14, buff_y - 2)
+            glVertex2f(275, buff_y - 2)
+            glVertex2f(275, buff_y + 18)
+            glVertex2f(14, buff_y + 18)
+            glEnd()
+            glDisable(GL_BLEND)
+            self.draw_text("🔥 SPREAD CANNON ACTIVE [3-WAY]", 18, buff_y, self.font, (255, 110, 230))
             buff_y += 22
 
     def draw(self):

@@ -364,7 +364,7 @@ class VoiceCommandsListenerThread(QThread):
             55.0: "Voice Command 'Fire'",
             66.0: "Voice Command 'Missile'",
             44.0: "Voice Command 'Fire'",
-            33.0: "Voice Command 'Right'",
+            33.0: "Voice Command 'Spread'",
             11.0: "Voice Command 'Fire'"
         }
         while self.running:
@@ -2022,7 +2022,7 @@ class BCIControllerMappingWidget(QWidget):
             "Move Up (up)",
             "Move Down (down)",
             "Primary Action (Laser Cannon)",
-            "Secondary Action (Double Laser Spread)",
+            "Toggle Spread Cannon Buff (Triple Lasers)",
             "Launch Guided Missiles (Rockets)",
             "Supernova Cleansing Blast (Nova Screen Wipe)"
         ]
@@ -2034,7 +2034,7 @@ class BCIControllerMappingWidget(QWidget):
             "Move Up (up)": "up",
             "Move Down (down)": "down",
             "Primary Action (Laser Cannon)": "action",
-            "Secondary Action (Double Laser Spread)": "sec_action",
+            "Toggle Spread Cannon Buff (Triple Lasers)": "toggle_spread_buff",
             "Launch Guided Missiles (Rockets)": "missile",
             "Supernova Cleansing Blast (Nova Screen Wipe)": "supernova"
         }
@@ -2049,8 +2049,12 @@ class BCIControllerMappingWidget(QWidget):
             "up": "Move Up (up)",
             "down": "Move Down (down)",
             "action": "Primary Action (Laser Cannon)",
-            "sec_action": "Secondary Action (Double Laser Spread)",
-            "sec": "Secondary Action (Double Laser Spread)",
+            "toggle_spread_buff": "Toggle Spread Cannon Buff (Triple Lasers)",
+            "spread_buff_on": "Toggle Spread Cannon Buff (Triple Lasers)",
+            "spread_buff": "Toggle Spread Cannon Buff (Triple Lasers)",
+            "sec_action": "Toggle Spread Cannon Buff (Triple Lasers)",
+            "sec": "Toggle Spread Cannon Buff (Triple Lasers)",
+            "spread": "Toggle Spread Cannon Buff (Triple Lasers)",
             "missile": "Launch Guided Missiles (Rockets)",
             "calm_missile": "Launch Guided Missiles (Rockets)",
             "supernova": "Supernova Cleansing Blast (Nova Screen Wipe)",
@@ -2077,6 +2081,7 @@ class BCIControllerMappingWidget(QWidget):
             "Phone Shake",
             "Voice Command 'Left'",
             "Voice Command 'Right'",
+            "Voice Command 'Spread'",
             "Voice Command 'Missile'",
             "Voice Command 'Fire'"
         ]
@@ -2084,7 +2089,7 @@ class BCIControllerMappingWidget(QWidget):
         # Default mapping per input trigger
         default_trigger_actions = {
             "Muse Eye Blink": "Supernova Cleansing Blast (Nova Screen Wipe)",
-            "Muse Jaw Clench": "Disabled (None)",
+            "Muse Jaw Clench": "Toggle Spread Cannon Buff (Triple Lasers)",
             "Muse High Focus": "Disabled (None)",
             "Muse Deep Calm": "Launch Guided Missiles (Rockets)",
             "Phone Tilt Left": "Move Left (left)",
@@ -2096,9 +2101,10 @@ class BCIControllerMappingWidget(QWidget):
             "Phone Flick Up": "Disabled (None)",
             "Phone Flick Down": "Disabled (None)",
             "Phone Screen Tap": "Primary Action (Laser Cannon)",
-            "Phone Shake": "Secondary Action (Double Laser Spread)",
+            "Phone Shake": "Toggle Spread Cannon Buff (Triple Lasers)",
             "Voice Command 'Left'": "Move Left (left)",
             "Voice Command 'Right'": "Move Right (right)",
+            "Voice Command 'Spread'": "Toggle Spread Cannon Buff (Triple Lasers)",
             "Voice Command 'Missile'": "Launch Guided Missiles (Rockets)",
             "Voice Command 'Fire'": "Supernova Cleansing Blast (Nova Screen Wipe)"
         }
