@@ -123,10 +123,88 @@ async def echo(websocket):
     else:
         duration = time.monotonic() - session_start
         conn_logger.info(f"DISCONNECT remote={remote}  reason=stream_ended  duration={duration:.1f}s")
+def start_udp_listener(ip, port):
+    """Listens for UDP packets (JSON or CSV) from mobile apps like HyperIMU and pushes to LSL."""
+    global latest_acc, latest_gyro, latest_touch
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.bind((ip, port))
+        conn_logger.info(f"UDP_START  Listening on {ip}:{port}")
+        print(f"📡 UDP Listener active on {ip}:{port}")
+    except Exception as e:
+        conn_logger.error(f"UDP_BIND_ERROR on {ip}:{port}: {e}")
+        print(f"⚠️ Failed to bind UDP listener on {ip}:{port}: {e}")
+        return
 
-# ==========================================
-# EMBEDDED ZERO-INSTALL MOBILE WEB INTERFACE
-# ==========================================
+    first_packet = True
+    while True:
+        try:
+            data, addr = sock.recvfrom(4096)
+            if first_packet:
+                conn_logger.info(f"UDP_FIRST_MSG remote={addr}")
+                print(f"📥 First UDP sensor packet received from {addr}!")
+                first_packet = False
+
+            text = data.decode('utf-8', errors='ignore').strip()
+
+            # 1. JSON format
+            if text.startswith('{'):
+                try:
+                    payload = json.loads(text)
+                    if "touch" in payload:
+                        latest_touch = 1.0
+                        outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
+                        latest_touch = 0.0
+                        continue
+                    if "acc" in payload and "gyro" in payload:
+                        latest_acc = payload.get("acc", [0.0, 0.0, 9.81])
+                        latest_gyro = payload.get("gyro", [0.0, 0.0, 0.0])
+                        outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
+                        latest_touch = 0.0
+                        continue
+                    elif "accel" in payload and "gyro" in payload:
+                        latest_acc = payload["accel"]
+                        latest_gyro = payload["gyro"]
+                        outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
+                        latest_touch = 0.0
+                        continue
+                    elif "payload" in payload:
+                        for item in payload.get("payload", []):
+                            name = item.get("name")
+                            values = item.get("values", {})
+                            if name == "accelerometer":
+                                latest_acc = [values.get("x", 0.0), values.get("y", 0.0), values.get("z", 0.0)]
+                            elif name == "gyroscope":
+                                latest_gyro = [values.get("x", 0.0), values.get("y", 0.0), values.get("z", 0.0)]
+                        outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
+                        latest_touch = 0.0
+                        continue
+                except Exception:
+                    pass
+
+            # 2. CSV format
+            # Galaxy Watch / Mobile Streamer format: accX,accY,accZ,gyroX,gyroY,gyroZ,hr,touchX,touchY,isTouched (10 values)
+            # HyperIMU standard format: accX,accY,accZ,gyroX,gyroY,gyroZ (6 values)
+            parts = text.split(',')
+            if len(parts) >= 6:
+                try:
+                    vals = [float(p.strip()) for p in parts if p.strip()]
+                    if len(vals) >= 6:
+                        latest_acc = vals[:3]
+                        latest_gyro = vals[3:6]
+                        # If 10 items (from galaxy_watch_lsl mobile/watch streamer)
+                        if len(vals) >= 10:
+                            # vals[9] is isTouched (1.0 if touched, 0.0 otherwise)
+                            touch_state = 1.0 if vals[9] > 0.5 else 0.0
+                            outlet.push_sample(latest_acc + latest_gyro + [touch_state])
+                        else:
+                            outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
+                            latest_touch = 0.0
+                except ValueError:
+                    pass
+        except Exception as e:
+            conn_logger.error(f"UDP_ERROR: {e}")
+
 HTML_CONTENT = """<!DOCTYPE html>
 <html>
 <head>
@@ -815,6 +893,7 @@ async def main():
     parser = argparse.ArgumentParser(description="Phone IMU LSL Bridge")
     parser.add_argument("--ip", type=str, default="0.0.0.0", help="IP address to bind the WebSocket/HTTP servers to")
     parser.add_argument("--port", type=int, default=8000, help="HTTP Server Port (WebSockets runs on port+1 and port+2)")
+    parser.add_argument("--udp-port", type=int, default=5005, help="UDP Server Port for apps like HyperIMU (default: 5005)")
     args, _ = parser.parse_known_args()
 
     # Resolve display IP for console instructions
@@ -834,6 +913,10 @@ async def main():
     print(f"📡 Starting HTTPS Interface Server on https://{args.ip}:{args.port}...")
     http_server = start_http_server(args.ip, args.port)
 
+    # Start background UDP listener
+    udp_thread = threading.Thread(target=start_udp_listener, args=(args.ip, args.udp_port), daemon=True)
+    udp_thread.start()
+
     # Setup SSL context for Secure WebSockets (WSS)
     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     try:
@@ -843,11 +926,11 @@ async def main():
         ssl_context = None
 
     print("==================================================")
-    print("📲 Dual-Protocol Phone IMU LSL Bridge Active")
+    print("📲 Multi-Protocol Phone IMU LSL Bridge Active")
     print("==================================================")
     if sys.platform == "win32":
         print("⚠️  WINDOWS SECURITY REMINDER:")
-        print("   - Ensure Windows Defender Firewall allows incoming TCP on ports 8000-8002.")
+        print(f"   - Ensure Windows Defender Firewall allows incoming TCP on ports 8000-8002 and UDP on port {args.udp_port}.")
         print("   - Set your Wi-Fi Network Profile type to 'Private' in Windows settings.")
         print("--------------------------------------------------")
         is_virtual = (
@@ -868,19 +951,24 @@ async def main():
     print("  4. Tap 'Enable Sensors' to begin streaming.")
     print("  5. Toggle 'Voice Commands' to control with speech!")
     print("--------------------------------------------------")
-    print("Option B: CUSTOM ANDROID APP")
+    print("Option B: UDP STREAMER APP (HyperIMU / Custom UDP)")
+    print("  1. In your app settings, set target IP and Port:")
+    print(f"     IP: {display_ip} | Port: {args.udp_port} | Protocol: UDP")
+    print("  2. Format: JSON (accel/gyro or acc/gyro) or CSV (ax,ay,az,gx,gy,gz)")
+    print("--------------------------------------------------")
+    print("Option C: CUSTOM ANDROID APP (WebSocket)")
     print("  1. Build and install the minimal streamer APK located in:")
     print("     /android-imu-streamer")
     print("  2. Open the app on your phone and connect to URL:")
     print(f"     ws://{display_ip}:{ws_port_insecure}")
     print("--------------------------------------------------")
-    print("Option C: THIRD-PARTY APP (Sensor Logger)")
+    print("Option D: THIRD-PARTY APP (Sensor Logger - WebSockets)")
     print("  1. In the app Settings -> Live Data Streaming:")
     print("     - Set Protocol to 'WebSockets' (JSON).")
     print(f"     - Set URL to: ws://{display_ip}:{ws_port_insecure}")
     print("  2. Tap orange 'Start' on the main screen to begin streaming.")
     print("==================================================")
-    print(f"⌛ Listening for Insecure WS (port {ws_port_insecure}) and Secure WSS (port {ws_port_secure})...")
+    print(f"⌛ Listening for UDP ({args.udp_port}), WS ({ws_port_insecure}), and WSS ({ws_port_secure})...")
 
     # Start both WebSocket servers concurrently
     insecure_server = websockets.serve(echo, args.ip, ws_port_insecure, reuse_address=True)

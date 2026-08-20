@@ -68,3 +68,216 @@
 2026-08-14 16:35:20  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
 2026-08-14 16:35:20  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
 2026-08-14 17:11:37  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=2180.0s
+2026-08-20 16:27:43  INFO      RESOLVING  stream=Muse_Athena
+2026-08-20 16:27:43  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-20 16:27:43  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-20 16:27:43  INFO      RESOLVING  stream=Muse_Optics
+2026-08-20 16:27:46  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-20 16:27:46  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-20 16:27:46  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-20 16:27:46  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-20 16:27:58  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:27:58  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:28:09  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-20 16:28:09  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-20 16:28:10  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-20 16:28:10  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 134)
+2026-08-20 16:28:10  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 24)
+2026-08-20 16:28:18  INFO      RESOLVING  stream=Muse_Athena
+2026-08-20 16:28:18  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_uid123
+2026-08-20 16:28:33  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-20 16:28:33  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-20 16:30:20  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=107.3s
+2026-08-20 16:30:55  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-20 16:30:55  INFO      CONNECT    stream=Smartwatch_PPG  source_id=smartwatch_ppg_01
+2026-08-20 16:30:55  ERROR     ERROR      stream=Smartwatch_PPG  error=Digital filter critical frequencies must be 0 < Wn < fs/2 (fs=1.0 -> fs/2=0.5)
+2026-08-20 16:30:57  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-20 16:31:11  INFO      DISCONNECT stream=Smartwatch_PPG  session_duration=16.6s
+2026-08-20 16:31:21  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-20 16:31:21  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-20 16:31:29  INFO      RESOLVING  stream=Muse_Optics
+2026-08-20 16:31:29  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-20 16:34:15  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=5.0s  session_duration=1787238376.7s
+2026-08-20 16:34:15  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=365.4s
+2026-08-20 16:34:22  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:34:32  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:34:32  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:34:42  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:34:42  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:34:52  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:34:52  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:35:02  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:35:02  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:35:12  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:35:12  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:35:23  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:35:23  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:35:33  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:35:33  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:35:43  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:35:43  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:35:53  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:35:53  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:36:03  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:36:03  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:36:13  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:36:13  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:36:23  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:36:23  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:36:33  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:36:33  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:36:43  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:36:43  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:36:53  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:36:53  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:37:03  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:37:03  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:37:13  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:37:13  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:37:23  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:37:23  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:37:33  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:37:33  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:37:43  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:37:43  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:37:53  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:37:53  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:38:03  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:38:03  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:38:13  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:38:13  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:38:23  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:38:23  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:38:33  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:38:33  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:38:43  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:38:43  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:38:54  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:38:54  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:39:04  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:39:04  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:39:14  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:39:14  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:39:24  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:39:24  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:39:34  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:39:34  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:39:44  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:39:44  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:39:54  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:39:54  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:40:04  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:40:04  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:40:14  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:40:14  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:40:24  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:40:24  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:40:34  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:40:34  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:40:44  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:40:44  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:40:54  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:40:54  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:41:04  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:41:04  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:41:14  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:41:14  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:41:24  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:41:24  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:41:34  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:41:34  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:41:44  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:41:44  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:41:55  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:41:55  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:42:05  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:42:05  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:42:15  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:42:15  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:42:25  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:42:25  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:42:35  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:42:35  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:42:45  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:42:45  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:42:55  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:42:55  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:43:05  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:43:05  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:43:15  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:43:15  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:43:25  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:43:25  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:43:35  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:43:35  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:43:45  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:43:45  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:43:55  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:43:55  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:44:05  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:44:05  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:44:15  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:44:15  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:44:25  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:44:25  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:44:35  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:44:35  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:44:45  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:44:45  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:44:55  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:44:55  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:45:05  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:45:05  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:45:16  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:45:16  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:45:25  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-20 16:45:25  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 148)
+2026-08-20 16:45:25  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 24)
+2026-08-20 16:50:52  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=5.0s  session_duration=1787238337.9s
+2026-08-20 16:50:52  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=326.5s
+2026-08-20 16:50:59  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:51:09  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:51:09  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:51:19  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:51:19  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:51:29  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-20 16:51:29  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:51:38  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-20 16:51:38  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 160)
+2026-08-20 16:51:38  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 24)
+2026-08-20 16:52:13  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=5.0s  session_duration=1787238046.2s
+2026-08-20 16:52:13  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=34.9s
+2026-08-20 16:52:15  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:52:23  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-20 16:52:23  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 160)
+2026-08-20 16:52:23  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 24)
+2026-08-20 16:53:50  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=5.0s  session_duration=1787238098.5s
+2026-08-20 16:53:50  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=87.2s
+2026-08-20 16:53:52  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:53:59  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-20 16:53:59  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 160)
+2026-08-20 16:53:59  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 24)
+2026-08-20 16:54:26  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=5.0s  session_duration=1787238037.5s
+2026-08-20 16:54:26  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=26.2s
+2026-08-20 16:54:28  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-20 16:54:35  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-20 16:54:35  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 160)
+2026-08-20 16:54:35  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 24)
+2026-08-20 17:06:18  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=702.7s
+2026-08-20 17:11:03  INFO      RESOLVING  stream=Muse_Athena
+2026-08-20 17:11:03  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-20 17:11:03  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-20 17:11:03  INFO      RESOLVING  stream=Muse_Optics
+2026-08-20 17:11:03  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-20 17:11:04  INFO      CONNECT    stream=Smartwatch_PPG  source_id=smartwatch_ppg_01
+2026-08-20 17:11:04  ERROR     ERROR      stream=Smartwatch_PPG  error=Digital filter critical frequencies must be 0 < Wn < fs/2 (fs=1.0 -> fs/2=0.5)
+2026-08-20 17:11:05  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-20 17:11:06  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-20 17:11:06  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-20 17:11:15  ERROR     UDP_BIND_ERROR on 0.0.0.0:5005: [WinError 10048] Only one usage of each socket address (protocol/network address/port) is normally permitted
+2026-08-20 17:12:03  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=59.9s
+2026-08-20 17:12:18  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-20 17:12:18  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-20 17:12:38  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-20 17:12:38  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-20 17:13:28  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="I think I'll do it myself.  All right, I'll do it myself."
