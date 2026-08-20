@@ -1,0 +1,87 @@
+{
+  "version": "2.0",
+  "timestamp": "2026-08-16 14:25:14",
+  "input_mappings": {
+    "Muse Eye Blink": "Supernova Cleansing Blast (Nova Screen Wipe)",
+    "Muse Jaw Clench": "Toggle Spread Cannon Buff (Triple Lasers)",
+    "Muse High Focus": "Disabled (None)",
+    "Muse Deep Calm": "Launch Guided Missiles (Rockets)",
+    "Phone Tilt Left": "Move Left (left)",
+    "Phone Tilt Right": "Move Right (right)",
+    "Phone Tilt Forward": "Move Up (up)",
+    "Phone Tilt Backward": "Move Down (down)",
+    "Phone Flick Left": "Disabled (None)",
+    "Phone Flick Right": "Disabled (None)",
+    "Phone Flick Up": "Disabled (None)",
+    "Phone Flick Down": "Disabled (None)",
+    "Phone Screen Tap": "Primary Action (Laser Cannon)",
+    "Phone Shake": "Toggle Spread Cannon Buff (Triple Lasers)",
+    "Voice Command 'Left'": "Move Left (left)",
+    "Voice Command 'Right'": "Move Right (right)",
+    "Voice Command 'Spread'": "Toggle Spread Cannon Buff (Triple Lasers)",
+    "Voice Command 'Missile'": "Launch Guided Missiles (Rockets)",
+    "Voice Command 'Fire'": "Supernova Cleansing Blast (Nova Screen Wipe)"
+  },
+  "thresholds": {
+    "blink_uv": 600,
+    "clench_uv": 400,
+    "focus_pct": 60,
+    "calm_pct": 50,
+    "tilt_deg": 15,
+    "flick": 0.35,
+    "shake": 8.0
+  },
+  "dsp": {
+    "notch_index": 0,
+    "custom_notch_hz": 50.0,
+    "notch_q": 30,
+    "bandpass_index": 0,
+    "custom_hp_hz": 1.0,
+    "custom_lp_hz": 45.0,
+    "focus_target_index": 0,
+    "smoothing_alpha": 0.04,
+    "blink_ch_index": 0,
+    "clench_ch_index": 0,
+    "cooldown_sec": 0.8
+  },
+  "frequency_bands": {
+    "delta": [
+      0.5,
+      4.0
+    ],
+    "theta": [
+      4.0,
+      8.0
+    ],
+    "alpha": [
+      8.0,
+      13.0
+    ],
+    "beta": [
+      13.0,
+      30.0
+    ],
+    "gamma": [
+      30.0,
+      50.0
+    ]
+  },
+  "cognitive_ratios": {
+    "focus_num": [
+      13.0,
+      30.0
+    ],
+    "focus_den": [
+      8.0,
+      13.0
+    ],
+    "calm_num": [
+      8.0,
+      13.0
+    ],
+    "calm_den": [
+      4.0,
+      8.0
+    ]
+  }
+}

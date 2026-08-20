@@ -68,3 +68,1458 @@
 2026-08-14 16:35:20  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
 2026-08-14 16:35:20  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
 2026-08-14 17:11:37  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=2180.0s
+2026-08-14 20:51:13  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 20:51:13  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 20:51:13  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 20:51:13  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 20:51:16  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 20:51:16  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 20:51:16  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-14 20:51:16  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 21:32:46  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 21:32:46  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 21:32:46  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 21:32:46  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 21:32:48  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 21:32:49  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 21:32:49  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 21:32:49  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 21:37:32  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 21:37:32  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 21:37:32  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 21:37:32  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 21:38:54  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 21:38:54  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 21:38:54  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 21:38:54  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 21:38:55  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 21:38:57  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 21:38:57  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 21:38:57  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 21:45:07  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=372.0s
+2026-08-14 21:45:13  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 21:45:13  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 21:45:13  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 21:45:13  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 21:45:15  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 21:45:16  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 21:45:16  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 21:45:16  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-14 21:46:55  INFO      RESOLVING  stream=Muse_Athena
+2026-08-14 21:46:55  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-14 21:46:55  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-14 21:46:55  INFO      RESOLVING  stream=Muse_Optics
+2026-08-14 21:46:56  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-14 21:46:57  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-14 21:46:57  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-14 21:46:57  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 15:50:37  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 15:50:37  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 15:50:37  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 15:50:37  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 15:50:39  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-15 15:50:40  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 15:50:40  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 15:50:40  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 15:50:54  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=15.5s
+2026-08-15 15:54:22  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 15:54:22  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 15:54:22  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 15:54:22  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 15:54:24  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-15 15:54:25  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 15:54:25  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 15:54:25  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 15:55:00  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:55:00  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:55:00  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:55:00  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:55:00  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:55:00  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:55:00  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:55:00  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:55:00  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:55:00  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:56:07  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 15:56:07  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 15:56:07  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 15:56:07  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 15:56:08  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-15 15:56:10  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 15:56:10  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 15:56:10  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 15:56:16  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:56:16  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:56:16  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:56:16  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:56:16  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:56:16  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:56:16  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:56:17  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:56:17  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:56:17  INFO      SERVE_UI client=192.168.2.100 path=/qr-apk
+2026-08-15 15:56:19  INFO      SERVE_UI client=192.168.2.100 path=/
+2026-08-15 15:56:19  INFO      WEB_REQUEST client=192.168.2.100 "GET / HTTP/1.1" 200 -
+2026-08-15 15:56:19  INFO      SERVE_UI client=192.168.2.100 path=/favicon.ico
+2026-08-15 15:56:19  INFO      WEB_REQUEST client=192.168.2.100 "GET /favicon.ico HTTP/1.1" 204 -
+2026-08-15 15:56:21  INFO      CONNECT    remote=('192.168.2.100', 32896)
+2026-08-15 15:56:24  INFO      FIRST_MSG  remote=('192.168.2.100', 32896)  (first sensor data received)
+2026-08-15 15:56:35  INFO      DISCONNECT remote=('192.168.2.100', 32896)  reason=stream_ended  duration=14.6s
+2026-08-15 16:03:07  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 16:03:07  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 16:03:07  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 16:03:07  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 16:03:09  INFO      server listening on 0.0.0.0:8001
+2026-08-15 16:03:09  INFO      server listening on 0.0.0.0:8002
+2026-08-15 16:03:09  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-15 16:03:10  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 16:03:10  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 16:03:10  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 16:04:55  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 16:04:55  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 16:04:55  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 16:04:55  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 16:04:56  INFO      server listening on 0.0.0.0:8001
+2026-08-15 16:04:56  INFO      server listening on 0.0.0.0:8002
+2026-08-15 16:04:57  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-15 16:04:58  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 16:04:58  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 16:04:58  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 19:24:00  INFO      server closing
+2026-08-15 19:24:00  INFO      server closed
+2026-08-15 19:24:00  INFO      server closing
+2026-08-15 19:24:00  INFO      server closed
+2026-08-15 19:24:01  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=11943.9s
+2026-08-15 19:42:48  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 19:42:48  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 19:42:48  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 19:42:48  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 19:42:51  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-15 19:42:51  INFO      server listening on 0.0.0.0:8001
+2026-08-15 19:42:51  INFO      server listening on 0.0.0.0:8002
+2026-08-15 19:42:51  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 19:42:51  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 19:42:51  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 19:56:29  INFO      server closing
+2026-08-15 19:56:29  INFO      server closed
+2026-08-15 19:56:29  INFO      server closing
+2026-08-15 19:56:29  INFO      server closed
+2026-08-15 19:56:29  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=818.7s
+2026-08-15 21:06:20  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 21:06:20  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 21:06:20  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 21:06:20  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 21:06:23  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 21:06:23  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 21:06:23  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 21:06:23  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 21:06:58  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 21:07:01  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 21:14:40  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 21:14:43  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 21:18:17  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 21:18:17  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 21:18:17  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 21:18:17  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 21:18:20  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 21:18:20  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 21:18:20  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 21:18:20  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 21:18:23  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-15 21:18:23  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 32904) (first Galaxy Watch UDP packet received)
+2026-08-15 21:18:33  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 21:18:33  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-15 21:18:55  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=21.7s
+2026-08-15 21:50:03  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 21:50:03  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 21:50:03  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 21:50:03  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 21:50:06  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 21:50:06  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 21:50:06  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 21:50:06  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 21:50:08  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-15 21:50:14  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 32904) (first Galaxy Watch UDP packet received)
+2026-08-15 21:50:27  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 21:50:27  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-15 21:55:49  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-15 21:55:49  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 21:56:11  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="Right?"
+2026-08-15 21:56:22  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire?"
+2026-08-15 21:56:26  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 21:56:36  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="Right?"
+2026-08-15 21:56:47  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire!"
+2026-08-15 21:57:48  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 21:57:59  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 21:59:12  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="fire."
+2026-08-15 21:59:23  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:09:09  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:09:09  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:09:09  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:09:09  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:09:12  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:09:12  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:09:12  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:09:12  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:09:32  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-15 23:09:32  INFO      server listening on 0.0.0.0:8001
+2026-08-15 23:09:32  INFO      server listening on 0.0.0.0:8002
+2026-08-15 23:09:38  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-15 23:09:38  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 23:09:43  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 58299) (first Galaxy Watch UDP packet received)
+2026-08-15 23:10:17  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:10:21  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:10:25  INFO      VOICE_CMD  keyword="left"  code=99.0  transcript="Left"
+2026-08-15 23:10:30  INFO      VOICE_CMD  keyword="left"  code=99.0  transcript="Left."
+2026-08-15 23:10:34  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="Right"
+2026-08-15 23:11:04  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:11:07  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:11:46  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:11:46  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:11:46  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:11:46  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:11:46  INFO      RESOLVING  stream=Voice_Commands
+2026-08-15 23:11:46  INFO      CONNECT    stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 23:11:49  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:11:49  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:11:49  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:11:49  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:11:50  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-15 23:11:50  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 58299) (first Galaxy Watch UDP packet received)
+2026-08-15 23:11:55  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-15 23:11:55  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 23:11:57  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:11:57  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:12:04  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:12:06  INFO      VOICE_CMD  keyword="left"  code=99.0  transcript="Left"
+2026-08-15 23:12:07  INFO      VOICE_CMD  keyword="left"  code=99.0  transcript="Left"
+2026-08-15 23:12:08  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="Right"
+2026-08-15 23:12:09  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="Right?"
+2026-08-15 23:12:11  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:12:11  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:12:13  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:12:16  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:12:23  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:12:26  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:13:17  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:13:20  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:15:36  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:15:36  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:15:36  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:15:36  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:15:36  INFO      RESOLVING  stream=Voice_Commands
+2026-08-15 23:15:36  INFO      CONNECT    stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 23:15:39  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:15:39  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:15:39  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:15:39  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:15:42  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-15 23:15:45  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 46915) (first Galaxy Watch UDP packet received)
+2026-08-15 23:15:51  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:15:51  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-15 23:15:56  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-15 23:15:56  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 23:16:29  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:16:30  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:16:32  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:16:32  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire"
+2026-08-15 23:16:33  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:16:35  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire?"
+2026-08-15 23:16:36  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire?"
+2026-08-15 23:16:36  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire?"
+2026-08-15 23:16:39  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:16:39  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:18:47  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-15 23:18:47  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-15 23:18:47  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-15 23:19:00  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:19:03  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:19:05  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:19:08  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:19:17  INFO      SHUTDOWN   device=Muse_BLE  reason=KeyboardInterrupt
+2026-08-15 23:19:17  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=30.3s
+2026-08-15 23:19:17  INFO      SHUTDOWN  stream=Voice_Commands  reason=KeyboardInterrupt  total_commands_sent={total_commands}
+2026-08-15 23:19:17  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=205.9s
+2026-08-15 23:43:17  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:43:17  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:43:17  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:43:17  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:43:17  INFO      RESOLVING  stream=Voice_Commands
+2026-08-15 23:43:17  INFO      CONNECT    stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 23:43:20  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:43:20  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:43:20  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:43:20  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:43:23  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:43:23  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:43:23  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:43:23  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:43:26  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:43:26  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:43:26  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:43:26  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:43:29  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:43:29  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:43:29  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:43:29  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:43:32  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:43:32  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:43:32  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:43:32  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:43:35  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:43:35  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:43:35  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:43:35  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:43:38  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:43:38  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:43:38  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:43:38  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:43:41  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:43:41  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:43:41  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:43:41  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:43:44  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:43:44  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:43:44  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:43:44  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:43:47  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:43:47  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:43:47  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:43:47  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:43:50  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:43:50  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:43:50  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:43:50  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:43:53  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:43:53  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:43:53  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:43:53  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:43:56  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:43:56  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:43:56  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:43:56  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:43:59  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:43:59  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:43:59  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:43:59  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:44:02  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:44:02  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:44:02  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:44:02  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:44:05  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:44:05  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:44:05  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:44:05  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:44:08  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:44:08  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:44:08  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:44:08  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:44:11  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:44:11  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:44:11  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:44:11  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:44:14  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:44:14  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:44:14  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:44:14  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:44:17  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:44:17  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:44:17  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:44:17  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:44:20  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:44:20  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:44:20  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:44:20  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:44:23  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:44:23  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:44:23  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:44:23  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:44:26  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:44:26  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:44:26  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:44:26  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:44:29  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:44:29  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:44:29  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:44:29  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:44:32  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:44:32  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:44:32  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:44:32  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:44:35  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:44:35  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:44:35  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:44:35  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:44:38  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:44:38  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:44:38  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:44:38  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:44:41  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:44:41  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:44:41  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:44:41  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:44:44  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:44:44  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:44:44  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:44:44  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:44:47  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:44:47  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:44:47  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:44:47  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:44:50  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:44:50  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:44:50  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:44:50  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:44:53  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:44:53  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:44:53  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:44:53  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:44:56  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:44:56  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:44:56  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:44:56  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:44:59  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:44:59  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:44:59  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:44:59  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:45:02  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:45:02  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:45:02  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:45:02  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:45:05  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:45:05  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:45:05  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:45:05  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:45:08  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:45:08  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:45:08  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:45:08  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:45:11  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:45:11  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:45:11  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:45:11  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:45:14  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:45:14  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:45:14  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:45:14  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:45:17  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:45:17  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:45:17  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:45:17  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:45:20  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:45:20  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:45:20  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:45:20  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:45:23  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:45:23  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:45:23  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:45:23  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:45:26  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:45:26  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:45:26  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:45:26  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:45:29  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:45:29  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:45:29  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:45:29  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:45:32  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:45:32  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:45:32  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:45:32  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:45:35  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:45:35  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:45:35  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:45:35  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:45:38  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:45:38  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:45:38  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:45:38  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:45:41  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:45:41  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:45:41  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:45:41  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:45:44  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:45:44  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:45:44  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:45:44  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:07  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:07  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:07  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:47:07  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:07  INFO      RESOLVING  stream=Voice_Commands
+2026-08-15 23:47:07  INFO      CONNECT    stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 23:47:09  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:09  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:09  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:47:09  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:11  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:11  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:11  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:47:11  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:13  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:13  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:13  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:47:13  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:16  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:16  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:16  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:47:16  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:18  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:18  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:18  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:47:18  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:20  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:20  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:20  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:47:20  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:22  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:22  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:22  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:47:22  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:25  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:25  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:25  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:47:25  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:27  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:27  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:27  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:27  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:47:29  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:29  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:29  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:29  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:47:31  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:31  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:47:31  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:31  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:34  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:34  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:47:34  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:34  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:34  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-15 23:47:34  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 34549) (first Galaxy Watch UDP packet received)
+2026-08-15 23:47:35  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-15 23:47:36  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:36  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:36  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:38  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:38  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:38  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:40  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:40  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:40  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:43  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:43  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:43  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:45  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:45  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:45  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:47  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:47  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:47  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:49  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:49  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:49  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:52  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:52  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:52  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:54  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:54  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:54  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:47:56  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:47:56  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:47:56  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:47:58  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:47:58  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:47:58  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:01  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:01  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:01  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:03  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:03  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:03  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:05  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:05  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:05  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:07  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:07  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:07  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:10  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:10  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:10  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:12  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:12  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:12  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:14  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:14  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:14  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:16  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:16  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:16  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:19  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:19  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:19  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:21  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:21  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:21  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:23  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:23  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:23  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:25  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:25  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:25  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:28  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:28  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:28  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:30  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:30  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:30  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:30  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="All right, buddy."
+2026-08-15 23:48:32  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:32  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:32  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:34  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:34  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:34  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:37  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:37  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:37  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:39  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:39  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:39  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:41  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:41  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:41  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:43  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:43  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:43  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:46  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:46  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:46  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:48  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:48  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:48  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:50  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:50  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:50  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:52  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:52  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:48:52  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:55  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:55  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:48:55  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:48:55  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-15 23:48:57  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:48:57  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:48:59  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:48:59  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:01  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:01  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:02  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-15 23:49:02  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 132)
+2026-08-15 23:49:02  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 24)
+2026-08-15 23:49:04  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:04  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:06  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:06  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:08  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:08  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:10  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:10  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:13  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:13  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:15  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:15  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:17  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:17  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:19  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:19  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:22  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:22  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:24  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:24  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:26  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:26  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:28  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:28  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:31  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:31  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:33  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:33  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:35  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="Okay, I'll be right back."
+2026-08-15 23:49:35  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:35  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:37  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:37  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:40  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:40  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:42  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:42  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:44  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:44  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:46  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:46  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:49  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:49  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:51  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:51  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:53  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:53  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:49:53  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-15 23:49:53  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 23:49:55  INFO      DISCONNECT stream=Voice_Commands  session_duration=168.1s
+2026-08-15 23:49:55  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:49:55  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:49:58  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-15 23:49:58  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 23:49:58  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:49:58  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:00  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:00  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:00  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:50:02  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:50:03  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:03  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:05  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:05  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:05  INFO      VOICE_CMD  keyword="left"  code=99.0  transcript="Left."
+2026-08-15 23:50:05  INFO      VOICE_CMD  keyword="left"  code=99.0  transcript="Left."
+2026-08-15 23:50:06  INFO      VOICE_CMD  keyword="left"  code=99.0  transcript="Left."
+2026-08-15 23:50:07  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:07  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:09  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:09  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:09  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:50:09  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-15 23:50:12  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:12  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:14  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:14  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:16  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:16  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:18  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:18  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:21  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:21  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:23  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:23  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:25  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:25  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:27  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:27  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:30  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:30  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:32  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:32  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:34  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:34  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:36  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:36  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:39  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:39  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:41  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:41  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:43  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:43  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:45  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:45  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:48  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:48  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:50  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:50  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:52  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:52  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:54  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:54  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:50:57  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:50:57  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:50:59  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:50:59  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:51:01  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:51:01  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:51:03  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:51:03  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:51:06  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:51:06  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:51:08  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:51:08  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:51:10  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:51:10  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:51:12  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:51:12  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:51:15  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:51:15  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:51:17  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:51:17  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:51:19  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:51:19  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:51:21  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:51:21  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:51:24  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:51:24  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:51:26  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:51:26  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:51:28  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:51:28  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:51:30  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:51:30  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:51:33  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:51:33  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:51:35  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:51:35  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:51:37  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:51:37  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:51:39  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:51:39  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:51:46  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:51:46  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:51:46  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:51:46  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:51:46  INFO      RESOLVING  stream=Voice_Commands
+2026-08-15 23:51:46  INFO      CONNECT    stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 23:51:48  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:51:48  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:51:48  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:51:48  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:51:52  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Oh, I think so, control the fire."
+2026-08-15 23:51:54  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:51:54  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:51:54  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-15 23:51:56  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:51:57  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-15 23:51:57  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 150)
+2026-08-15 23:51:57  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 24)
+2026-08-15 23:52:21  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:52:21  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-15 23:52:21  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 40148) (first Galaxy Watch UDP packet received)
+2026-08-15 23:52:22  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-15 23:52:33  INFO      SHUTDOWN   device=Muse_BLE  reason=KeyboardInterrupt
+2026-08-15 23:52:33  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=35.9s
+2026-08-15 23:52:33  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=11.6s
+2026-08-15 23:53:33  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:53:33  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-15 23:53:33  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-15 23:53:33  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:53:33  INFO      RESOLVING  stream=Voice_Commands
+2026-08-15 23:53:33  INFO      CONNECT    stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-15 23:53:35  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:53:35  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-15 23:53:35  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-15 23:53:35  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-15 23:55:28  INFO      RESOLVING  stream=Muse_Athena
+2026-08-15 23:55:28  INFO      RESOLVING  stream=Muse_Optics
+2026-08-15 23:55:28  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-15 23:55:30  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-15 23:55:31  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-15 23:55:31  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-15 23:55:31  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-15 23:55:42  INFO      SHUTDOWN   device=Muse_BLE  reason=KeyboardInterrupt
+2026-08-15 23:55:42  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=10.7s
+2026-08-15 23:55:48  INFO      DISCONNECT stream=Muse_Athena  session_duration=-0.0s
+2026-08-15 23:55:48  INFO      DISCONNECT stream=Muse_Optics  session_duration=20.1s
+2026-08-15 23:58:25  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="No?  Alright."
+2026-08-16 00:01:35  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:01:35  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 00:01:36  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-16 00:01:37  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:01:42  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:01:42  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:01:52  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:01:52  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:02:00  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 00:02:00  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 00:02:00  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 00:03:25  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:03:25  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 00:03:26  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-16 00:03:26  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:03:26  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:03:30  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:03:32  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:03:33  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 00:03:33  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 00:03:33  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 00:03:37  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:03:39  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:03:44  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:03:46  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:03:51  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:03:53  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:03:58  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:04:00  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:04:05  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:04:07  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:04:12  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:04:14  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:04:19  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:04:21  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:04:25  ERROR     ERROR      device=Muse_BLE  error=GENERAL_ERROR:17 unable to start streaming session
+2026-08-16 00:04:25  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=0.0s
+2026-08-16 00:04:25  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:04:26  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:04:28  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:04:28  ERROR     ERROR      device=Muse_BLE  error=GENERAL_ERROR:17 unable to start streaming session
+2026-08-16 00:04:28  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=0.0s
+2026-08-16 00:04:28  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:04:31  ERROR     ERROR      device=Muse_BLE  error=GENERAL_ERROR:17 unable to start streaming session
+2026-08-16 00:04:31  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=0.0s
+2026-08-16 00:04:31  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:04:33  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:04:35  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:04:40  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:04:42  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:04:47  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:04:49  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:04:54  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:04:56  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:05:01  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:05:03  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:05:08  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:05:10  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:05:15  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:05:17  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:05:22  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:05:24  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:05:29  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:05:31  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:05:36  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:05:38  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:05:43  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:05:45  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:05:50  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:05:52  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:05:57  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:05:59  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:06:04  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:06:06  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:06:11  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:06:13  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:06:18  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:06:20  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:06:21  INFO      SHUTDOWN   device=Muse_BLE  reason=KeyboardInterrupt
+2026-08-16 00:06:21  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=168.4s
+2026-08-16 00:06:29  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:06:29  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 00:06:29  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-16 00:06:34  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:06:36  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:06:36  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:06:36  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:06:41  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:06:43  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:06:46  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:06:46  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:06:48  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:06:50  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:06:55  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:06:56  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:06:56  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:06:57  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:07:02  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:07:04  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:07:06  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:07:06  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:07:09  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:07:11  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:07:16  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:07:16  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:07:16  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:07:18  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:07:23  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:07:25  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:07:26  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:07:26  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:07:30  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:07:32  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:07:39  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:07:39  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 00:07:40  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-16 00:07:44  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:07:46  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:07:46  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:07:46  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:07:51  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:07:53  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:07:56  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:07:56  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:07:58  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:07:59  INFO      DISCONNECT stream=Muse_Athena  session_duration=-0.0s
+2026-08-16 00:07:59  INFO      DISCONNECT stream=Muse_Optics  session_duration=19.6s
+2026-08-16 00:08:00  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:08:33  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="Maybe we'll be right there."
+2026-08-16 00:08:54  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:08:54  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 00:08:54  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-16 00:08:59  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:09:01  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:09:01  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:09:11  INFO      SHUTDOWN   device=Muse_BLE  reason=KeyboardInterrupt
+2026-08-16 00:09:11  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:09:14  INFO      DISCONNECT stream=Muse_Athena  session_duration=-0.0s
+2026-08-16 00:09:14  INFO      DISCONNECT stream=Muse_Optics  session_duration=19.7s
+2026-08-16 00:10:18  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:10:18  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 00:10:19  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-16 00:10:22  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 00:10:22  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 00:10:22  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 21)
+2026-08-16 00:10:23  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:10:28  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:10:30  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-16 00:10:32  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-16 00:10:33  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:10:35  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-16 00:10:36  INFO      RESOLVING  stream=Voice_Commands
+2026-08-16 00:10:37  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-16 00:10:37  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:10:41  WARNING   FAILED     stream=Voice_Commands  reason=resolve_timeout
+2026-08-16 00:10:42  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:10:44  INFO      DISCONNECT stream=Muse_Athena  session_duration=-0.0s
+2026-08-16 00:10:44  INFO      DISCONNECT stream=Muse_Optics  session_duration=24.7s
+2026-08-16 00:11:42  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:11:42  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 00:11:42  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-16 00:11:45  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 00:11:45  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 140)
+2026-08-16 00:11:45  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 00:11:47  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:11:48  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:11:53  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:11:57  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:12:02  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:12:04  INFO      DISCONNECT stream=Muse_Optics  session_duration=21.9s
+2026-08-16 00:12:06  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 00:12:06  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-16 00:12:08  INFO      DISCONNECT stream=Muse_Optics  session_duration=2.2s
+2026-08-16 00:12:09  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:12:14  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:13:00  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:13:05  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:13:38  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 00:13:38  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 154)
+2026-08-16 00:13:38  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 00:14:27  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:14:27  INFO      RESOLVING  stream=Smartwatch_PPG
+2026-08-16 00:14:27  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-16 00:14:27  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 00:14:30  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:14:30  WARNING   FAILED     stream=Smartwatch_PPG  reason=resolve_timeout
+2026-08-16 00:14:30  WARNING   FAILED     stream=Smartwatch_IMU  reason=resolve_timeout
+2026-08-16 00:14:30  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-16 00:14:39  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 00:14:39  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 00:14:39  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 21)
+2026-08-16 00:14:42  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:14:45  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:17:07  INFO      SHUTDOWN   device=Muse_BLE  reason=KeyboardInterrupt
+2026-08-16 00:17:07  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=148.4s
+2026-08-16 00:17:23  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:17:23  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:17:33  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:17:33  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:17:43  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:17:43  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:17:53  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:17:53  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:18:03  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 00:18:03  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 00:18:17  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 00:18:17  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 00:18:17  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 00:18:22  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:18:25  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:18:29  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 00:18:29  INFO      CONNECT    stream=Muse_Optics  source_id=muse_athena_opt_uid123
+2026-08-16 00:21:27  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 00:21:27  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 00:21:27  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 00:21:31  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:21:39  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:21:40  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 00:21:40  INFO      CONNECT    stream=Muse_Optics  source_id=muse_optics_48bc98e5a133
+2026-08-16 00:21:42  INFO      DISCONNECT stream=Muse_Optics  session_duration=1.4s
+2026-08-16 00:21:45  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 00:21:53  WARNING   FAILED     stream=Muse_Athena  reason=resolve_timeout
+2026-08-16 00:23:19  INFO      VOICE_CMD  keyword="stop"  code=11.0  transcript="find my file if I just stop."
+2026-08-16 00:23:19  INFO      VOICE_CMD  keyword="stop"  code=11.0  transcript="and my file, your file, so stop."
+2026-08-16 00:23:48  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 00:23:48  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 00:23:48  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 21)
+2026-08-16 00:25:46  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="I don't know if I can get it right here, but I don't know."
+2026-08-16 00:29:10  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fireblossom New Vienter, Morning with me."
+2026-08-16 00:29:43  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="Right?"
+2026-08-16 00:29:43  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="right"
+2026-08-16 00:37:29  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="Right, that was so good."
+2026-08-16 00:47:13  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="All right, let's go home, of course."
+2026-08-16 01:04:29  INFO      VOICE_CMD  keyword="shoot"  code=55.0  transcript="I can't start shooting up."
+2026-08-16 01:12:58  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="All right, see you soon."
+2026-08-16 01:19:10  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="right?  Printment."
+2026-08-16 01:22:34  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="All right"
+2026-08-16 01:23:29  INFO      VOICE_CMD  keyword="left"  code=99.0  transcript="I just don't even see my left hand."
+2026-08-16 01:24:46  INFO      SHUTDOWN   device=Muse_BLE  reason=KeyboardInterrupt
+2026-08-16 01:24:46  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=3657.5s
+2026-08-16 01:24:52  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 01:32:40  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 01:32:40  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 10:39:20  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 10:39:20  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 10:39:20  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 10:39:35  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 10:39:35  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_a4e588878975
+2026-08-16 10:41:31  INFO      SHUTDOWN   device=Muse_BLE  reason=KeyboardInterrupt
+2026-08-16 10:41:31  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=131.6s
+2026-08-16 10:41:38  INFO      DISCONNECT stream=Muse_Athena  session_duration=122.3s
+2026-08-16 10:46:48  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 10:46:48  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 10:46:58  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 10:46:58  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 10:46:58  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 10:47:01  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 10:47:01  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_bd7891df7fec
+2026-08-16 10:55:26  INFO      SHUTDOWN   device=Muse_BLE  reason=KeyboardInterrupt
+2026-08-16 10:55:26  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=507.5s
+2026-08-16 10:59:35  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 10:59:35  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 10:59:45  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 10:59:45  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 10:59:55  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 10:59:55  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:00:06  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 11:00:06  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 11:00:06  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 11:00:20  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 11:00:20  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_584653fcb0c3
+2026-08-16 11:10:50  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:10:50  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:10:56  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 11:10:56  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 160)
+2026-08-16 11:10:56  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 24)
+2026-08-16 11:10:59  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 11:10:59  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_01e9ca4f6245
+2026-08-16 11:11:00  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 11:11:08  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-16 11:11:09  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 11:11:17  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-16 11:12:05  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 11:12:13  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-16 11:15:32  INFO      DISCONNECT stream=Muse_Athena  session_duration=273.1s
+2026-08-16 11:20:12  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 11:20:12  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 11:20:12  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 11:20:15  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 11:20:15  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_848960a93ea3
+2026-08-16 11:20:17  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 11:20:25  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-16 11:21:16  INFO      DISCONNECT stream=Muse_Athena  session_duration=60.4s
+2026-08-16 11:26:40  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 11:26:40  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 11:26:40  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 11:26:46  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 11:26:46  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_90613c11db50
+2026-08-16 11:27:36  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 11:27:44  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-16 11:29:48  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-16 11:29:48  INFO      server listening on 0.0.0.0:8001
+2026-08-16 11:29:48  INFO      server listening on 0.0.0.0:8002
+2026-08-16 11:30:17  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 55068) (first Galaxy Watch UDP packet received)
+2026-08-16 11:30:27  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-16 11:30:27  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-16 11:31:57  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 11:32:05  WARNING   FAILED     stream=Muse_Optics  reason=resolve_timeout
+2026-08-16 11:37:41  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=5.0s  session_duration=1786873626.2s
+2026-08-16 11:37:41  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=661.1s
+2026-08-16 11:37:43  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:37:53  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:37:53  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:38:03  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:38:03  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:38:43  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 11:38:58  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=15.0s  session_duration=1786872980.2s
+2026-08-16 11:38:58  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=15.0s
+2026-08-16 11:38:58  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:39:08  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:39:08  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:39:18  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:39:18  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:39:28  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:39:28  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:39:38  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:39:38  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:39:48  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:39:48  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:40:21  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:40:21  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:40:33  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:40:33  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:40:43  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:40:43  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:40:53  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:40:53  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:41:03  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:41:03  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:41:13  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:41:13  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:41:23  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:41:23  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:41:33  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:41:33  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:41:43  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:41:43  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:42:29  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:42:29  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:42:39  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:42:39  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:42:49  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:42:49  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:42:59  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:42:59  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:43:09  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:43:09  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:43:16  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 11:43:16  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 11:43:16  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 11:43:36  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=5.0s  session_duration=1786872984.8s
+2026-08-16 11:43:36  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=19.6s
+2026-08-16 11:43:38  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:43:48  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:43:48  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:44:20  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:44:20  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:44:40  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:44:40  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:44:50  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:44:50  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:45:00  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 11:45:00  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 11:45:07  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 11:45:07  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 11:45:07  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 11:46:30  INFO      DISCONNECT stream=Muse_Athena  session_duration=1184.6s
+2026-08-16 12:06:39  INFO      CONNECT    device=Muse_BLE  board_id=-1
+2026-08-16 12:06:39  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(32, 1)
+2026-08-16 12:06:39  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=0.0s
+2026-08-16 12:06:39  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 12:07:14  INFO      CONNECT    device=Muse_BLE  board_id=-1
+2026-08-16 12:07:14  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(32, 1)
+2026-08-16 12:07:14  INFO      STREAM_START  device=Muse_SIM  stream=Optics  shape=(9, 1)
+2026-08-16 12:07:23  INFO      CONNECT    device=Muse_BLE  board_id=-1
+2026-08-16 12:07:23  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(32, 1)
+2026-08-16 12:07:23  INFO      STREAM_START  device=Muse_SIM  stream=Optics  shape=(9, 1)
+2026-08-16 12:07:31  INFO      CONNECT    device=Muse_BLE  board_id=-1
+2026-08-16 12:07:31  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(32, 1)
+2026-08-16 12:07:31  INFO      STREAM_START  device=Muse_SIM  stream=Optics  shape=(9, 1)
+2026-08-16 12:07:39  INFO      CONNECT    device=Muse_BLE  board_id=-1
+2026-08-16 12:07:39  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(32, 1)
+2026-08-16 12:07:39  INFO      STREAM_START  device=Muse_SIM  stream=Optics  shape=(9, 1)
+2026-08-16 12:07:54  INFO      CONNECT    device=Muse_BLE  board_id=-1
+2026-08-16 12:07:54  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(32, 1)
+2026-08-16 12:07:54  INFO      STREAM_START  device=Muse_SIM  stream=Optics  shape=(9, 1)
+2026-08-16 12:08:49  INFO      CONNECT    device=Muse_BLE  board_id=-1
+2026-08-16 12:08:49  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(32, 1)
+2026-08-16 12:08:49  INFO      STREAM_START  device=Muse_SIM  stream=Optics  shape=(9, 1)
+2026-08-16 12:09:10  INFO      CONNECT    device=Muse_BLE  board_id=-1
+2026-08-16 12:09:10  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(32, 1)
+2026-08-16 12:09:10  INFO      STREAM_START  device=Muse_SIM  stream=Optics  shape=(9, 1)
+2026-08-16 12:09:25  INFO      CONNECT    device=Muse_BLE  board_id=-1
+2026-08-16 12:09:25  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(32, 1)
+2026-08-16 12:09:25  INFO      STREAM_START  device=Muse_SIM  stream=Optics  shape=(9, 1)
+2026-08-16 12:10:35  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 12:10:35  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 12:10:35  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 12:10:40  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 12:10:40  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_de33fa68c16c
+2026-08-16 12:10:41  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 12:10:42  INFO      CONNECT    stream=Muse_Optics  source_id=muse_optics_de33fa68c16c
+2026-08-16 12:11:04  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 12:11:04  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 12:11:10  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=34.8s
+2026-08-16 12:12:56  INFO      server listening on 0.0.0.0:8001
+2026-08-16 12:12:56  INFO      server listening on 0.0.0.0:8002
+2026-08-16 12:13:28  INFO      server listening on 127.0.0.1:8001
+2026-08-16 12:13:28  INFO      server listening on 127.0.0.1:8002
+2026-08-16 12:13:45  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 12:13:45  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 160)
+2026-08-16 12:13:45  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 24)
+2026-08-16 12:13:52  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 12:13:52  INFO      CONNECT    stream=Muse_Optics  source_id=muse_optics_fcf7bab77749
+2026-08-16 12:14:43  INFO      server listening on 0.0.0.0:8001
+2026-08-16 12:14:43  INFO      server listening on 0.0.0.0:8002
+2026-08-16 12:14:51  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-16 12:14:51  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-16 12:15:08  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="like fire."
+2026-08-16 12:17:40  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-16 12:17:47  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-16 12:17:48  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-16 12:18:04  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=16.8s
+2026-08-16 12:18:07  INFO      server listening on 0.0.0.0:8001
+2026-08-16 12:18:07  INFO      server listening on 0.0.0.0:8002
+2026-08-16 12:19:01  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=316.0s
+2026-08-16 12:20:33  INFO      server listening on 127.0.0.1:8001
+2026-08-16 12:20:33  INFO      server listening on 127.0.0.1:8002
+2026-08-16 12:46:29  INFO      server listening on 0.0.0.0:8001
+2026-08-16 12:46:29  INFO      server listening on 0.0.0.0:8002
+2026-08-16 12:46:46  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-16 12:46:46  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-16 12:48:49  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=122.9s
+2026-08-16 12:48:49  INFO      server listening on 192.168.2.100:8001
+2026-08-16 12:48:49  INFO      server listening on 192.168.2.100:8002
+2026-08-16 12:50:36  INFO      server listening on 0.0.0.0:8001
+2026-08-16 12:50:36  INFO      server listening on 0.0.0.0:8002
+2026-08-16 12:50:51  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-16 12:50:51  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-16 12:51:23  INFO      WEB_REQUEST client=10.0.0.2 "GET / HTTP/1.1" 200 -
+2026-08-16 12:51:23  INFO      WEB_REQUEST client=10.0.0.2 "GET /favicon.ico HTTP/1.1" 204 -
+2026-08-16 12:51:24  INFO      connection open
+2026-08-16 12:51:24  INFO      CONNECT   remote=('10.0.0.2', 54982)
+2026-08-16 12:51:28  INFO      FIRST_MSG  remote=('10.0.0.2', 54982)  (first sensor data received)
+2026-08-16 12:52:16  INFO      connection closed
+2026-08-16 12:52:16  INFO      DISCONNECT remote=('10.0.0.2', 54982)  reason=no close frame received or sent  duration=51.6s
+2026-08-16 12:52:36  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=105.3s
+2026-08-16 12:53:51  INFO      CONNECT    remote=('127.0.0.1', 40662)
+2026-08-16 12:53:51  INFO      FIRST_MSG  remote=('127.0.0.1', 40662)  (first sensor data received)
+2026-08-16 12:54:01  INFO      CONNECT    remote=('127.0.0.1', 55088)
+2026-08-16 12:54:01  INFO      FIRST_MSG  remote=('127.0.0.1', 55088)  (first sensor data received)
+2026-08-16 12:54:11  INFO      CONNECT    remote=('127.0.0.1', 57834)
+2026-08-16 12:54:11  INFO      FIRST_MSG  remote=('127.0.0.1', 57834)  (first sensor data received)
+2026-08-16 12:54:17  INFO      CONNECT    remote=('127.0.0.1', 57842)
+2026-08-16 12:54:17  INFO      FIRST_MSG  remote=('127.0.0.1', 57842)  (first sensor data received)
+2026-08-16 12:54:26  INFO      CONNECT    remote=('127.0.0.1', 41882)
+2026-08-16 12:54:26  INFO      FIRST_MSG  remote=('127.0.0.1', 41882)  (first sensor data received)
+                                                                                                          2026-08-16 12:55:59  INFO      UDP_LISTEN bound=127.0.0.1:5005
+2026-08-16 12:56:00  INFO      UDP_FIRST_MSG remote=('127.0.0.1', 54235) (first UDP sensor packet received)
+2026-08-16 12:56:06  INFO      UDP_LISTEN bound=127.0.0.1:5005
+2026-08-16 12:56:07  INFO      UDP_FIRST_MSG remote=('127.0.0.1', 37838) (first UDP sensor packet received)
+2026-08-16 12:58:28  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-16 12:58:28  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 43413) (first UDP sensor packet received)
+2026-08-16 12:58:31  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-16 12:58:31  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-16 12:58:56  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 12:58:56  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 12:58:56  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 12:59:04  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 12:59:05  INFO      CONNECT    stream=Muse_Optics  source_id=muse_optics_9b92980c57ae
+2026-08-16 12:59:06  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 12:59:06  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_9b92980c57ae
+2026-08-16 13:03:39  INFO      DISCONNECT stream=Smartwatch_IMU  session_duration=308.0s
+2026-08-16 13:04:09  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=313.2s
+2026-08-16 13:05:43  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-16 13:05:43  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 43413) (first UDP sensor packet received)
+2026-08-16 13:05:45  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-16 13:05:45  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-16 13:05:47  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 13:05:47  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_66289817e3d6
+2026-08-16 13:05:48  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 13:05:49  INFO      CONNECT    stream=Muse_Optics  source_id=muse_optics_66289817e3d6
+2026-08-16 13:05:50  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 13:05:50  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 13:05:50  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 13:07:28  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-16 13:07:38  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-16 13:07:38  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-16 13:07:55  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-16 13:07:59  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire!"
+2026-08-16 13:08:08  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-16 13:10:43  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-16 13:45:15  ERROR     ERROR      device=Muse_BLE  error=BOARD_NOT_READY_ERROR:7 unable to prepare streaming session
+2026-08-16 13:45:15  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 13:45:16  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-16 13:45:16  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 37514) (first UDP sensor packet received)
+2026-08-16 13:45:19  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-16 13:45:19  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-16 13:45:20  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 13:45:20  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_0de1a112f1c7
+2026-08-16 13:45:21  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 13:45:21  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 13:45:21  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 13:45:22  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-16 13:45:23  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-16 13:45:24  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 13:45:25  INFO      CONNECT    stream=Muse_Optics  source_id=muse_optics_0de1a112f1c7
+2026-08-16 13:55:42  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-16 13:55:44  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 13:55:44  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 13:55:44  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 13:55:44  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-16 13:55:44  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-16 13:55:51  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 13:55:51  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_7717c24b49a6
+2026-08-16 13:55:54  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 13:55:54  INFO      CONNECT    stream=Muse_Optics  source_id=muse_optics_7717c24b49a6
+2026-08-16 13:55:55  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-16 13:55:56  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-16 13:56:10  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=5.0s  session_duration=1786872990.5s
+2026-08-16 13:56:10  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=25.4s
+2026-08-16 13:56:12  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 13:56:18  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 13:56:18  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 13:56:18  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 13:57:19  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 37514) (first UDP sensor packet received)
+2026-08-16 13:59:21  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="fire."
+2026-08-16 13:59:25  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-16 13:59:53  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-16 13:59:59  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile!"
+2026-08-16 14:00:07  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="missile"
+2026-08-16 14:00:11  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="missile missile missile"
+2026-08-16 14:00:20  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile!"
+2026-08-16 14:01:02  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:01:05  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:01:09  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:01:41  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=5.0s  session_duration=1786873288.1s
+2026-08-16 14:01:41  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=322.9s
+2026-08-16 14:01:43  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 14:01:46  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:01:50  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 14:01:50  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 14:01:50  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 14:01:54  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile, Missile."
+2026-08-16 14:02:03  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile, Missile?"
+2026-08-16 14:02:18  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="missile"
+2026-08-16 14:02:44  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=5.0s  session_duration=1786873019.3s
+2026-08-16 14:02:44  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=54.2s
+2026-08-16 14:02:46  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 14:02:53  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 14:02:53  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 14:02:53  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 14:06:54  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile!"
+2026-08-16 14:07:13  INFO      VOICE_CMD  keyword="right"  code=-99.0  transcript="It's really hard to see, right?"
+2026-08-16 14:07:36  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:08:18  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:08:22  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-16 14:08:51  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="See, missile!"
+2026-08-16 14:08:57  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:09:07  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="missile."
+2026-08-16 14:10:49  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:10:53  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile"
+2026-08-16 14:11:32  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="missile"
+2026-08-16 14:11:41  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:11:59  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-16 14:12:29  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:13:50  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:17:23  INFO      VOICE_CMD  keyword="fire"  code=55.0  transcript="Fire."
+2026-08-16 14:17:43  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:23:25  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 14:23:25  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 14:23:25  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 14:23:26  INFO      UDP_LISTEN bound=0.0.0.0:5005
+2026-08-16 14:23:26  INFO      UDP_FIRST_MSG remote=('10.0.0.2', 37514) (first UDP sensor packet received)
+2026-08-16 14:23:30  INFO      WHISPER_READY  model=tiny  device=cpu
+2026-08-16 14:23:30  INFO      LSL_OUTLET  stream=Voice_Commands  source_id=whisper_voice_bridge_uid888
+2026-08-16 14:23:31  INFO      RESOLVING  stream=Muse_Athena
+2026-08-16 14:23:32  INFO      CONNECT    stream=Muse_Athena  source_id=muse_athena_95540187b9fd
+2026-08-16 14:23:32  INFO      RESOLVING  stream=Muse_Optics
+2026-08-16 14:23:33  INFO      CONNECT    stream=Muse_Optics  source_id=muse_optics_95540187b9fd
+2026-08-16 14:23:34  INFO      RESOLVING  stream=Smartwatch_IMU
+2026-08-16 14:23:34  INFO      CONNECT    stream=Smartwatch_IMU  source_id=phone_imu_bridge_uid777
+2026-08-16 14:24:02  WARNING   TIMEOUT    device=Muse_BLE  no_data_for=5.0s  session_duration=1786873002.7s
+2026-08-16 14:24:02  INFO      DISCONNECT device=Muse_BLE  reason=cleanup  session_duration=37.6s
+2026-08-16 14:24:04  INFO      RETRY      device=Muse_BLE  retry_in=3s
+2026-08-16 14:24:12  INFO      CONNECT    device=Muse_BLE  board_id=67
+2026-08-16 14:24:12  INFO      STREAM_START  device=Muse_BLE  stream=EEG  shape=(11, 128)
+2026-08-16 14:24:12  INFO      STREAM_START  device=Muse_BLE  stream=Optics  shape=(20, 22)
+2026-08-16 14:25:40  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile"
+2026-08-16 14:25:54  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile."
+2026-08-16 14:26:15  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="Missile?"
+2026-08-16 14:53:00  INFO      VOICE_CMD  keyword="nova"  code=55.0  transcript="So my supernova."
+2026-08-16 14:53:00  INFO      VOICE_CMD  keyword="supernova"  code=55.0  transcript="So my supernova."
+2026-08-16 14:53:02  INFO      VOICE_CMD  keyword="missile"  code=66.0  transcript="and you'll say missile"
+2026-08-16 14:53:05  INFO      VOICE_CMD  keyword="rocket"  code=66.0  transcript="and rockets."
