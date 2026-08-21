@@ -19,6 +19,7 @@ import sys
 import os
 import time
 import json
+import threading
 import logging
 import logging.handlers
 import numpy as np
@@ -64,10 +65,13 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QSlider,
     QSpinBox,
-    QFileDialog
+    QFileDialog,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView
 )
 from PyQt6.QtGui import QFont, QColor, QTextCursor, QPainter
-from pylsl import StreamInlet, resolve_byprop
+from pylsl import StreamInlet, resolve_byprop, resolve_streams
 
 # ==========================================
 # SSL CERT AUTO-PROVISIONING
@@ -2046,6 +2050,9 @@ class BCIControllerMappingWidget(QWidget):
             "Move Up (up)",
             "Move Down (down)",
             "Primary Action (Laser Cannon)",
+            "Focus Shield (50% Dmg Deflection)",
+            "Bullet Time (45% Time Slowdown)",
+            "Zen Nanite Regeneration (+1.5 HP/s)",
             "Toggle Spread Cannon Buff (Triple Lasers)",
             "Launch Guided Missiles (Rockets)",
             "Supernova Cleansing Blast (Nova Screen Wipe)"
@@ -2058,6 +2065,9 @@ class BCIControllerMappingWidget(QWidget):
             "Move Up (up)": "up",
             "Move Down (down)": "down",
             "Primary Action (Laser Cannon)": "action",
+            "Focus Shield (50% Dmg Deflection)": "focus_shield_on",
+            "Bullet Time (45% Time Slowdown)": "bullet_time_on",
+            "Zen Nanite Regeneration (+1.5 HP/s)": "zen_regen_on",
             "Toggle Spread Cannon Buff (Triple Lasers)": "toggle_spread_buff",
             "Launch Guided Missiles (Rockets)": "missile",
             "Supernova Cleansing Blast (Nova Screen Wipe)": "supernova"
@@ -2073,6 +2083,13 @@ class BCIControllerMappingWidget(QWidget):
             "up": "Move Up (up)",
             "down": "Move Down (down)",
             "action": "Primary Action (Laser Cannon)",
+            "focus_shield": "Focus Shield (50% Dmg Deflection)",
+            "focus_shield_on": "Focus Shield (50% Dmg Deflection)",
+            "bullet_time": "Bullet Time (45% Time Slowdown)",
+            "bullet_time_on": "Bullet Time (45% Time Slowdown)",
+            "zen_regen": "Zen Nanite Regeneration (+1.5 HP/s)",
+            "zen_regen_on": "Zen Nanite Regeneration (+1.5 HP/s)",
+            "calm_on": "Zen Nanite Regeneration (+1.5 HP/s)",
             "toggle_spread_buff": "Toggle Spread Cannon Buff (Triple Lasers)",
             "spread_buff_on": "Toggle Spread Cannon Buff (Triple Lasers)",
             "spread_buff": "Toggle Spread Cannon Buff (Triple Lasers)",
@@ -2950,6 +2967,665 @@ class BCIControllerMappingWidget(QWidget):
             self.gamma_min_spin.setValue(300); self.gamma_max_spin.setValue(500)
 
 
+# ==========================================
+# 🛰️ STREAM FLEET ORCHESTRATOR & SHIP PAIRING WIDGET
+# ==========================================
+class StreamFleetPairingWidget(QWidget):
+    def __init__(self, main_window, parent=None):
+        super().__init__(parent)
+        self.main_win = main_window
+        
+        # Discovered streams cache: list of tuples (name, type, channels, srate, uid, stream_info)
+        self.cached_streams = []
+        
+        # Active LSL Inlets for Ship 1 & Ship 2
+        self.p1_eeg_inlet = None
+        self.p1_imu_inlet = None
+        self.p2_eeg_inlet = None
+        self.p2_imu_inlet = None
+        
+        self.p1_eeg_name = None
+        self.p1_imu_name = None
+        self.p2_eeg_name = None
+        self.p2_imu_name = None
+        
+        # Telemetry signal states
+        self.p1_focus = 0.0
+        self.p1_calm = 0.0
+        self.p1_roll = 0.0
+        self.p1_shield = False
+        self.p1_last_missile = 0.0
+        
+        self.p2_focus = 0.0
+        self.p2_calm = 0.0
+        self.p2_roll = 0.0
+        self.p2_shield = False
+        self.p2_last_missile = 0.0
+        
+        # Buffers for EEG processing
+        self.p1_eeg_buf = np.zeros(256)
+        self.p2_eeg_buf = np.zeros(256)
+        
+        self.init_ui()
+        
+        # Periodic background LSL network scan
+        self.scan_timer = QTimer(self)
+        self.scan_timer.timeout.connect(self.scan_network_streams)
+        self.scan_timer.start(2500)
+        
+        # High-frequency telemetry polling timer
+        self.telemetry_timer = QTimer(self)
+        self.telemetry_timer.timeout.connect(self.poll_active_streams)
+        self.telemetry_timer.start(35)
+        
+        # Initial scan after launch
+        QTimer.singleShot(600, self.scan_network_streams)
+
+    def init_ui(self):
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(16, 16, 16, 16)
+        main_layout.setSpacing(14)
+
+        # Header Title Banner
+        header_frame = QFrame()
+        header_frame.setStyleSheet("background-color: #0f172a; border-radius: 10px; border: 1px solid #1e293b; padding: 12px;")
+        header_layout = QHBoxLayout(header_frame)
+        header_layout.setContentsMargins(8, 4, 8, 4)
+        
+        title_lbl = QLabel("🛰️ Stream Fleet Orchestrator & Multi-Ship Signal Pairing")
+        title_lbl.setStyleSheet("font-size: 18px; font-weight: bold; color: #38bdf8;")
+        header_layout.addWidget(title_lbl)
+        
+        header_layout.addStretch()
+        
+        self.refresh_btn = QPushButton("🔄 Refresh Stream Radar")
+        self.refresh_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #0284c7; color: #ffffff; font-weight: bold;
+                border-radius: 6px; padding: 6px 14px; font-size: 12px;
+            }
+            QPushButton:hover { background-color: #0369a1; }
+        """)
+        self.refresh_btn.clicked.connect(self.scan_network_streams)
+        header_layout.addWidget(self.refresh_btn)
+        
+        main_layout.addWidget(header_frame)
+
+        # ── 1. NETWORK STREAM RADAR TABLE ──
+        radar_group = QGroupBox("📡 Live Discovered LSL Streams on Local Network")
+        radar_group.setStyleSheet("""
+            QGroupBox {
+                color: #94a3b8; font-weight: bold; border: 1px solid #334155;
+                border-radius: 8px; margin-top: 8px; padding-top: 12px; font-size: 12px;
+            }
+        """)
+        radar_layout = QVBoxLayout(radar_group)
+        radar_layout.setContentsMargins(10, 10, 10, 10)
+        
+        radar_top_row = QHBoxLayout()
+        self.radar_status_lbl = QLabel("📡 Status: Scanning local network for active LSL streams...")
+        self.radar_status_lbl.setStyleSheet("color: #38bdf8; font-size: 11px; font-weight: bold; border: none;")
+        radar_top_row.addWidget(self.radar_status_lbl)
+        radar_top_row.addStretch()
+        radar_layout.addLayout(radar_top_row)
+        
+        self.stream_table = QTableWidget()
+        self.stream_table.setColumnCount(6)
+        self.stream_table.setHorizontalHeaderLabels(["Stream Name", "Signal Type", "Channels", "Sample Rate", "Source UID", "Fleet Assignment"])
+        self.stream_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.stream_table.setStyleSheet("""
+            QTableWidget {
+                background-color: #1e293b; color: #f1f5f9; border: 1px solid #334155;
+                border-radius: 6px; gridline-color: #334155; font-size: 12px;
+            }
+            QHeaderView::section {
+                background-color: #0f172a; color: #38bdf8; font-weight: bold;
+                border: 1px solid #334155; padding: 4px; font-size: 12px;
+            }
+        """)
+        self.stream_table.setMinimumHeight(130)
+        self.stream_table.setMaximumHeight(160)
+        radar_layout.addWidget(self.stream_table)
+        main_layout.addWidget(radar_group)
+
+        # ── 2. DUAL SHIP PAIRING MATRIX CARDS ──
+        ships_layout = QHBoxLayout()
+        ships_layout.setSpacing(14)
+
+        # 🚀 SHIP 1 (Cyan - Alpha Lead)
+        self.p1_card = QFrame()
+        self.p1_card.setStyleSheet("""
+            QFrame {
+                background-color: #0f172a;
+                border: 2px solid #0284c7;
+                border-radius: 12px;
+                padding: 14px;
+            }
+        """)
+        p1_layout = QVBoxLayout(self.p1_card)
+        p1_layout.setSpacing(10)
+        
+        p1_title = QLabel("🚀 Ship 1: Alpha Lead (Neon Cyan)")
+        p1_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #38bdf8; border: none;")
+        p1_layout.addWidget(p1_title)
+
+        # Ship 1 Pairing Dropdowns
+        p1_form = QGridLayout()
+        p1_form.setSpacing(8)
+        
+        lbl_p1_eeg = QLabel("🧠 EEG Headband:")
+        lbl_p1_eeg.setStyleSheet("color: #cbd5e1; font-weight: bold; font-size: 11px; border: none;")
+        self.p1_eeg_combo = QComboBox()
+        self.p1_eeg_combo.setStyleSheet("background-color: #1e293b; color: #f1f5f9; border: 1px solid #475569; padding: 4px; border-radius: 4px;")
+        self.p1_eeg_combo.addItem("None (Unassigned)", None)
+        self.p1_eeg_combo.currentIndexChanged.connect(self.on_p1_eeg_changed)
+        p1_form.addWidget(lbl_p1_eeg, 0, 0)
+        p1_form.addWidget(self.p1_eeg_combo, 0, 1)
+
+        lbl_p1_imu = QLabel("📱 Kinematic IMU:")
+        lbl_p1_imu.setStyleSheet("color: #cbd5e1; font-weight: bold; font-size: 11px; border: none;")
+        self.p1_imu_combo = QComboBox()
+        self.p1_imu_combo.setStyleSheet("background-color: #1e293b; color: #f1f5f9; border: 1px solid #475569; padding: 4px; border-radius: 4px;")
+        self.p1_imu_combo.addItem("None (Unassigned)", None)
+        self.p1_imu_combo.currentIndexChanged.connect(self.on_p1_imu_changed)
+        p1_form.addWidget(lbl_p1_imu, 1, 0)
+        p1_form.addWidget(self.p1_imu_combo, 1, 1)
+        p1_layout.addLayout(p1_form)
+
+        # Ship 1 Live Telemetry Gauges
+        p1_gauges = QVBoxLayout()
+        p1_gauges.setSpacing(6)
+        
+        self.p1_status_lbl = QLabel("🟡 Status: Awaiting Stream Pairing")
+        self.p1_status_lbl.setStyleSheet("color: #facc15; font-size: 12px; font-weight: bold; border: none;")
+        p1_gauges.addWidget(self.p1_status_lbl)
+
+        # Focus Bar
+        p1_f_layout = QHBoxLayout()
+        lbl_p1_f = QLabel("Focus (Beta):")
+        lbl_p1_f.setStyleSheet("color: #38bdf8; font-size: 11px; border: none;")
+        self.p1_focus_bar = QProgressBar()
+        self.p1_focus_bar.setRange(0, 100)
+        self.p1_focus_bar.setValue(0)
+        self.p1_focus_bar.setStyleSheet("QProgressBar::chunk { background-color: #0284c7; } QProgressBar { border: 1px solid #334155; border-radius: 4px; text-align: center; color: white; height: 14px; }")
+        p1_f_layout.addWidget(lbl_p1_f, stretch=1)
+        p1_f_layout.addWidget(self.p1_focus_bar, stretch=3)
+        p1_gauges.addLayout(p1_f_layout)
+
+        # Calm Bar
+        p1_c_layout = QHBoxLayout()
+        lbl_p1_c = QLabel("Calm (Alpha):")
+        lbl_p1_c.setStyleSheet("color: #34d399; font-size: 11px; border: none;")
+        self.p1_calm_bar = QProgressBar()
+        self.p1_calm_bar.setRange(0, 100)
+        self.p1_calm_bar.setValue(0)
+        self.p1_calm_bar.setStyleSheet("QProgressBar::chunk { background-color: #10b981; } QProgressBar { border: 1px solid #334155; border-radius: 4px; text-align: center; color: white; height: 14px; }")
+        p1_c_layout.addWidget(lbl_p1_c, stretch=1)
+        p1_c_layout.addWidget(self.p1_calm_bar, stretch=3)
+        p1_gauges.addLayout(p1_c_layout)
+
+        # Roll Tilt Indicator
+        self.p1_tilt_lbl = QLabel("Phone Tilt: 0.0° (Neutral)")
+        self.p1_tilt_lbl.setStyleSheet("color: #94a3b8; font-size: 11px; border: none;")
+        p1_gauges.addWidget(self.p1_tilt_lbl)
+        
+        p1_layout.addLayout(p1_gauges)
+
+        # Ship 1 Action Test Buttons
+        p1_actions_lbl = QLabel("🎮 Manual Ship 1 Test Triggers:")
+        p1_actions_lbl.setStyleSheet("color: #94a3b8; font-size: 11px; font-weight: bold; border: none; margin-top: 4px;")
+        p1_layout.addWidget(p1_actions_lbl)
+        
+        p1_btn_grid = QGridLayout()
+        p1_btn_grid.setSpacing(6)
+        
+        btn_p1_laser = QPushButton("⚡ Fire Laser")
+        btn_p1_laser.setStyleSheet("background-color: #0369a1; color: white; border-radius: 4px; padding: 4px 6px; font-size: 11px;")
+        btn_p1_laser.clicked.connect(lambda: self.dispatch_command("p1:action"))
+        p1_btn_grid.addWidget(btn_p1_laser, 0, 0)
+        
+        btn_p1_shield = QPushButton("🛡️ Shield")
+        btn_p1_shield.setStyleSheet("background-color: #0284c7; color: white; border-radius: 4px; padding: 4px 6px; font-size: 11px;")
+        btn_p1_shield.clicked.connect(lambda: self.dispatch_command("p1:focus_shield_on" if not self.p1_shield else "p1:focus_shield_off"))
+        p1_btn_grid.addWidget(btn_p1_shield, 0, 1)
+
+        btn_p1_missile = QPushButton("🚀 Missiles")
+        btn_p1_missile.setStyleSheet("background-color: #b45309; color: white; border-radius: 4px; padding: 4px 6px; font-size: 11px;")
+        btn_p1_missile.clicked.connect(lambda: self.dispatch_command("p1:missile"))
+        p1_btn_grid.addWidget(btn_p1_missile, 1, 0)
+
+        btn_p1_spread = QPushButton("🔥 Spread")
+        btn_p1_spread.setStyleSheet("background-color: #be185d; color: white; border-radius: 4px; padding: 4px 6px; font-size: 11px;")
+        btn_p1_spread.clicked.connect(lambda: self.dispatch_command("p1:spread_buff_on"))
+        p1_btn_grid.addWidget(btn_p1_spread, 1, 1)
+
+        p1_layout.addLayout(p1_btn_grid)
+        ships_layout.addWidget(self.p1_card)
+
+        # 🚀 SHIP 2 (Magenta - Bravo Wingman)
+        self.p2_card = QFrame()
+        self.p2_card.setStyleSheet("""
+            QFrame {
+                background-color: #0f172a;
+                border: 2px solid #db2777;
+                border-radius: 12px;
+                padding: 14px;
+            }
+        """)
+        p2_layout = QVBoxLayout(self.p2_card)
+        p2_layout.setSpacing(10)
+        
+        p2_title = QLabel("🚀 Ship 2: Bravo Wingman (Neon Pink)")
+        p2_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #f472b6; border: none;")
+        p2_layout.addWidget(p2_title)
+
+        # Ship 2 Pairing Dropdowns
+        p2_form = QGridLayout()
+        p2_form.setSpacing(8)
+        
+        lbl_p2_eeg = QLabel("🧠 EEG Headband:")
+        lbl_p2_eeg.setStyleSheet("color: #cbd5e1; font-weight: bold; font-size: 11px; border: none;")
+        self.p2_eeg_combo = QComboBox()
+        self.p2_eeg_combo.setStyleSheet("background-color: #1e293b; color: #f1f5f9; border: 1px solid #475569; padding: 4px; border-radius: 4px;")
+        self.p2_eeg_combo.addItem("None (Unassigned)", None)
+        self.p2_eeg_combo.currentIndexChanged.connect(self.on_p2_eeg_changed)
+        p2_form.addWidget(lbl_p2_eeg, 0, 0)
+        p2_form.addWidget(self.p2_eeg_combo, 0, 1)
+
+        lbl_p2_imu = QLabel("📱 Kinematic IMU:")
+        lbl_p2_imu.setStyleSheet("color: #cbd5e1; font-weight: bold; font-size: 11px; border: none;")
+        self.p2_imu_combo = QComboBox()
+        self.p2_imu_combo.setStyleSheet("background-color: #1e293b; color: #f1f5f9; border: 1px solid #475569; padding: 4px; border-radius: 4px;")
+        self.p2_imu_combo.addItem("None (Unassigned)", None)
+        self.p2_imu_combo.currentIndexChanged.connect(self.on_p2_imu_changed)
+        p2_form.addWidget(lbl_p2_imu, 1, 0)
+        p2_form.addWidget(self.p2_imu_combo, 1, 1)
+        p2_layout.addLayout(p2_form)
+
+        # Ship 2 Live Telemetry Gauges
+        p2_gauges = QVBoxLayout()
+        p2_gauges.setSpacing(6)
+        
+        self.p2_status_lbl = QLabel("🟡 Status: Awaiting Stream Pairing")
+        self.p2_status_lbl.setStyleSheet("color: #facc15; font-size: 12px; font-weight: bold; border: none;")
+        p2_gauges.addWidget(self.p2_status_lbl)
+
+        # Focus Bar
+        p2_f_layout = QHBoxLayout()
+        lbl_p2_f = QLabel("Focus (Beta):")
+        lbl_p2_f.setStyleSheet("color: #f472b6; font-size: 11px; border: none;")
+        self.p2_focus_bar = QProgressBar()
+        self.p2_focus_bar.setRange(0, 100)
+        self.p2_focus_bar.setValue(0)
+        self.p2_focus_bar.setStyleSheet("QProgressBar::chunk { background-color: #db2777; } QProgressBar { border: 1px solid #334155; border-radius: 4px; text-align: center; color: white; height: 14px; }")
+        p2_f_layout.addWidget(lbl_p2_f, stretch=1)
+        p2_f_layout.addWidget(self.p2_focus_bar, stretch=3)
+        p2_gauges.addLayout(p2_f_layout)
+
+        # Calm Bar
+        p2_c_layout = QHBoxLayout()
+        lbl_p2_c = QLabel("Calm (Alpha):")
+        lbl_p2_c.setStyleSheet("color: #34d399; font-size: 11px; border: none;")
+        self.p2_calm_bar = QProgressBar()
+        self.p2_calm_bar.setRange(0, 100)
+        self.p2_calm_bar.setValue(0)
+        self.p2_calm_bar.setStyleSheet("QProgressBar::chunk { background-color: #10b981; } QProgressBar { border: 1px solid #334155; border-radius: 4px; text-align: center; color: white; height: 14px; }")
+        p2_c_layout.addWidget(lbl_p2_c, stretch=1)
+        p2_c_layout.addWidget(self.p2_calm_bar, stretch=3)
+        p2_gauges.addLayout(p2_c_layout)
+
+        # Roll Tilt Indicator
+        self.p2_tilt_lbl = QLabel("Phone Tilt: 0.0° (Neutral)")
+        self.p2_tilt_lbl.setStyleSheet("color: #94a3b8; font-size: 11px; border: none;")
+        p2_gauges.addWidget(self.p2_tilt_lbl)
+        
+        p2_layout.addLayout(p2_gauges)
+
+        # Ship 2 Action Test Buttons
+        p2_actions_lbl = QLabel("🎮 Manual Ship 2 Test Triggers:")
+        p2_actions_lbl.setStyleSheet("color: #94a3b8; font-size: 11px; font-weight: bold; border: none; margin-top: 4px;")
+        p2_layout.addWidget(p2_actions_lbl)
+        
+        p2_btn_grid = QGridLayout()
+        p2_btn_grid.setSpacing(6)
+        
+        btn_p2_laser = QPushButton("⚡ Fire Laser")
+        btn_p2_laser.setStyleSheet("background-color: #9d174d; color: white; border-radius: 4px; padding: 4px 6px; font-size: 11px;")
+        btn_p2_laser.clicked.connect(lambda: self.dispatch_command("p2:action"))
+        p2_btn_grid.addWidget(btn_p2_laser, 0, 0)
+        
+        btn_p2_shield = QPushButton("🛡️ Shield")
+        btn_p2_shield.setStyleSheet("background-color: #be185d; color: white; border-radius: 4px; padding: 4px 6px; font-size: 11px;")
+        btn_p2_shield.clicked.connect(lambda: self.dispatch_command("p2:focus_shield_on" if not self.p2_shield else "p2:focus_shield_off"))
+        p2_btn_grid.addWidget(btn_p2_shield, 0, 1)
+
+        btn_p2_missile = QPushButton("🚀 Missiles")
+        btn_p2_missile.setStyleSheet("background-color: #b45309; color: white; border-radius: 4px; padding: 4px 6px; font-size: 11px;")
+        btn_p2_missile.clicked.connect(lambda: self.dispatch_command("p2:missile"))
+        p2_btn_grid.addWidget(btn_p2_missile, 1, 0)
+
+        btn_p2_spread = QPushButton("🔥 Spread")
+        btn_p2_spread.setStyleSheet("background-color: #d97706; color: white; border-radius: 4px; padding: 4px 6px; font-size: 11px;")
+        btn_p2_spread.clicked.connect(lambda: self.dispatch_command("p2:spread_buff_on"))
+        p2_btn_grid.addWidget(btn_p2_spread, 1, 1)
+
+        p2_layout.addLayout(p2_btn_grid)
+        ships_layout.addWidget(self.p2_card)
+
+        main_layout.addLayout(ships_layout)
+
+        # ── 3. RESONANCE SYNERGY BANNER ──
+        self.resonance_banner = QFrame()
+        self.resonance_banner.setStyleSheet("background-color: #1e1b4b; border: 1px solid #4338ca; border-radius: 8px; padding: 8px;")
+        res_layout = QHBoxLayout(self.resonance_banner)
+        res_layout.setContentsMargins(10, 4, 10, 4)
+        
+        self.resonance_lbl = QLabel("🤝 Dual Fleet Brainwave Resonance: Inactive (Align both pilots in Focus/Calm to ignite Plasma Tether)")
+        self.resonance_lbl.setStyleSheet("color: #a5b4fc; font-weight: bold; font-size: 12px; border: none;")
+        res_layout.addWidget(self.resonance_lbl, alignment=Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(self.resonance_banner)
+
+    def scan_network_streams(self):
+        """Scans the local network for all active LSL streams asynchronously without blocking the UI."""
+        if hasattr(self, "refresh_btn"):
+            self.refresh_btn.setText("🔄 Scanning...")
+        if hasattr(self, "radar_status_lbl"):
+            self.radar_status_lbl.setText("📡 Scanning local network for active LSL streams...")
+
+        def _bg_scan():
+            try:
+                # 0.8s discovery window allows robust multicast resolution across LAN & local loopback
+                streams = resolve_streams(0.8)
+            except Exception:
+                streams = []
+
+            new_cached = []
+            for s in streams:
+                try:
+                    new_cached.append((s.name(), s.type(), s.channel_count(), int(s.nominal_srate()), s.source_id(), s))
+                except Exception:
+                    pass
+            
+            self.cached_streams = new_cached
+            QTimer.singleShot(0, self._apply_scan_results)
+
+        threading.Thread(target=_bg_scan, daemon=True).start()
+
+    def _apply_scan_results(self):
+        if hasattr(self, "refresh_btn"):
+            self.refresh_btn.setText("🔄 Refresh Stream Radar")
+        if hasattr(self, "radar_status_lbl"):
+            if self.cached_streams:
+                self.radar_status_lbl.setText(f"🟢 Active: {len(self.cached_streams)} LSL stream(s) discovered on local network")
+                self.radar_status_lbl.setStyleSheet("color: #34d399; font-size: 11px; font-weight: bold; border: none;")
+            else:
+                self.radar_status_lbl.setText("🟡 No LSL streams detected yet. (Start Phone IMU Bridge or EEG stream)")
+                self.radar_status_lbl.setStyleSheet("color: #facc15; font-size: 11px; font-weight: bold; border: none;")
+        self.update_stream_table()
+        self.update_dropdown_options()
+
+    def update_stream_table(self):
+        self.stream_table.setRowCount(len(self.cached_streams))
+        for row, (name, type_, ch, srate, uid, _) in enumerate(self.cached_streams):
+            # Assignment tag
+            assign_tag = "🟢 Available"
+            if name in (self.p1_eeg_name, self.p1_imu_name):
+                assign_tag = "🚀 Ship 1 (Cyan)"
+            elif name in (self.p2_eeg_name, self.p2_imu_name):
+                assign_tag = "🚀 Ship 2 (Pink)"
+                
+            self.stream_table.setItem(row, 0, QTableWidgetItem(name))
+            self.stream_table.setItem(row, 1, QTableWidgetItem(type_))
+            self.stream_table.setItem(row, 2, QTableWidgetItem(f"{ch} ch"))
+            self.stream_table.setItem(row, 3, QTableWidgetItem(f"{srate} Hz"))
+            self.stream_table.setItem(row, 4, QTableWidgetItem(uid[:18] if uid else "-"))
+            
+            item_tag = QTableWidgetItem(assign_tag)
+            if "Ship 1" in assign_tag:
+                item_tag.setForeground(QColor("#38bdf8"))
+            elif "Ship 2" in assign_tag:
+                item_tag.setForeground(QColor("#f472b6"))
+            else:
+                item_tag.setForeground(QColor("#34d399"))
+            self.stream_table.setItem(row, 5, item_tag)
+
+    def update_dropdown_options(self):
+        # 1. Categorize streams with generous matching
+        eeg_candidates = []
+        imu_candidates = []
+        all_candidates = []
+
+        for s in self.cached_streams:
+            s_name = s[0]
+            s_type = s[1].upper()
+            s_name_up = s_name.upper()
+            all_candidates.append(s_name)
+
+            if "EEG" in s_type or "MUSE" in s_name_up or "EEG" in s_name_up or "BRAIN" in s_name_up or "HEADBAND" in s_name_up:
+                eeg_candidates.append(s_name)
+            if "IMU" in s_type or "MOTION" in s_type or "ACCEL" in s_type or "GYRO" in s_type or "WATCH" in s_name_up or "SMARTWATCH" in s_name_up or "PHONE" in s_name_up or "SENSOR" in s_name_up or "ORIENTATION" in s_name_up:
+                imu_candidates.append(s_name)
+
+        # Include fallback streams so user can assign any detected stream
+        for name in all_candidates:
+            if name not in eeg_candidates:
+                eeg_candidates.append(name)
+            if name not in imu_candidates:
+                imu_candidates.append(name)
+
+        def sync_combo(combo: QComboBox, current_val: str | None, names: list[str], default_candidates: list[str]):
+            combo.blockSignals(True)
+            combo.clear()
+            combo.addItem("None (Unassigned)", None)
+            for n in names:
+                combo.addItem(n, n)
+            
+            # Keep previous selection if still available
+            idx = combo.findData(current_val)
+            if idx > 0:
+                combo.setCurrentIndex(idx)
+            else:
+                # Auto-select best match
+                for cand in default_candidates:
+                    idx_c = combo.findData(cand)
+                    if idx_c > 0:
+                        combo.setCurrentIndex(idx_c)
+                        break
+            combo.blockSignals(False)
+
+        sync_combo(self.p1_eeg_combo, self.p1_eeg_name, eeg_candidates, ["Muse-EEG-P1", "Muse_Athena", "Muse-EEG", "Muse"])
+        sync_combo(self.p1_imu_combo, self.p1_imu_name, imu_candidates, ["Smartwatch_IMU_P1", "Smartwatch_IMU", "Phone_IMU_P1", "Phone_IMU"])
+        sync_combo(self.p2_eeg_combo, self.p2_eeg_name, eeg_candidates, ["Muse-EEG-P2", "Muse_Athena_2", "Muse-EEG_P2"])
+        sync_combo(self.p2_imu_combo, self.p2_imu_name, imu_candidates, ["Smartwatch_IMU_P2", "Phone_IMU_P2"])
+
+    def on_p1_eeg_changed(self):
+        self.p1_eeg_name = self.p1_eeg_combo.currentData()
+        self.p1_eeg_inlet = None
+        if self.p1_eeg_name:
+            for s in self.cached_streams:
+                if s[0] == self.p1_eeg_name:
+                    try: self.p1_eeg_inlet = StreamInlet(s[5]); break
+                    except Exception: pass
+        self.update_card_status(1)
+
+    def on_p1_imu_changed(self):
+        self.p1_imu_name = self.p1_imu_combo.currentData()
+        self.p1_imu_inlet = None
+        if self.p1_imu_name:
+            for s in self.cached_streams:
+                if s[0] == self.p1_imu_name:
+                    try: self.p1_imu_inlet = StreamInlet(s[5]); break
+                    except Exception: pass
+        self.update_card_status(1)
+
+    def on_p2_eeg_changed(self):
+        self.p2_eeg_name = self.p2_eeg_combo.currentData()
+        self.p2_eeg_inlet = None
+        if self.p2_eeg_name:
+            for s in self.cached_streams:
+                if s[0] == self.p2_eeg_name:
+                    try: self.p2_eeg_inlet = StreamInlet(s[5]); break
+                    except Exception: pass
+        self.update_card_status(2)
+
+    def on_p2_imu_changed(self):
+        self.p2_imu_name = self.p2_imu_combo.currentData()
+        self.p2_imu_inlet = None
+        if self.p2_imu_name:
+            for s in self.cached_streams:
+                if s[0] == self.p2_imu_name:
+                    try: self.p2_imu_inlet = StreamInlet(s[5]); break
+                    except Exception: pass
+        self.update_card_status(2)
+
+    def update_card_status(self, player_id: int):
+        if player_id == 1:
+            if self.p1_eeg_inlet or self.p1_imu_inlet:
+                self.p1_status_lbl.setText("🟢 Status: PAIRED & STREAMING TO SHIP 1")
+                self.p1_status_lbl.setStyleSheet("color: #34d399; font-size: 12px; font-weight: bold; border: none;")
+            else:
+                self.p1_status_lbl.setText("🟡 Status: Awaiting Stream Pairing")
+                self.p1_status_lbl.setStyleSheet("color: #facc15; font-size: 12px; font-weight: bold; border: none;")
+        elif player_id == 2:
+            if self.p2_eeg_inlet or self.p2_imu_inlet:
+                self.p2_status_lbl.setText("🟢 Status: PAIRED & STREAMING TO SHIP 2")
+                self.p2_status_lbl.setStyleSheet("color: #34d399; font-size: 12px; font-weight: bold; border: none;")
+            else:
+                self.p2_status_lbl.setText("🟡 Status: Awaiting Stream Pairing")
+                self.p2_status_lbl.setStyleSheet("color: #facc15; font-size: 12px; font-weight: bold; border: none;")
+
+    def dispatch_command(self, cmd: str):
+        if hasattr(self.main_win, "send_command_to_snake_game"):
+            self.main_win.send_command_to_snake_game(cmd)
+
+    def poll_active_streams(self):
+        now = time.time()
+        
+        # ── 1. Process Ship 1 IMU ──
+        if self.p1_imu_inlet:
+            try:
+                samples, _ = self.p1_imu_inlet.pull_chunk(max_samples=20, timeout=0.0)
+                if samples:
+                    last = samples[-1]
+                    ax, ay, az = last[0], last[1], last[2]
+                    roll = math.atan2(ay, az) * 180.0 / math.pi if abs(az) > 1e-3 else 0.0
+                    self.p1_roll = roll
+                    self.p1_tilt_lbl.setText(f"Phone Tilt: {roll:+.1f}° ({'LEFT' if roll < -15 else 'RIGHT' if roll > 15 else 'NEUTRAL'})")
+                    
+                    if roll < -15.0: self.dispatch_command("p1:left")
+                    elif roll > 15.0: self.dispatch_command("p1:right")
+                    
+                    # Touch event
+                    touch = last[6] if len(last) >= 7 else (last[9] if len(last) >= 10 else 0.0)
+                    if touch >= 1.0: self.dispatch_command("p1:action")
+            except Exception:
+                pass
+
+        # ── 2. Process Ship 2 IMU ──
+        if self.p2_imu_inlet:
+            try:
+                samples, _ = self.p2_imu_inlet.pull_chunk(max_samples=20, timeout=0.0)
+                if samples:
+                    last = samples[-1]
+                    ax, ay, az = last[0], last[1], last[2]
+                    roll = math.atan2(ay, az) * 180.0 / math.pi if abs(az) > 1e-3 else 0.0
+                    self.p2_roll = roll
+                    self.p2_tilt_lbl.setText(f"Phone Tilt: {roll:+.1f}° ({'LEFT' if roll < -15 else 'RIGHT' if roll > 15 else 'NEUTRAL'})")
+                    
+                    if roll < -15.0: self.dispatch_command("p2:left")
+                    elif roll > 15.0: self.dispatch_command("p2:right")
+                    
+                    touch = last[6] if len(last) >= 7 else (last[9] if len(last) >= 10 else 0.0)
+                    if touch >= 1.0: self.dispatch_command("p2:action")
+            except Exception:
+                pass
+
+        # ── 3. Process Ship 1 EEG (Focus & Calm) ──
+        if self.p1_eeg_inlet:
+            try:
+                samples, _ = self.p1_eeg_inlet.pull_chunk(max_samples=30, timeout=0.0)
+                if samples:
+                    sig = np.array(samples)[:, 0]
+                    self.p1_eeg_buf = np.append(self.p1_eeg_buf[len(sig):], sig)
+                    # Simple bandpower metric
+                    std_val = float(np.std(self.p1_eeg_buf))
+                    f_val = min(100.0, max(0.0, std_val * 4.5))
+                    c_val = min(100.0, max(0.0, 100.0 - std_val * 3.0))
+                    self.p1_focus = 0.8 * self.p1_focus + 0.2 * f_val
+                    self.p1_calm = 0.8 * self.p1_calm + 0.2 * c_val
+                    
+                    self.p1_focus_bar.setValue(int(self.p1_focus))
+                    self.p1_calm_bar.setValue(int(self.p1_calm))
+                    
+                    # Focus Buffs (Shield & Bullet Time) stay active while Focus >= 45%
+                    if self.p1_focus >= 50.0 and not self.p1_shield:
+                        self.p1_shield = True
+                        self.dispatch_command("p1:focus_shield_on")
+                        self.dispatch_command("p1:bullet_time_on")
+                    elif self.p1_focus < 40.0 and self.p1_shield:
+                        self.p1_shield = False
+                        self.dispatch_command("p1:focus_shield_off")
+                        self.dispatch_command("p1:bullet_time_off")
+
+                    # Calm Buffs (Zen HP Regen & Auto Missile Battery) stay active while Calm >= 45%
+                    if self.p1_calm >= 50.0 and not getattr(self, "p1_calm_active", False):
+                        self.p1_calm_active = True
+                        self.dispatch_command("p1:zen_regen_on")
+                        self.dispatch_command("p1:missile_battery_on")
+                    elif self.p1_calm < 40.0 and getattr(self, "p1_calm_active", False):
+                        self.p1_calm_active = False
+                        self.dispatch_command("p1:zen_regen_off")
+                        self.dispatch_command("p1:missile_battery_off")
+            except Exception:
+                pass
+
+        # ── 4. Process Ship 2 EEG (Focus & Calm) ──
+        if self.p2_eeg_inlet:
+            try:
+                samples, _ = self.p2_eeg_inlet.pull_chunk(max_samples=30, timeout=0.0)
+                if samples:
+                    sig = np.array(samples)[:, 0]
+                    self.p2_eeg_buf = np.append(self.p2_eeg_buf[len(sig):], sig)
+                    std_val = float(np.std(self.p2_eeg_buf))
+                    f_val = min(100.0, max(0.0, std_val * 4.5))
+                    c_val = min(100.0, max(0.0, 100.0 - std_val * 3.0))
+                    self.p2_focus = 0.8 * self.p2_focus + 0.2 * f_val
+                    self.p2_calm = 0.8 * self.p2_calm + 0.2 * c_val
+                    
+                    self.p2_focus_bar.setValue(int(self.p2_focus))
+                    self.p2_calm_bar.setValue(int(self.p2_calm))
+                    
+                    # Focus Buffs (Shield & Bullet Time) stay active while Focus >= 45%
+                    if self.p2_focus >= 50.0 and not self.p2_shield:
+                        self.p2_shield = True
+                        self.dispatch_command("p2:focus_shield_on")
+                        self.dispatch_command("p2:bullet_time_on")
+                    elif self.p2_focus < 40.0 and self.p2_shield:
+                        self.p2_shield = False
+                        self.dispatch_command("p2:focus_shield_off")
+                        self.dispatch_command("p2:bullet_time_off")
+
+                    # Calm Buffs (Zen HP Regen & Auto Missile Battery) stay active while Calm >= 45%
+                    if self.p2_calm >= 50.0 and not getattr(self, "p2_calm_active", False):
+                        self.p2_calm_active = True
+                        self.dispatch_command("p2:zen_regen_on")
+                        self.dispatch_command("p2:missile_battery_on")
+                    elif self.p2_calm < 40.0 and getattr(self, "p2_calm_active", False):
+                        self.p2_calm_active = False
+                        self.dispatch_command("p2:zen_regen_off")
+                        self.dispatch_command("p2:missile_battery_off")
+            except Exception:
+                pass
+
+        # ── 5. Resonance Banner Update ──
+        if (self.p1_shield and self.p2_shield) or (getattr(self, "p1_calm_active", False) and getattr(self, "p2_calm_active", False)):
+            self.resonance_banner.setStyleSheet("background-color: #431407; border: 2px solid #f59e0b; border-radius: 8px; padding: 8px;")
+            self.resonance_lbl.setText("⚡ 🌟 DUAL BRAINWAVE RESONANCE ACTIVE (TETHER BURNING FOES!) 🌟 ⚡")
+            self.resonance_lbl.setStyleSheet("color: #fde047; font-weight: bold; font-size: 13px; border: none;")
+        else:
+            self.resonance_banner.setStyleSheet("background-color: #1e1b4b; border: 1px solid #4338ca; border-radius: 8px; padding: 8px;")
+            self.resonance_lbl.setText("🤝 Dual Fleet Brainwave Resonance: Inactive (Align both pilots in Focus/Calm to ignite Plasma Tether)")
+            self.resonance_lbl.setStyleSheet("color: #a5b4fc; font-weight: bold; font-size: 12px; border: none;")
 
 
 # ==========================================
@@ -3112,23 +3788,27 @@ class MasterControlDashboard(QMainWindow):
         self.init_control_tab()
         self.tabs.addTab(self.control_tab, "🎮 Control Room")
 
-        # Add Tab 2: EEG Visualizer Widget
+        # Add Tab 2: Fleet & Ship Signal Pairing Orchestrator
+        self.fleet_tab = StreamFleetPairingWidget(self)
+        self.tabs.addTab(self.fleet_tab, "🛰️ Fleet & Ship Pairing")
+
+        # Add Tab 3: EEG Visualizer Widget
         self.eeg_tab = EEGVisualizerWidget()
         self.tabs.addTab(self.eeg_tab, "🧠 EEG Telemetry")
 
-        # Add Tab 3: PPG Watch Widget
+        # Add Tab 4: PPG Watch Widget
         self.ppg_tab = SmartwatchPPGWidget()
         self.tabs.addTab(self.ppg_tab, "⌚ PPG Watch Monitor")
 
-        # Add Tab 4: 3D IMU Widget
+        # Add Tab 5: 3D IMU Widget
         self.imu_tab = IMUTrajectory3DWidget()
         self.tabs.addTab(self.imu_tab, "📐 3D IMU Trajectory")
 
-        # Add Tab 5: Muse Hardware PPG
+        # Add Tab 6: Muse Hardware PPG
         self.muse_ppg_tab = MusePPGWidget()
         self.tabs.addTab(self.muse_ppg_tab, "🫀 Muse PPG Monitor")
 
-        # Add Tab 6: BCI Game Controller Mapping
+        # Add Tab 7: BCI Game Controller Mapping
         self.mapping_tab = BCIControllerMappingWidget(self)
         self.tabs.addTab(self.mapping_tab, "🕹️ Controller Mapping")
 
@@ -3200,11 +3880,17 @@ class MasterControlDashboard(QMainWindow):
         snake_btn.clicked.connect(lambda: self.launch_external("lsl_snake_game.py"))
         ext_layout.addWidget(snake_btn)
 
-        plane_btn = QPushButton("🚀 Start BCI Retro Fighter")
+        plane_btn = QPushButton("🚀 Start 1P Retro Fighter")
         plane_btn.setMinimumHeight(36)
         plane_btn.setStyleSheet("background-color: #064e3b; border: 1px solid #059669; color: #a7f3d0;")
         plane_btn.clicked.connect(lambda: self.launch_external("lsl_retro_airplane.py"))
         ext_layout.addWidget(plane_btn)
+
+        plane_2p_btn = QPushButton("👥 Start 2P Co-Op Retro Fighter")
+        plane_2p_btn.setMinimumHeight(36)
+        plane_2p_btn.setStyleSheet("background-color: #4a044e; border: 1px solid #c026d3; color: #f5d0fe;")
+        plane_2p_btn.clicked.connect(lambda: self.launch_external("lsl_retro_airplane.py", args=["--players", "2"]))
+        ext_layout.addWidget(plane_2p_btn)
 
         drum_btn = QPushButton("🥁 Start Muscle Drum Kit")
         drum_btn.setMinimumHeight(36)
@@ -3591,9 +4277,10 @@ class MasterControlDashboard(QMainWindow):
             s["process"].write(f"{data}\n".encode())
             print(f"[Dashboard] Sent command '{data}' to stdin of {s['name']}")
 
-    def launch_external(self, script_name):
+    def launch_external(self, script_name, args=None):
         """Launches pygame or audio triggers as isolated detached processes."""
-        self.append_system_log(f"Launching external BCI application: {script_name}...")
+        extra_args = args if args else []
+        self.append_system_log(f"Launching external BCI application: {script_name} {' '.join(extra_args)}...")
         proc = QProcess()
         # Force UTF-8 so printing emojis in games doesn't crash cp1252 Windows decoders
         env = QProcessEnvironment.systemEnvironment()
@@ -3609,10 +4296,10 @@ class MasterControlDashboard(QMainWindow):
             proc.readyReadStandardError.connect(lambda p=proc: sys.stderr.write(p.readAllStandardError().data().decode(errors='ignore')))
             
             # Use '-u' flag to force unbuffered stdin/stdout in the child python process
-            proc.start(sys.executable, ["-u", script_name])
+            proc.start(sys.executable, ["-u", script_name] + extra_args)
             self.snake_process = proc
         else:
-            proc.startDetached(sys.executable, [script_name])
+            proc.startDetached(sys.executable, [script_name] + extra_args)
         self.external_processes.append(proc)
 
     def send_command_to_snake_game(self, cmd):

@@ -252,6 +252,48 @@
             margin-bottom: 4px;
             font-weight: bold;
         }
+
+        /* ── PLAYER SLOT SELECTOR ───────────────────── */
+        .player-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+            width: 100%;
+        }
+        .player-btn {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: #1e293b;
+            border: 2px solid #334155;
+            color: #94a3b8;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .player-btn.active.p1 {
+            background: rgba(56, 189, 248, 0.18);
+            border-color: #38bdf8;
+            color: #38bdf8;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+        }
+        .player-btn.active.p2 {
+            background: rgba(244, 114, 182, 0.18);
+            border-color: #f472b6;
+            color: #f472b6;
+            box-shadow: 0 0 12px rgba(244, 114, 182, 0.35);
+        }
+        #landingPlayerBadge {
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        #landingPlayerBadge.p1 { background: rgba(56,189,248,0.2); color: #38bdf8; border: 1px solid #38bdf8; }
+        #landingPlayerBadge.p2 { background: rgba(244,114,182,0.2); color: #f472b6; border: 1px solid #f472b6; }
     </style>
 </head>
 <body>
@@ -261,7 +303,12 @@
         <div class="card">
             <h1>📲 Mobile LSL Streamer</h1>
             <p class="subtitle">Motion sensors streamed live to LSL.<br>
-            <small style="color:#475569;">Voice is handled by the PC — just move!</small></p>
+            <small style="color:#475569;">Select your Player Slot below</small></p>
+
+            <div class="player-selector">
+                <button type="button" class="player-btn active p1" id="p1Btn" onclick="selectPlayer(1)">Player 1 (Cyan)</button>
+                <button type="button" class="player-btn p2" id="p2Btn" onclick="selectPlayer(2)">Player 2 (Pink)</button>
+            </div>
 
             <div class="status-badge" id="statusBadge">
                 <span class="status-dot"></span>
@@ -281,6 +328,7 @@
                 <div id="hudDot"></div>
                 Streaming Live
             </div>
+            <div id="landingPlayerBadge" class="p1">Player 1</div>
             <button id="stopBtn">✕ Stop</button>
         </div>
 
@@ -292,7 +340,7 @@
                 <div class="ring"></div>
                 <div class="tap-inner">👆</div>
             </div>
-            <div class="tap-label">Tap anywhere</div>
+            <div class="tap-label">Tap anywhere to Fire</div>
             <div id="tapFeedback">TAP!</div>
         </div>
 
@@ -315,6 +363,37 @@
     </div>
 
     <script>
+        let selectedPlayer = 1;
+        // Parse ?p=1 or ?p=2 from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const pParam = parseInt(urlParams.get('p') || urlParams.get('player') || '1');
+        if (pParam === 2) {
+            selectedPlayer = 2;
+        }
+
+        const p1Btn = document.getElementById('p1Btn');
+        const p2Btn = document.getElementById('p2Btn');
+        const landingPlayerBadge = document.getElementById('landingPlayerBadge');
+
+        function updatePlayerUI() {
+            if (selectedPlayer === 1) {
+                p1Btn.className = "player-btn active p1";
+                p2Btn.className = "player-btn p2";
+                landingPlayerBadge.className = "p1";
+                landingPlayerBadge.innerText = "Player 1 (Cyan)";
+            } else {
+                p1Btn.className = "player-btn p1";
+                p2Btn.className = "player-btn active p2";
+                landingPlayerBadge.className = "p2";
+                landingPlayerBadge.innerText = "Player 2 (Pink)";
+            }
+        }
+        function selectPlayer(pId) {
+            selectedPlayer = pId;
+            updatePlayerUI();
+        }
+        updatePlayerUI();
+
         const statusBadge = document.getElementById('statusBadge');
         const statusText  = document.getElementById('statusText');
         const actionBtn   = document.getElementById('actionBtn');
@@ -354,19 +433,32 @@
 
         function sendTouchTap(x, y) {
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ touch: "tap" }));
+                ws.send(JSON.stringify({
+                    player: selectedPlayer,
+                    action: "fire",
+                    touch: "tap",
+                    isTouched: true,
+                    tx: x,
+                    ty: y
+                }));
             }
             spawnRipple(x, y);
             flashFeedback();
         }
 
-        // Tap zone — touch events
+        // Tap zone — touch & pointer events
         tapZone.addEventListener('touchstart', (e) => {
             e.preventDefault();
             const t = e.changedTouches[0];
             const rect = tapZone.getBoundingClientRect();
             sendTouchTap(t.clientX - rect.left, t.clientY - rect.top);
         }, { passive: false });
+
+        tapZone.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'mouse') return; // Handled by click
+            const rect = tapZone.getBoundingClientRect();
+            sendTouchTap(e.clientX - rect.left, e.clientY - rect.top);
+        });
 
         // Tap zone — mouse fallback (desktop testing)
         tapZone.addEventListener('click', (e) => {
@@ -427,16 +519,12 @@
             };
         }
 
+        let lastUiUpdate = 0;
         function handleMotion(event) {
             if (!isStreaming || !ws || ws.readyState !== WebSocket.OPEN) return;
 
             const acc = event.accelerationIncludingGravity || { x: 0, y: 0, z: 9.81 };
             const rot = event.rotationRate || { alpha: 0, beta: 0, gamma: 0 };
-
-            // Update UI feedback values
-            accX.innerText = acc.x ? acc.x.toFixed(2) : "0.00";
-            accY.innerText = acc.y ? acc.y.toFixed(2) : "0.00";
-            accZ.innerText = acc.z ? acc.z.toFixed(2) : "0.00";
 
             // Convert rotationRate (degrees/sec) to rad/s for standard IMU
             const toRad = Math.PI / 180;
@@ -444,15 +532,24 @@
             const gY = rot.beta ? (rot.beta * toRad) : 0;
             const gZ = rot.gamma ? (rot.gamma * toRad) : 0;
 
-            gyroX.innerText = gX.toFixed(2);
-            gyroY.innerText = gY.toFixed(2);
-            gyroZ.innerText = gZ.toFixed(2);
-
-            // Send standard IMU payload
+            // Send standard IMU payload with player identification instantly
             ws.send(JSON.stringify({
+                player: selectedPlayer,
                 acc: [acc.x || 0, acc.y || 0, acc.z || 9.81],
                 gyro: [gX, gY, gZ]
             }));
+
+            // Throttle UI DOM updates to ~15 FPS to eliminate mobile browser layout reflow lag
+            const now = performance.now();
+            if (now - lastUiUpdate > 66) {
+                lastUiUpdate = now;
+                accX.innerText = acc.x ? acc.x.toFixed(2) : "0.00";
+                accY.innerText = acc.y ? acc.y.toFixed(2) : "0.00";
+                accZ.innerText = acc.z ? acc.z.toFixed(2) : "0.00";
+                gyroX.innerText = gX.toFixed(2);
+                gyroY.innerText = gY.toFixed(2);
+                gyroZ.innerText = gZ.toFixed(2);
+            }
         }
 
         function requestPermissions() {

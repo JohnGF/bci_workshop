@@ -1,12 +1,13 @@
-# -*- coding: utf-8 -*-
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["cryptography"]
+# dependencies = [
+#     "cryptography",
+#     "qrcode[pil]"
+# ]
 # ///
 """
-Generates a self-signed TLS certificate (cert.pem + key.pem) for local HTTPS.
-The cert covers the machine's local IP and localhost so the phone can connect.
-Valid for 10 years so you don't have to regenerate it often.
+Generates a self-signed TLS certificate (cert.pem + key.pem) for local HTTPS,
+and generates QR codes (apk_qr.png) for the Android Watch app download and web controller.
 """
 
 import datetime
@@ -19,6 +20,12 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
+try:
+    import qrcode
+    qr_available = True
+except ImportError:
+    qr_available = False
+
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -29,6 +36,25 @@ def get_local_ip():
         return "127.0.0.1"
     finally:
         s.close()
+
+
+def generate_qr_code(url: str, filename: str, out_dir="."):
+    """Generates a high-contrast QR code image."""
+    if not qr_available:
+        print(f"⚠️ 'qrcode' package not found. Skipping QR code generation for {url}")
+        return None
+    qr_path = os.path.join(out_dir, filename)
+    qr = qrcode.QRCode(
+        version=1,
+        box_size=10,
+        border=3,
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    img.save(qr_path)
+    print(f"📱 QR Code saved → {os.path.abspath(qr_path)} ({url})")
+    return qr_path
 
 
 def generate_cert(out_dir="."):
@@ -81,13 +107,26 @@ def generate_cert(out_dir="."):
 
     print(f"✅ cert.pem written  → {os.path.abspath(cert_path)}")
     print(f"✅ key.pem  written  → {os.path.abspath(key_path)}")
+
+    # --- Generate QR Codes ---
+    apk_url = "https://github.com/JohnGF/galaxy_watch_lsl/releases"
+    generate_qr_code(apk_url, "apk_qr.png", out_dir=out_dir)
+
+    web_url_p1 = f"https://{local_ip}:8000/?p=1"
+    generate_qr_code(web_url_p1, "web_controller_p1_qr.png", out_dir=out_dir)
+
+    web_url_p2 = f"https://{local_ip}:8000/?p=2"
+    generate_qr_code(web_url_p2, "web_controller_p2_qr.png", out_dir=out_dir)
+
     print()
     print("━" * 54)
     print("  Next steps:")
-    print(f"  1. Run:  uv run phone_imu_bridge.py")
-    print(f"  2. On your phone open:  https://{local_ip}:8000")
-    print("  3. Tap 'Advanced' → 'Proceed' to bypass the")
-    print("     browser warning (self-signed cert is expected).")
+    print(f"  1. Galaxy Watch APK Download URL:")
+    print(f"     {apk_url}  (Scan apk_qr.png)")
+    print(f"  2. Mobile Web Controller:")
+    print(f"     Player 1: https://{local_ip}:8000/?p=1  (Scan web_controller_p1_qr.png)")
+    print(f"     Player 2: https://{local_ip}:8000/?p=2  (Scan web_controller_p2_qr.png)")
+    print("  3. Start Bridge:  uv run phone_imu_bridge.py")
     print("━" * 54)
 
 

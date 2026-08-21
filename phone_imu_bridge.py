@@ -132,39 +132,64 @@ def kill_stale_processes(script_name: str, ports: list[int] | None = None) -> li
     return list(set(killed))
 
 
-# Setup LSL Stream (7 Channels: Accel XYZ, Gyro XYZ, Touch)
-info = StreamInfo("Smartwatch_IMU", "IMU", 7, 100, cf_float32, "phone_imu_bridge_uid777")
-channels = info.desc().append_child("channels")
-labels = ["Acc_X", "Acc_Y", "Acc_Z", "Gyro_X", "Gyro_Y", "Gyro_Z", "Touch"]
-units  = ["m/s^2", "m/s^2", "m/s^2", "rad/s", "rad/s", "rad/s", "state"]
-for lbl, unit in zip(labels, units):
-    ch = channels.append_child("channel")
-    ch.append_child_value("label", lbl)
-    ch.append_child_value("type", "IMU")
-    ch.append_child_value("unit", unit)
+# Setup Multi-Player LSL Stream Factory
+def create_imu_stream_outlet(player_id: int = 1, legacy_name: str | None = None) -> StreamOutlet:
+    name = legacy_name if legacy_name else f"Smartwatch_IMU_P{player_id}"
+    uid = f"phone_imu_bridge_p{player_id}_uid777" if not legacy_name else "phone_imu_bridge_uid777"
+    info = StreamInfo(name, "IMU", 7, 100, cf_float32, uid)
+    channels = info.desc().append_child("channels")
+    labels = ["Acc_X", "Acc_Y", "Acc_Z", "Gyro_X", "Gyro_Y", "Gyro_Z", "Touch"]
+    units  = ["m/s^2", "m/s^2", "m/s^2", "rad/s", "rad/s", "rad/s", "state"]
+    for lbl, unit in zip(labels, units):
+        ch = channels.append_child("channel")
+        ch.append_child_value("label", lbl)
+        ch.append_child_value("type", "IMU")
+        ch.append_child_value("unit", unit)
+    return StreamOutlet(info)
 
-outlet = StreamOutlet(info)
+# Outlets for Player 1, Player 2, and legacy fallback alias
+outlets: dict[int, StreamOutlet] = {
+    1: create_imu_stream_outlet(1),
+    2: create_imu_stream_outlet(2),
+}
+legacy_outlet = create_imu_stream_outlet(1, legacy_name="Smartwatch_IMU")
 
-# Keep track of latest values
-latest_acc = [0.0, 0.0, 9.81]
-latest_gyro = [0.0, 0.0, 0.0]
-latest_touch = 0.0
+# Per-player sensor states: { player_id: {"acc": [...], "gyro": [...], "touch": 0.0} }
+player_states: dict[int, dict] = {}
+
+def get_player_state(player_id: int) -> dict:
+    if player_id not in player_states:
+        player_states[player_id] = {
+            "acc": [0.0, 0.0, 9.81],
+            "gyro": [0.0, 0.0, 0.0],
+            "touch": 0.0
+        }
+    return player_states[player_id]
+
+def get_player_outlet(player_id: int) -> StreamOutlet:
+    if player_id not in outlets:
+        outlets[player_id] = create_imu_stream_outlet(player_id)
+    return outlets[player_id]
+
+def push_player_sample(player_id: int, touch_event: bool = False):
+    st = get_player_state(player_id)
+    t_val = 1.0 if touch_event else st["touch"]
+    sample = st["acc"] + st["gyro"] + [t_val]
+    get_player_outlet(player_id).push_sample(sample)
+    if player_id == 1:
+        legacy_outlet.push_sample(sample)
+    st["touch"] = 0.0
 
 
 async def echo(websocket):
-    global latest_acc, latest_gyro, latest_touch
     remote = websocket.remote_address
     session_start = time.monotonic()
     conn_logger.info(f"CONNECT    remote={remote}")
     print(f"✅ Phone connected from: {remote}")
     first_message = True
+    assigned_player = 1
     try:
         async for message in websocket:
-            if first_message:
-                conn_logger.info(f"FIRST_MSG  remote={remote}  (first sensor data received)")
-                print("📥 First sensor message received from phone!")
-                first_message = False
-
             if isinstance(message, bytes):
                 message = message.decode("utf-8", errors="ignore")
 
@@ -173,19 +198,31 @@ async def echo(websocket):
             except Exception:
                 continue
 
+            # Extract player ID if provided in packet, otherwise default to 1
+            if isinstance(data, dict) and "player" in data:
+                try:
+                    assigned_player = max(1, int(data["player"]))
+                except (ValueError, TypeError):
+                    assigned_player = 1
+
+            if first_message:
+                conn_logger.info(f"FIRST_MSG  remote={remote}  player={assigned_player} (first sensor data received)")
+                print(f"📥 First sensor message received from Phone (Player {assigned_player})!")
+                first_message = False
+
+            st = get_player_state(assigned_player)
+
             # 1. Custom Web Browser / Mobile App Touch Action
-            if isinstance(data, dict) and "touch" in data:
-                latest_touch = 1.0
-                outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
-                latest_touch = 0.0
+            if isinstance(data, dict) and ("touch" in data or "action" in data or data.get("isTouched")):
+                push_player_sample(assigned_player, touch_event=True)
+                push_player_sample(assigned_player, touch_event=True) # Double pulse ensures non-blocking chunk readers capture it
                 continue
 
             # 2. Custom Android App / Web Browser Direct Sensor Format: {"acc": [...], "gyro": [...]}
             elif isinstance(data, dict) and "acc" in data and "gyro" in data:
-                latest_acc = data.get("acc", [0.0, 0.0, 9.81])
-                latest_gyro = data.get("gyro", [0.0, 0.0, 0.0])
-                outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
-                latest_touch = 0.0
+                st["acc"] = data.get("acc", [0.0, 0.0, 9.81])
+                st["gyro"] = data.get("gyro", [0.0, 0.0, 0.0])
+                push_player_sample(assigned_player)
 
             # 3. Third-Party 'Sensor Logger' App Format
             elif isinstance(data, dict) and "payload" in data:
@@ -194,11 +231,10 @@ async def echo(websocket):
                     name = item.get("name", "")
                     values = item.get("values", {})
                     if "accelerometer" in name or "gravity" in name or "total_acceleration" in name:
-                        latest_acc = [values.get("x", latest_acc[0]), values.get("y", latest_acc[1]), values.get("z", latest_acc[2])]
+                        st["acc"] = [values.get("x", st["acc"][0]), values.get("y", st["acc"][1]), values.get("z", st["acc"][2])]
                     elif "gyroscope" in name or "orientation" in name:
-                        latest_gyro = [values.get("x", latest_gyro[0]), values.get("y", latest_gyro[1]), values.get("z", latest_gyro[2])]
-                outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
-                latest_touch = 0.0
+                        st["gyro"] = [values.get("x", st["gyro"][0]), values.get("y", st["gyro"][1]), values.get("z", st["gyro"][2])]
+                push_player_sample(assigned_player)
 
             # 4. Fallback array of items: [{"name": "accelerometer", ...}]
             elif isinstance(data, list):
@@ -207,16 +243,15 @@ async def echo(websocket):
                         name = item.get("name", "")
                         values = item.get("values", {})
                         if "accelerometer" in name:
-                            latest_acc = [values.get("x", latest_acc[0]), values.get("y", latest_acc[1]), values.get("z", latest_acc[2])]
+                            st["acc"] = [values.get("x", st["acc"][0]), values.get("y", st["acc"][1]), values.get("z", st["acc"][2])]
                         elif "gyroscope" in name:
-                            latest_gyro = [values.get("x", latest_gyro[0]), values.get("y", latest_gyro[1]), values.get("z", latest_gyro[2])]
-                outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
-                latest_touch = 0.0
+                            st["gyro"] = [values.get("x", st["gyro"][0]), values.get("y", st["gyro"][1]), values.get("z", st["gyro"][2])]
+                push_player_sample(assigned_player)
 
     except websockets.exceptions.ConnectionClosed as e:
         duration = time.monotonic() - session_start
-        conn_logger.info(f"DISCONNECT remote={remote}  reason={e}  duration={duration:.1f}s")
-        print(f"🛑 Phone disconnected: {e}")
+        conn_logger.info(f"DISCONNECT remote={remote}  player={assigned_player}  reason={e}  duration={duration:.1f}s")
+        print(f"🛑 Phone (Player {assigned_player}) disconnected: {e}")
     except Exception as e:
         conn_logger.error(f"ERROR      remote={remote}  error={e}")
         print(f"⚠️ Parsing Error: {e}")
@@ -392,40 +427,56 @@ async def start_udp_listener(host, port):
             self.first_packet = True
 
         def datagram_received(self, data, addr):
-            global latest_acc, latest_gyro, latest_touch
             if self.first_packet:
                 conn_logger.info(f"UDP_FIRST_MSG remote={addr} (first UDP sensor packet received)")
                 print(f"📥 First UDP sensor packet received from {addr}!")
                 self.first_packet = False
             try:
                 text = data.decode("utf-8", errors="ignore").strip()
+                assigned_player = 1
+
                 # 1. JSON UDP packet
                 if text.startswith("{"):
                     try:
                         p = json.loads(text)
-                        if "acc" in p and "gyro" in p:
-                            latest_acc = p["acc"]
-                            latest_gyro = p["gyro"]
-                            outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
+                        if "player" in p:
+                            try:
+                                assigned_player = max(1, int(p["player"]))
+                            except (ValueError, TypeError):
+                                assigned_player = 1
+                        st = get_player_state(assigned_player)
+
+                        if "touch" in p:
+                            push_player_sample(assigned_player, touch_event=True)
+                            return
+                        elif "acc" in p and "gyro" in p:
+                            st["acc"] = p["acc"]
+                            st["gyro"] = p["gyro"]
+                            push_player_sample(assigned_player)
                             return
                         elif "accel" in p and "gyro" in p:
-                            latest_acc = p["accel"]
-                            latest_gyro = p["gyro"]
-                            outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
+                            st["acc"] = p["accel"]
+                            st["gyro"] = p["gyro"]
+                            push_player_sample(assigned_player)
                             return
                     except Exception:
                         pass
 
-                # 2. CSV format: accelX,accelY,accelZ,gyroX,gyroY,gyroZ,[hr],[touchX],[touchY],[isTouched]
+                # 2. CSV format: accelX,accelY,accelZ,gyroX,gyroY,gyroZ,[hr],[touchX],[touchY],[isTouched],[player]
                 parts = [float(p) for p in text.split(",") if p.strip()]
                 if len(parts) >= 6:
-                    latest_acc = parts[0:3]
-                    latest_gyro = parts[3:6]
+                    if len(parts) >= 11:
+                        try:
+                            assigned_player = max(1, int(parts[10]))
+                        except Exception:
+                            assigned_player = 1
+                    st = get_player_state(assigned_player)
+                    st["acc"] = parts[0:3]
+                    st["gyro"] = parts[3:6]
+                    is_touch = False
                     if len(parts) >= 10:
-                        is_touched = parts[9]
-                        latest_touch = 1.0 if is_touched >= 1.0 else 0.0
-                    outlet.push_sample(latest_acc + latest_gyro + [latest_touch])
-                    latest_touch = 0.0
+                        is_touch = (parts[9] >= 1.0)
+                    push_player_sample(assigned_player, touch_event=is_touch)
             except Exception as e:
                 conn_logger.error(f"UDP_PARSE_ERROR remote={addr} error={e}")
 
@@ -506,10 +557,11 @@ async def main():
     print("==================================================")
     print(f"⌛ Listening for UDP packets on port {args.udp_port} & WebSockets on port {ws_port_insecure}...")
 
-    # Start both WebSocket servers concurrently
-    insecure_server = websockets.serve(echo, args.ip, ws_port_insecure, reuse_address=True)
+    # Start both WebSocket servers concurrently with zero-latency streaming
+    ws_kwargs = {"ping_interval": None, "ping_timeout": None, "max_size": 2**20, "reuse_address": True}
+    insecure_server = websockets.serve(echo, args.ip, ws_port_insecure, **ws_kwargs)
     if ssl_context is not None:
-        secure_server = websockets.serve(echo, args.ip, ws_port_secure, ssl=ssl_context, reuse_address=True)
+        secure_server = websockets.serve(echo, args.ip, ws_port_secure, ssl=ssl_context, **ws_kwargs)
         async with insecure_server, secure_server:
             await asyncio.Future()  # Run forever
     else:
