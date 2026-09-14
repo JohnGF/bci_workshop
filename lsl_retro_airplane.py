@@ -797,9 +797,18 @@ class RetroPlaneGame:
         for m in self.missiles[:]:
             m["life"] -= 1 * time_scale
             if self.enemies:
-                nearest = min(self.enemies, key=lambda e: (e["x"] - m["x"])**2 + (e["y"] - m["y"])**2)
-                dx = nearest["x"] - m["x"]
-                dy = nearest["y"] - m["y"]
+                mx, my = m["x"], m["y"]
+                nearest = self.enemies[0]
+                min_dist_sq = (nearest["x"] - mx)**2 + (nearest["y"] - my)**2
+
+                for e in self.enemies[1:]:
+                    dist_sq = (e["x"] - mx)**2 + (e["y"] - my)**2
+                    if dist_sq < min_dist_sq:
+                        min_dist_sq = dist_sq
+                        nearest = e
+
+                dx = nearest["x"] - mx
+                dy = nearest["y"] - my
                 dist = math.hypot(dx, dy)
                 if dist > 0:
                     target_vx = (dx / dist) * m["speed"]
