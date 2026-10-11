@@ -1,4 +1,11 @@
-# 🧠 BCI & Kinematic Workshop: Muse EEG & Phone IMU
+<div align="center">
+  <h1>🧠 BCI & Kinematic Workshop: Muse EEG & Phone IMU</h1>
+  <p>Real-time signal processing, visual telemetry, and BCI-controlled games designed for interactive workshops.</p>
+
+  [![Python >= 3.11](https://img.shields.io/badge/python->=3.11-blue.svg)](https://www.python.org/downloads/)
+  [![uv](https://img.shields.io/badge/managed_by-uv-purple.svg)](https://github.com/astral-sh/uv)
+  [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+</div>
 
 This repository contains real-time signal processing, visual telemetry, and BCI-controlled games designed for interactive workshops. It bridges physiological signals (Muse S EEG) and kinematic motions (Phone/Watch IMUs) onto a unified dashboard to drive gameplay.
 
@@ -6,12 +13,30 @@ All scripts use the modern Python script metadata format and can be run instantl
 
 ---
 
-## 🚀 Getting Started
+## 🌊 Signal Processing Pipeline
+
+```mermaid
+graph LR
+    A[📡 Data Acquisition<br/>Muse EEG / Phone IMU] --> B[🧹 Preprocessing<br/>Filtering / Detrending]
+    B --> C[⚙️ Feature Extraction<br/>Bandpower / FFT]
+    C --> D[🤖 Classification<br/>Focus / Calm / Action]
+    D --> E[🎮 Output / Games]
+```
+
+---
+
+## 🚀 Quickstart Environment Setup
 
 Because this project relies heavily on real-time hardware (Bluetooth for the Muse headband, direct local network broadcasts for phone sensors, and OpenGL for 3D games), your installation path depends on your operating system.
 
 ### Option A: Native Setup (Recommended)
 This is the fastest, lowest-friction way to run the workshop. Because the codebase uses `brainflow` (which handles native Bluetooth directly) and `uv` (which manages Python dependencies automatically), you can run this natively on Windows, macOS, or Linux without any virtual machines.
+
+**Install Dependencies:**
+Use [uv](https://github.com/astral-sh/uv), conda, or pip to manage your environment:
+*   **uv**: `uv pip install -r requirements.txt` (Or let `uv run` handle it automatically!)
+*   **conda**: `conda create -n bci python=3.12 && conda activate bci && pip install -r requirements.txt`
+*   **pip**: `pip install -r requirements.txt`
 
 **For Windows:**
 Simply double-click the `install.bat` file in your File Explorer (or run it from Command Prompt). It will automatically download the required tools and sync the project dependencies.
@@ -62,7 +87,9 @@ docker-compose up --build
 
 ---
 
-## 🕹️ 1. Master Control Dashboard (`main.py`)
+## 📚 Workshop Modules Breakdown
+
+### 1. Master Control Dashboard (`main.py`)
 
 The central nervous system of the project. This PyQt6 dashboard manages incoming LSL streams, computes real-time DSP metrics, and pipes control tokens to games.
 
@@ -80,11 +107,7 @@ uv run main.py
     *   Exposes 7 live threshold sliders (Blink, Clench, Focus, Calm, Phone Tilt, Phone Flick, Phone Shake).
     *   Displays a real-time calibration scope plotting waveforms alongside color-coded threshold lines for immediate visual tuning.
 
----
-
-# This can be triggered in main or manually if main is not working properly.
-
-## 📱 2. Phone IMU Bridge (`phone_imu_bridge.py`) 
+### 2. Phone IMU Bridge (`phone_imu_bridge.py`) 
 
 Turn any smartphone into an LSL motion controller without installing an app.
 
@@ -95,13 +118,11 @@ Turn any smartphone into an LSL motion controller without installing an app.
 2.  Open the secure link on your phone (e.g., `https://<your-ip>:8000`).
 3.  Hold the phone naturally and click **🎯 Zero Sensors** on the dashboard to calibrate. Your phone is now streaming tilt angles, flick forces, shakes, and screen taps directly to the LSL network!
 
----
-
-## 🎮 3. BCI-Controlled Games
+### 3. BCI-Controlled Games
 
 Our games are built using Pygame and feature a **Unified Input System** (`game_input.py`) that unifies standard keyboard/mouse controls with incoming BCI/IMU tokens from the dashboard.
 
-### OpenGL Retro Fighter (`lsl_retro_airplane.py`)
+**OpenGL Retro Fighter (`lsl_retro_airplane.py`)**
 An arcade jet shooter featuring particle systems and synthesized retro audio:
 ```bash
 uv run lsl_retro_airplane.py
@@ -112,7 +133,7 @@ uv run lsl_retro_airplane.py
 *   **Muse EEG Eye Blink**: Triggers the ultimate screen-clearing smart bomb.
 *   **Keyboard Backup**: `A`/`D`/`W`/`S` (steer), `Space` (fire), `Shift` (spread), `Ctrl` (bomb).
 
-### BCI Snake Game (`lsl_snake_game.py`)
+**BCI Snake Game (`lsl_snake_game.py`)**
 ```bash
 uv run lsl_snake_game.py
 ```
@@ -121,9 +142,7 @@ uv run lsl_snake_game.py
 *   **Jaw Clench**: Turn Right.
 *   **Simulator Hotkeys**: `B` (simulate blink), `C` (simulate clench).
 
----
-
-## ⌚ 4. Smartwatch PPG & IMU Simulators (No Hardware Required)
+### 4. Smartwatch PPG & IMU Simulators (No Hardware Required)
 
 We provide interactive simulators that stream high-fidelity PPG (optical heart rate) and kinematic data over LSL:
 
@@ -132,9 +151,7 @@ We provide interactive simulators that stream high-fidelity PPG (optical heart r
 *   **watch_imu_streamer.py**: Streams simulated smartwatch 6-axis IMU motions (circular, figure-8, shakes).
 *   **watch_imu_viewer_3d.py**: Connects to the watch IMU LSL node and plots integrated 3D trajectories.
 
----
-
-## 🧠 5. Muse S (Athena) Connection (Requires Hardware)
+### 5. Muse S (Athena) Connection (Requires Hardware)
 
 Launches the persistent BLE hardware session and pipes raw EEG (Ch. 1-4) and PPG Optics (Ch. 1-9) onto LSL nodes `Muse_Athena` and `Muse_Optics`.
 ```bash
@@ -143,7 +160,24 @@ uv run athena_streamer.py
 
 ---
 
-## 🛠️ Codebase Structure
+## 🛠️ Project Structure
+
+```mermaid
+graph TD
+    A[main.py: Dashboard] --> B[lsl_retro_airplane.py: Game]
+    A --> C[lsl_snake_game.py: Game]
+    D[phone_imu_bridge.py] -->|LSL Stream| A
+    E[athena_streamer.py] -->|LSL Stream| A
+    F[watch_ppg_streamer.py] -->|LSL Stream| A
+    
+    classDef main fill:#1e1b4b,stroke:#a5b4fc,stroke-width:2px;
+    classDef streamer fill:#064e3b,stroke:#34d399,stroke-width:2px;
+    classDef game fill:#7f1d1d,stroke:#fca5a5,stroke-width:2px;
+    
+    class A main;
+    class D,E,F streamer;
+    class B,C game;
+```
 
 *   `main.py`: PyQt6 Master Control Dashboard.
 *   `game_input.py`: Unified keyboard, mouse, and BCI/stdin action-mapping system.
@@ -152,6 +186,7 @@ uv run athena_streamer.py
 *   `lsl_snake_game.py`: BCI Snake game with rolling signal visualizers.
 *   `athena_streamer.py`: Bluetooth driver for the Muse S headband.
 *   `ppg_viewer.py` & `lsl_viewer.py`: PPG heart rate visualizer and generic multi-channel time-series plotter.
+*   `tests/`: Comprehensive unit tests covering BCI signal processing helpers, data loading/cleaning pipelines, feature extraction, and validation logic.
 
 ---
 
