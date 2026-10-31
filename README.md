@@ -142,6 +142,15 @@ uv run lsl_snake_game.py
 *   **Jaw Clench**: Turn Right.
 *   **Simulator Hotkeys**: `B` (simulate blink), `C` (simulate clench).
 
+> **Galaxy Watch app v1.2 and newer** ([galaxy_watch_lsl](https://github.com/JohnGF/galaxy_watch_lsl))
+> send the new W2 packet format (keep-alive with the screen off, body location, clock sync).
+> `smartwatch_lsl_bridge.py` reads both W2 and the older CSV packets on UDP port 5005: the first
+> watch still appears as `Smartwatch_IMU` / `Smartwatch_PPG`, a second one as `Smartwatch_IMU_P2` /
+> `Smartwatch_PPG_P2` (player 2). On the watch, set the PC's IP and press Start; nothing else changes.
+> The full nautilus_bci bridge (per-location stream names, clock sync, BIDS recording) is not needed here.
+> Note: this repo's `lsl_api.cfg` puts everything in LSL session `bci_workshop`, so tools started outside
+> this folder (LabRecorder, nautilus_bci) will not see these streams unless they use the same SessionID.
+
 ### 4. Smartwatch PPG & IMU Simulators (No Hardware Required)
 
 We provide interactive simulators that stream high-fidelity PPG (optical heart rate) and kinematic data over LSL:
