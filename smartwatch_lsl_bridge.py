@@ -16,7 +16,8 @@ over WebSockets or UDP and streams them live into LSL.
 
 Supported inputs:
 1. Sensor Logger app (iOS / Wear OS / Android) - set live export to WebSocket (ws://<PC_IP>:8080)
-2. Custom Wear OS / Android UDP packet streams
+2. Galaxy Watch app (github.com/JohnGF/galaxy_watch_lsl): v1.2+ sends W2 packets (watch 1 ->
+   Smartwatch_IMU/PPG, watch 2 -> *_P2); older builds send CSV. Both on UDP port 5005.
 3. --mock flag for testing LSL streams without a watch connected
 
 Usage:
@@ -43,16 +44,16 @@ except ImportError:
     HAS_WEBSOCKETS = False
 
 
-def create_lsl_outlets():
-    """Create LSL outlets for IMU and PPG streams."""
+def create_lsl_outlets(suffix=""):
+    """Create LSL outlets for IMU and PPG streams (suffix e.g. '_P2' for a second watch)."""
     # 1. IMU Stream (6 channels: Accel X,Y,Z + Gyro X,Y,Z)
     imu_info = StreamInfo(
-        name='Smartwatch_IMU',
+        name=f'Smartwatch_IMU{suffix}',
         type='IMU',
         channel_count=6,
         nominal_srate=50.0,  # 50 Hz default
         channel_format='float32',
-        source_id='smartwatch_imu_01'
+        source_id=f'smartwatch_imu_01{suffix}'
     )
     imu_channels = imu_info.desc().append_child("channels")
     for name, unit in [('Accel_X', 'm/s2'), ('Accel_Y', 'm/s2'), ('Accel_Z', 'm/s2'),
@@ -66,12 +67,12 @@ def create_lsl_outlets():
 
     # 2. PPG / HR Stream (2 channels: HeartRate/PPG_val, Confidence)
     ppg_info = StreamInfo(
-        name='Smartwatch_PPG',
+        name=f'Smartwatch_PPG{suffix}',
         type='PPG',
         channel_count=2,
         nominal_srate=1.0,  # 1 Hz default for HR / pulse
         channel_format='float32',
-        source_id='smartwatch_ppg_01'
+        source_id=f'smartwatch_ppg_01{suffix}'
     )
     ppg_channels = ppg_info.desc().append_child("channels")
     for name, unit in [('HeartRate', 'bpm'), ('Confidence', 'percentage')]:
@@ -83,8 +84,8 @@ def create_lsl_outlets():
     ppg_outlet = StreamOutlet(ppg_info)
 
     print("[+] LSL Outlets created:")
-    print("    - 'Smartwatch_IMU' (6 channels: Accel XYZ + Gyro XYZ)")
-    print("    - 'Smartwatch_PPG' (2 channels: HeartRate BPM, Confidence)")
+    print(f"    - 'Smartwatch_IMU{suffix}' (6 channels: Accel XYZ + Gyro XYZ)")
+    print(f"    - 'Smartwatch_PPG{suffix}' (2 channels: HeartRate BPM, Confidence)")
 
     return imu_outlet, ppg_outlet
 
@@ -123,6 +124,72 @@ def run_mock_stream(imu_outlet, ppg_outlet):
         print("\n[*] Mock stream stopped.")
 
 
+class W2Watches:
+    """Packets from galaxy_watch_lsl >= 1.2 (W2 format, also used by nautilus_bci):
+
+        W2|<device_id>|<location>|<seq>|<kind>[@<rate>]|<t_ns>,<v1>,...;<t_ns>,<v1>,...
+
+    The first watch feeds the existing Smartwatch_IMU / Smartwatch_PPG streams, so the
+    dashboard and games work unchanged; a second watch gets Smartwatch_IMU_P2 /
+    Smartwatch_PPG_P2 (player 2 in game_input.py). Heartbeat, touch and clock-sync echo
+    packets are ignored. Sample times come from the watch clock, mapped onto LSL time with
+    the fastest packet seen in the last 10 s (strips Wi-Fi jitter).
+    """
+
+    def __init__(self, imu_outlet, ppg_outlet):
+        self.players = []  # [(device_id, imu_outlet, ppg_outlet)]
+        self.p1 = (imu_outlet, ppg_outlet)
+        self.offsets = {}  # device_id -> deque of (arrival, offset)
+
+    def _outlets(self, device_id, location):
+        for dev, imu, ppg in self.players:
+            if dev == device_id:
+                return imu, ppg
+        player = len(self.players) + 1
+        print(f"[+] Watch {device_id} ({location}) -> player {player}")
+        imu, ppg = self.p1 if player == 1 else create_lsl_outlets(f"_P{player}")
+        self.players.append((device_id, imu, ppg))
+        return imu, ppg
+
+    def _to_lsl(self, device_id, device_s, arrival):
+        from collections import deque
+        q = self.offsets.setdefault(device_id, deque())
+        offset = arrival - device_s
+        while q and q[-1][1] >= offset:
+            q.pop()
+        q.append((arrival, offset))
+        while arrival - q[0][0] > 10.0:
+            q.popleft()
+        return q[0][1]
+
+    def handle(self, text, arrival):
+        """True if text was a W2 packet (handled or deliberately ignored)."""
+        if not text.startswith("W2|"):
+            return False
+        parts = text.split("|")
+        if len(parts) != 6:
+            return True
+        _, device_id, location, _seq, kind, body = parts
+        kind = kind.split("@", 1)[0]
+        if kind not in ("IMU", "HR"):
+            return True
+        try:
+            samples = [[float(v) for v in chunk.split(",")] for chunk in body.split(";") if chunk]
+        except ValueError:
+            return True
+        if not samples:
+            return True
+        imu, ppg = self._outlets(device_id, location)
+        offset = self._to_lsl(device_id, max(s[0] for s in samples) * 1e-9, arrival)
+        for s in samples:
+            stamp = s[0] * 1e-9 + offset
+            if kind == "IMU" and len(s) >= 7:
+                imu.push_sample(s[1:7], stamp)
+            elif kind == "HR" and len(s) >= 2:
+                ppg.push_sample([s[1], 100.0], stamp)
+        return True
+
+
 def run_udp_server(host, port, imu_outlet, ppg_outlet):
     """Listen for incoming JSON or CSV sensor packets from free smartwatch apps (e.g. HyperIMU)."""
     print(f"\n[+] Starting UDP server on {host}:{port}...")
@@ -131,11 +198,17 @@ def run_udp_server(host, port, imu_outlet, ppg_outlet):
 
     print("    Listening for UDP packets from Galaxy Watch... Press Ctrl+C to stop.")
     count = 0
+    w2 = W2Watches(imu_outlet, ppg_outlet)
     try:
         while True:
             data, addr = sock.recvfrom(4096)
+            arrival = local_clock()
             count += 1
             text = data.decode('utf-8', errors='ignore').strip()
+
+            # 0. Galaxy Watch app >= 1.2 (W2 packets)
+            if w2.handle(text, arrival):
+                continue
 
             # 1. Try JSON parsing
             if text.startswith('{'):
